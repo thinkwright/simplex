@@ -1,0 +1,15 @@
+FUNCTION: greet(name) → greeting
+
+RULES:
+  - return a greeting that includes the name
+
+DONE_WHEN:
+  - greeting contains the name
+  - greeting is friendly
+
+EXAMPLES:
+  ("Alice") → "Hello, Alice!"
+  ("Bob") → "Hello, Bob!"
+
+ERRORS:
+  - empty name → "Name cannot be empty"
