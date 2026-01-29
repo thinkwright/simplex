@@ -1,0 +1,66 @@
+DATA: Item
+  id: string
+  name: string
+  price: number
+  quantity: number
+
+DATA: Cart
+  items: list of Item
+  total: number
+
+FUNCTION: add_to_cart(cart, item) → Cart
+
+RULES:
+  - if item already in cart, increase quantity
+  - otherwise add item to cart
+  - recalculate total
+
+DONE_WHEN:
+  - item is in cart
+  - total reflects all items
+
+EXAMPLES:
+  (empty_cart, item_a) → { items: [item_a], total: 10.00 }
+  (cart_with_a, item_a) → { items: [item_a(qty:2)], total: 20.00 }
+  (cart_with_a, item_b) → { items: [item_a, item_b], total: 25.00 }
+
+ERRORS:
+  - invalid item → "Item must have id, name, and price"
+  - negative quantity → "Quantity cannot be negative"
+
+
+FUNCTION: remove_from_cart(cart, item_id) → Cart
+
+RULES:
+  - find item by id
+  - remove it from cart
+  - recalculate total
+
+DONE_WHEN:
+  - item no longer in cart
+  - total is updated
+
+EXAMPLES:
+  (cart_with_a_and_b, "a") → { items: [item_b], total: 15.00 }
+  (cart_with_a, "a") → { items: [], total: 0.00 }
+  (empty_cart, "a") → { items: [], total: 0.00 }
+
+ERRORS:
+  - item not found → return cart unchanged (not an error)
+
+
+FUNCTION: calculate_total(cart) → number
+
+RULES:
+  - sum price × quantity for all items
+
+DONE_WHEN:
+  - total is accurate
+
+EXAMPLES:
+  (empty_cart) → 0.00
+  (cart_with_a) → 10.00
+  (cart_with_a_and_b) → 25.00
+
+ERRORS:
+  - invalid cart → 0.00

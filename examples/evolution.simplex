@@ -1,0 +1,59 @@
+# Evolution Example
+#
+# Demonstrates BASELINE and EVAL landmarks for evolutionary specifications.
+# Use these when evolving an existing system rather than building greenfield.
+
+DATA: AuthSystem
+  session_support: boolean
+  jwt_support: boolean
+  refresh_rotation: boolean
+  rate_limiting: boolean
+
+FUNCTION: modernize_authentication(config) → AuthSystem
+
+BASELINE:
+  reference: "session-based auth, commit abc123"
+  preserve:
+    - POST /login returns { session_id, expires_at }
+    - session timeout is 30 minutes
+    - existing client SDKs continue to work
+  evolve:
+    - add JWT token issuance alongside sessions
+    - implement refresh token rotation
+    - add rate limiting on auth endpoints
+
+RULES:
+  - authenticate user credentials against user store
+  - issue JWT token with configurable expiration
+  - issue refresh token that rotates on each use
+  - maintain session-based auth for backward compatibility
+  - rate limit failed attempts per IP address
+
+DONE_WHEN:
+  - valid credentials produce both session and JWT
+  - refresh tokens rotate correctly
+  - rate limiting activates after threshold
+  - existing session-based clients unaffected
+
+EXAMPLES:
+  # Preserved behaviors (regression tests)
+  (valid_creds, session_mode) → { session_id: "...", expires_at: +30min }
+  (invalid_creds, any_mode) → { error: "unauthorized" }
+
+  # Evolved capabilities (capability tests)
+  (valid_creds, jwt_mode) → { token: "...", refresh: "...", expires_at: +1hr }
+  (expired_token, valid_refresh) → { token: "new...", refresh: "new..." }
+  (any_creds, after_rate_limit) → { error: "rate limited", retry_after: 60 }
+
+ERRORS:
+  - user store unavailable → "auth service unavailable"
+  - malformed credentials → "invalid request format"
+  - rate limit exceeded → "rate limited, retry after {seconds}"
+
+EVAL:
+  preserve: pass^3
+  evolve: pass@5
+  grading: code
+
+CONSTRAINT: backward_compatibility
+  existing v1 API clients must work without modification

@@ -1,0 +1,40 @@
+DATA: User
+  id: string
+  name: string
+  email: string
+  role: "admin" | "member" | "guest"
+
+DATA: AuthResult
+  success: boolean
+  user: User | null
+  error: string | null
+
+FUNCTION: authenticate(email, password) → AuthResult
+
+RULES:
+  - look up user by email
+  - if user not found, return failure
+  - verify password matches stored hash
+  - if password invalid, return failure
+  - return success with user data
+
+DONE_WHEN:
+  - valid credentials return user
+  - invalid credentials return error
+  - result always has either user or error, never both
+
+EXAMPLES:
+  ("alice@example.com", "correct") → { success: true, user: User, error: null }
+  ("alice@example.com", "wrong") → { success: false, user: null, error: "Invalid password" }
+  ("unknown@example.com", "any") → { success: false, user: null, error: "User not found" }
+
+ERRORS:
+  - user not found → "User not found"
+  - invalid password → "Invalid password"
+  - database unavailable → "Service temporarily unavailable"
+
+READS:
+  - Database.users
+
+CONSTRAINT: password_security
+  passwords are never logged or returned in responses
