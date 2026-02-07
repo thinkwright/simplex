@@ -840,6 +840,66 @@ textarea::placeholder {
     color: var(--text-primary);
 }
 
+/* Collapsible code blocks */
+.collapsible-code .code-example pre {
+    max-height: 280px;
+    overflow: hidden;
+    position: relative;
+}
+
+.collapsible-code .code-example pre::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.85));
+    pointer-events: none;
+}
+
+.collapsible-code.expanded .code-example pre {
+    max-height: none;
+}
+
+.collapsible-code.expanded .code-example pre::after {
+    display: none;
+}
+
+.collapsible-code-toggle {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-top: -1px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 0.75rem 0.75rem;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.collapsible-code-toggle:hover {
+    color: var(--accent-orange);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.collapsible-code .code-example {
+    border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.collapsible-code.expanded .code-example {
+    border-radius: 0.75rem;
+}
+
+.collapsible-code.expanded .collapsible-code-toggle {
+    border-radius: 0.75rem;
+    margin-top: 0.5rem;
+    border: 1px solid var(--border-color);
+}
+
 /* Get started steps */
 .get-started-steps {
     margin-top: 3rem;

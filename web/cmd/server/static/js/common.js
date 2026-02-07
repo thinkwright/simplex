@@ -20,6 +20,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // Toggle collapsible code blocks
+    window.toggleCodeBlock = function(button) {
+        var container = button.closest('.collapsible-code');
+        if (container.classList.contains('expanded')) {
+            container.classList.remove('expanded');
+            button.textContent = 'Show full specification';
+        } else {
+            container.classList.add('expanded');
+            button.textContent = 'Collapse';
+        }
+    };
+
     // Smooth scroll for anchor links (offset for fixed nav)
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {

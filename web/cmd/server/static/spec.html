@@ -469,6 +469,7 @@ WRITES:
                 <section class="doc-section" id="linter-specification">
                     <h2>Linter Specification</h2>
                     <p>The following specification defines a Simplex linter. The linter enforces the "enforced simplicity" pillar through concrete limits and checks.</p>
+                    <div class="collapsible-code" id="linter-code-block">
                     <div class="code-example">
                         <div class="code-header">
                             <span class="code-language">simplex</span>
@@ -824,6 +825,8 @@ CONSTRAINT: self_description
   this specification is parseable by parse_spec
   this specification passes validate_spec
   this specification passes lint_spec with zero errors</code></pre>
+                    </div>
+                    <button class="collapsible-code-toggle" onclick="toggleCodeBlock(this)">Show full specification</button>
                     </div>
                     <p>The self-description constraint is meaningful. Any future version of Simplex must remain self-describing and pass its own linter. This provides a check on evolution: changes that break self-description or fail linting are changes that have gone too far.</p>
                 </section>
