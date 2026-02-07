@@ -185,11 +185,11 @@ body {
 }
 
 .planner-controls {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     margin-top: 1.5rem;
-    gap: 1rem;
+}
+
+.planner-controls .btn {
+    margin-top: 1.25rem;
 }
 
 #describe-input {
@@ -223,8 +223,8 @@ textarea::placeholder {
 
 /* Chat messages */
 .chat-messages {
-    min-height: 300px;
-    max-height: calc(100vh - 22rem);
+    min-height: 400px;
+    max-height: calc(100vh - 18rem);
     overflow-y: auto;
     padding: 1rem;
     margin-bottom: 1.5rem;
@@ -1624,12 +1624,6 @@ textarea::placeholder {
 }
 
 /* ========== PLANNER: BUTTON OVERRIDES ========== */
-
-.action-buttons .btn-secondary {
-    padding: 6px 14px;
-    font-size: 12px;
-    background: transparent;
-}
 
 /* ========== PLANNER: REFERENCE MODAL ========== */
 
