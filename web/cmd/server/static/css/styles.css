@@ -168,20 +168,22 @@ body {
     display: flex;
     justify-content: center;
     padding-top: 4.5rem;
-    padding-bottom: 2rem;
-    min-height: calc(100vh - 4.5rem);
+    height: calc(100vh);
+    overflow: hidden;
 }
 
 .planner-main .wizard-container {
     width: 100%;
     max-width: 640px;
-    padding: 2rem 2rem 4rem;
+    padding: 2rem 2rem 2rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .planner-title {
     text-align: left;
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 3rem;
+    font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 0.5rem;
     letter-spacing: -0.02em;
@@ -240,11 +242,26 @@ body {
     font-size: 12px;
 }
 
+.wizard-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
 /* Wizard content */
 .wizard-step {
     max-width: 800px;
     margin: 0 auto;
+    width: 100%;
     animation: fadeIn 0.3s ease;
+}
+
+.wizard-step:not(.hidden) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 @keyframes fadeIn {
@@ -276,7 +293,16 @@ body {
 
 /* Input container */
 .input-container {
-    margin-bottom: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.input-container textarea {
+    flex: 1;
+    min-height: 100px;
+    resize: none;
 }
 
 /* Textareas and inputs */
@@ -306,8 +332,8 @@ textarea::placeholder {
 
 /* Chat messages */
 .chat-messages {
+    flex: 1;
     min-height: 200px;
-    max-height: calc(100vh - 20rem);
     overflow-y: auto;
     margin-bottom: 1rem;
     padding: 1rem;
@@ -447,6 +473,7 @@ textarea::placeholder {
 
 /* Specification output */
 .spec-output {
+    flex: 1;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid var(--border-color);
     border-radius: 0.75rem;
@@ -456,7 +483,6 @@ textarea::placeholder {
     line-height: 1.8;
     white-space: pre-wrap;
     overflow-x: auto;
-    max-height: 500px;
     overflow-y: auto;
     color: var(--text-primary);
 }
