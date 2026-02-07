@@ -841,28 +841,31 @@ textarea::placeholder {
 }
 
 /* Collapsible code blocks */
-.collapsible-code .code-example pre {
-    max-height: 280px;
-    overflow: hidden;
+.collapsible-code {
     position: relative;
 }
 
-.collapsible-code .code-example pre::after {
-    content: '';
+.collapsible-code .code-example pre {
+    max-height: 280px;
+    overflow: hidden;
+}
+
+.collapsible-code-fade {
     position: absolute;
-    bottom: 0;
+    bottom: 42px;
     left: 0;
     right: 0;
     height: 120px;
-    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.85));
+    background: linear-gradient(to bottom, transparent, #0d0d0d);
     pointer-events: none;
+    border-radius: 0 0 0.75rem 0.75rem;
 }
 
 .collapsible-code.expanded .code-example pre {
     max-height: none;
 }
 
-.collapsible-code.expanded .code-example pre::after {
+.collapsible-code.expanded .collapsible-code-fade {
     display: none;
 }
 
