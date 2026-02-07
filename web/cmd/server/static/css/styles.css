@@ -180,19 +180,20 @@ body {
 
 .planner-title {
     text-align: left;
-    font-size: 3rem;
-    font-weight: 700;
+    font-size: 1.5rem;
+    font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
     letter-spacing: -0.02em;
 }
 
 .planner-disclaimer {
     text-align: left;
-    color: var(--accent-orange);
-    font-size: 13px;
+    color: var(--text-secondary);
+    font-size: 12px;
     line-height: 1.5;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
+    opacity: 0.6;
 }
 
 /* (Panel and example-item styles removed — replaced by reference modal) */
@@ -210,7 +211,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.5rem;
     font-size: 13px;
     font-weight: 500;
 }
@@ -262,18 +263,13 @@ body {
 }
 
 .wizard-step h2 {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--accent-orange);
-    margin-bottom: 0.75rem;
-    letter-spacing: -0.01em;
-    text-align: left;
+    display: none;
 }
 
 .step-description {
     color: var(--text-secondary);
-    font-size: 14px;
-    margin-bottom: 2rem;
+    font-size: 13px;
+    margin-bottom: 1.25rem;
     line-height: 1.5;
     text-align: left;
 }
@@ -311,9 +307,9 @@ textarea::placeholder {
 /* Chat messages */
 .chat-messages {
     min-height: 200px;
-    max-height: calc(100vh - 26rem);
+    max-height: calc(100vh - 20rem);
     overflow-y: auto;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     padding: 1rem;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 0.75rem;
