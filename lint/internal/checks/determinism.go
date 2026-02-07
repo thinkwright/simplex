@@ -34,9 +34,6 @@ func (c *DeterminismChecker) checkDeterminismStructure(fn parser.FunctionBlock, 
 	loc := formatFunctionLocation(fn.Name) + " DETERMINISM"
 
 	level := ""
-	seed := ""
-	hasVary := false
-	hasStable := false
 
 	// Parse DETERMINISM content
 	lines := strings.Split(content, "\n")
@@ -48,12 +45,6 @@ func (c *DeterminismChecker) checkDeterminismStructure(fn parser.FunctionBlock, 
 
 		if strings.HasPrefix(trimmed, "level:") {
 			level = strings.TrimSpace(strings.TrimPrefix(trimmed, "level:"))
-		} else if strings.HasPrefix(trimmed, "seed:") {
-			seed = strings.TrimSpace(strings.TrimPrefix(trimmed, "seed:"))
-		} else if strings.HasPrefix(trimmed, "vary:") {
-			hasVary = true
-		} else if strings.HasPrefix(trimmed, "stable:") {
-			hasStable = true
 		}
 	}
 
@@ -70,15 +61,4 @@ func (c *DeterminismChecker) checkDeterminismStructure(fn parser.FunctionBlock, 
 			r.AddError("E070", fmt.Sprintf("DETERMINISM level must be strict, structural, or semantic, got: %s", level), loc)
 		}
 	}
-
-	// Validate seed if present
-	if seed != "" && seed != "from_input" {
-		// seed can be "from_input" or any value (treated as literal seed)
-		// We just note it's present; literal seeds are valid
-		_ = seed
-	}
-
-	// vary and stable are optional but useful to note
-	_ = hasVary
-	_ = hasStable
 }

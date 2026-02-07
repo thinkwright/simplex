@@ -382,6 +382,107 @@ EVAL:
 	}
 }
 
+func TestEvolutionChecker_PreserveMustUseCaretNotAt(t *testing.T) {
+	// Regression test: preserve must use pass^k, not pass@k.
+	// The old code accepted either notation for both fields.
+	spec := `
+FUNCTION: migrate(config) → Result
+
+BASELINE:
+  reference: "v1.0"
+  preserve:
+    - existing API
+  evolve:
+    - add new feature
+
+RULES:
+  - migrate data
+
+DONE_WHEN:
+  - migration complete
+
+EXAMPLES:
+  (config) → result
+
+ERRORS:
+  - any → fail
+
+EVAL:
+  preserve: pass@3
+  evolve: pass@5
+`
+
+	p := parser.NewParser()
+	parsed := p.Parse(spec)
+	r := result.NewLintResult("test")
+
+	checker := NewEvolutionChecker()
+	checker.Check(parsed, r)
+
+	// Should have E063 error — preserve must be pass^k, not pass@k
+	found := false
+	for _, err := range r.Errors {
+		if err.Code == "E063" {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Error("Expected E063 error: preserve threshold pass@3 should be rejected (must use pass^k)")
+	}
+}
+
+func TestEvolutionChecker_EvolveMustUseAtNotCaret(t *testing.T) {
+	// Regression test: evolve must use pass@k, not pass^k
+	spec := `
+FUNCTION: migrate(config) → Result
+
+BASELINE:
+  reference: "v1.0"
+  preserve:
+    - existing API
+  evolve:
+    - add new feature
+
+RULES:
+  - migrate data
+
+DONE_WHEN:
+  - migration complete
+
+EXAMPLES:
+  (config) → result
+
+ERRORS:
+  - any → fail
+
+EVAL:
+  preserve: pass^3
+  evolve: pass^5
+`
+
+	p := parser.NewParser()
+	parsed := p.Parse(spec)
+	r := result.NewLintResult("test")
+
+	checker := NewEvolutionChecker()
+	checker.Check(parsed, r)
+
+	// Should have E064 error — evolve must be pass@k, not pass^k
+	found := false
+	for _, err := range r.Errors {
+		if err.Code == "E064" {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Error("Expected E064 error: evolve threshold pass^5 should be rejected (must use pass@k)")
+	}
+}
+
 func TestEvolutionChecker_NoBaselineNoEval(t *testing.T) {
 	spec := `
 FUNCTION: add(a, b) → sum

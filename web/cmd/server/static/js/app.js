@@ -1,5 +1,5 @@
 // Planner application JavaScript
-// Depends on: simplex-spec.js (system prompt constants), linter.js (spec validation)
+// Depends on: simplex-spec.js (system prompt constants)
 
 const MODEL_NAME = 'mistralai/Mixtral-8x7B-Instruct-v0.1';
 
@@ -230,9 +230,20 @@ async function generateSpecification() {
         specOutput.innerHTML = formatSpecOutput(state.generatedSpec);
         specOutput.classList.remove('loading');
 
-        // Run linter
-        state.lintResult = lintSpec(state.generatedSpec);
-        renderLintResults();
+        // Run linter via server-side Go linter
+        try {
+            const lintResp = await fetch('/api/lint', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ spec: state.generatedSpec })
+            });
+            if (lintResp.ok) {
+                state.lintResult = await lintResp.json();
+                renderLintResults();
+            }
+        } catch (lintErr) {
+            console.error('Lint error:', lintErr);
+        }
     } catch (error) {
         specOutput.innerHTML = '<div class="error">Failed to generate specification. Ensure the API proxy is configured.</div>';
         specOutput.classList.remove('loading');

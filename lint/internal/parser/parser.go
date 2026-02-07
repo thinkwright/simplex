@@ -5,6 +5,7 @@ package parser
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -244,13 +245,13 @@ func (p *Parser) organizeLandmarks(spec *ParsedSpec, landmarks []Landmark) {
 			} else {
 				// Function landmark without parent FUNCTION - add warning
 				spec.ParseWarnings = append(spec.ParseWarnings,
-					"landmark "+lm.Name+" at line "+string(rune(lm.LineNumber+'0'))+" appears outside FUNCTION block")
+					"landmark "+lm.Name+" at line "+strconv.Itoa(lm.LineNumber)+" appears outside FUNCTION block")
 			}
 
 		default:
 			// Unrecognized landmark - add warning but don't fail
 			spec.ParseWarnings = append(spec.ParseWarnings,
-				"unrecognized landmark: "+lm.Name+" at line "+string(rune(lm.LineNumber+'0')))
+				"unrecognized landmark: "+lm.Name+" at line "+strconv.Itoa(lm.LineNumber))
 		}
 	}
 }

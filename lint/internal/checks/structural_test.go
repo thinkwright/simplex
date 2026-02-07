@@ -223,7 +223,7 @@ DONE_WHEN:
 	assert.True(t, codes["E005"])
 }
 
-func TestStructuralChecker_E006_UndefinedDataType(t *testing.T) {
+func TestStructuralChecker_W006_UndefinedDataType(t *testing.T) {
 	spec := `DATA: User
   id: string
   name: string
@@ -250,17 +250,17 @@ ERRORS:
 	checker.Check(parsed, r)
 
 	// Should have warning about Customer type not being defined
-	hasE006 := false
+	hasW006 := false
 	for _, w := range r.Warnings {
-		if w.Code == "E006" {
-			hasE006 = true
+		if w.Code == "W006" {
+			hasW006 = true
 			assert.Contains(t, w.Message, "Customer")
 		}
 	}
-	assert.True(t, hasE006, "Expected E006 warning for undefined DATA type")
+	assert.True(t, hasW006, "Expected W006 warning for undefined DATA type")
 }
 
-func TestStructuralChecker_E006_DefinedDataType(t *testing.T) {
+func TestStructuralChecker_W006_DefinedDataType(t *testing.T) {
 	spec := `DATA: User
   id: string
   name: string
@@ -288,11 +288,11 @@ ERRORS:
 
 	// No warning because User is defined
 	for _, w := range r.Warnings {
-		assert.NotEqual(t, "E006", w.Code, "Should not warn about defined type")
+		assert.NotEqual(t, "W006", w.Code, "Should not warn about defined type")
 	}
 }
 
-func TestStructuralChecker_E006_BuiltinTypes(t *testing.T) {
+func TestStructuralChecker_W006_BuiltinTypes(t *testing.T) {
 	spec := `DATA: Custom
   field: string
 
@@ -347,13 +347,13 @@ ERRORS:
 
 	// No warnings for built-in types
 	for _, w := range r.Warnings {
-		if w.Code == "E006" {
+		if w.Code == "W006" {
 			t.Errorf("Should not warn about built-in type: %s", w.Message)
 		}
 	}
 }
 
-func TestStructuralChecker_NoDataBlocks_NoE006(t *testing.T) {
+func TestStructuralChecker_NoDataBlocks_NoW006(t *testing.T) {
 	// When there are no DATA blocks, we don't warn about undefined types
 	// because the user isn't using typed specs
 	spec := `FUNCTION: process(input) → CustomResult
@@ -377,9 +377,9 @@ ERRORS:
 	checker := NewStructuralChecker()
 	checker.Check(parsed, r)
 
-	// No E006 warnings when no DATA blocks exist
+	// No W006 warnings when no DATA blocks exist
 	for _, w := range r.Warnings {
-		assert.NotEqual(t, "E006", w.Code)
+		assert.NotEqual(t, "W006", w.Code)
 	}
 }
 

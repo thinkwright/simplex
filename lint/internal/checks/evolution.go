@@ -12,15 +12,17 @@ import (
 
 // EvolutionChecker performs validation of BASELINE and EVAL landmarks.
 type EvolutionChecker struct {
-	// thresholdPattern matches pass^k or pass@k notation
-	thresholdPattern *regexp.Regexp
+	// preservePattern matches pass^k notation (preserve threshold)
+	preservePattern *regexp.Regexp
+	// evolvePattern matches pass@k notation (evolve threshold)
+	evolvePattern *regexp.Regexp
 }
 
 // NewEvolutionChecker creates a new EvolutionChecker.
 func NewEvolutionChecker() *EvolutionChecker {
 	return &EvolutionChecker{
-		// Match pass^k or pass@k where k is a positive integer
-		thresholdPattern: regexp.MustCompile(`^pass[\^@](\d+)$`),
+		preservePattern: regexp.MustCompile(`^pass\^(\d+)$`),
+		evolvePattern:   regexp.MustCompile(`^pass@(\d+)$`),
 	}
 }
 
@@ -159,21 +161,17 @@ func (c *EvolutionChecker) checkEvalStructure(fn parser.FunctionBlock, r *result
 		}
 	}
 
-	// Validate preserve threshold notation (pass^k)
+	// Validate preserve threshold notation (must be pass^k)
 	if preserveThreshold != "" {
-		if !strings.HasPrefix(preserveThreshold, "pass^") {
+		if !c.preservePattern.MatchString(preserveThreshold) {
 			r.AddError("E063", fmt.Sprintf("preserve threshold must use pass^k notation, got: %s", preserveThreshold), loc)
-		} else if !c.isValidThreshold(preserveThreshold) {
-			r.AddError("E066", fmt.Sprintf("threshold k must be positive integer in: %s", preserveThreshold), loc)
 		}
 	}
 
-	// Validate evolve threshold notation (pass@k)
+	// Validate evolve threshold notation (must be pass@k)
 	if evolveThreshold != "" {
-		if !strings.HasPrefix(evolveThreshold, "pass@") {
+		if !c.evolvePattern.MatchString(evolveThreshold) {
 			r.AddError("E064", fmt.Sprintf("evolve threshold must use pass@k notation, got: %s", evolveThreshold), loc)
-		} else if !c.isValidThreshold(evolveThreshold) {
-			r.AddError("E066", fmt.Sprintf("threshold k must be positive integer in: %s", evolveThreshold), loc)
 		}
 	}
 
@@ -190,7 +188,3 @@ func (c *EvolutionChecker) checkEvalStructure(fn parser.FunctionBlock, r *result
 	}
 }
 
-// isValidThreshold checks if a threshold string has valid pass^k or pass@k format.
-func (c *EvolutionChecker) isValidThreshold(threshold string) bool {
-	return c.thresholdPattern.MatchString(threshold)
-}

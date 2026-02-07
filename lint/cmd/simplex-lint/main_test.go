@@ -233,10 +233,10 @@ ERRORS:
 	assert.True(t, result.Stats.CoveragePercent > 0)
 }
 
-func TestLinter_Lint_CoveragePercent_Capped(t *testing.T) {
+func TestLinter_Lint_CoveragePercent_CanExceed100(t *testing.T) {
 	linter := NewLinter(LinterConfig{NoLLM: true})
 
-	// More examples than branches should cap at 100%
+	// More examples than branches — coverage should exceed 100%
 	input := InputSource{
 		Name: "overcovered.md",
 		Content: `FUNCTION: test() → result
@@ -261,7 +261,8 @@ ERRORS:
 	result := linter.Lint(input)
 
 	assert.True(t, result.Valid)
-	assert.Equal(t, 100.0, result.Stats.CoveragePercent)
+	// 5 examples / 1 branch = 500%
+	assert.Equal(t, 500.0, result.Stats.CoveragePercent)
 }
 
 func TestOutputSingle_Text(t *testing.T) {

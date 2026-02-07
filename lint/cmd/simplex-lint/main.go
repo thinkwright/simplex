@@ -83,6 +83,9 @@ func init() {
 }
 
 func runLint(cmd *cobra.Command, args []string) error {
+	// Apply env var defaults now that cobra has parsed flags
+	applyEnvDefaults()
+
 	// Determine input sources
 	var inputs []InputSource
 
@@ -192,23 +195,11 @@ func (l *Linter) Lint(input InputSource) *result.LintResult {
 		r.AddWarning("W001", w, "parse")
 	}
 
-	// Structural checks
+	// Run all checkers (each handles empty function lists internally)
 	l.structuralChecker.Check(spec, r)
-
-	// Complexity checks (only if we have functions to check)
-	if len(spec.Functions) > 0 {
-		l.complexityChecker.Check(spec, r)
-	}
-
-	// Evolution checks (BASELINE and EVAL validation)
-	if len(spec.Functions) > 0 {
-		l.evolutionChecker.Check(spec, r)
-	}
-
-	// Determinism checks (DETERMINISM validation)
-	if len(spec.Functions) > 0 {
-		l.determinismChecker.Check(spec, r)
-	}
+	l.complexityChecker.Check(spec, r)
+	l.evolutionChecker.Check(spec, r)
+	l.determinismChecker.Check(spec, r)
 
 	// Update stats
 	r.Stats.Functions = len(spec.Functions)
@@ -218,9 +209,6 @@ func (l *Linter) Lint(input InputSource) *result.LintResult {
 	// Calculate coverage percent if we have branches
 	if r.Stats.Branches > 0 {
 		r.Stats.CoveragePercent = float64(r.Stats.Examples) / float64(r.Stats.Branches) * 100
-		if r.Stats.CoveragePercent > 100 {
-			r.Stats.CoveragePercent = 100
-		}
 	}
 
 	// Semantic checks (if LLM enabled)
@@ -278,16 +266,20 @@ func outputMultiple(results []result.LintResult, format string) {
 	}
 }
 
-func init() {
-	// Apply environment variable defaults
-	if os.Getenv("SIMPLEX_LINT_PROVIDER") != "" && flagProvider == "" {
-		flagProvider = os.Getenv("SIMPLEX_LINT_PROVIDER")
+// applyEnvDefaults fills in flag values from environment variables
+// when the user didn't provide them on the command line.
+// Called inside RunE after cobra has parsed flags.
+func applyEnvDefaults() {
+	if flagProvider == "" {
+		if v := os.Getenv("SIMPLEX_LINT_PROVIDER"); v != "" {
+			flagProvider = v
+		}
 	}
-	if os.Getenv("SIMPLEX_LINT_MODEL") != "" && flagModel == "" {
-		flagModel = os.Getenv("SIMPLEX_LINT_MODEL")
+	if flagModel == "" {
+		if v := os.Getenv("SIMPLEX_LINT_MODEL"); v != "" {
+			flagModel = v
+		}
 	}
-
-	// Disable color if NO_COLOR is set
 	if os.Getenv("NO_COLOR") != "" {
 		color.NoColor = true
 	}

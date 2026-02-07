@@ -193,6 +193,16 @@ func CountExamples(examples string) int {
 	return count
 }
 
+// Pre-compiled branch-counting patterns (compiled once, used per-call).
+var (
+	branchIfOrPattern       = regexp.MustCompile(`\bif\b[^,\n]*\bor\b`)
+	branchIfElsePattern     = regexp.MustCompile(`\bif\b[^,\n]*(otherwise|else)\b`)
+	branchSimpleIfPattern   = regexp.MustCompile(`\bif\b`)
+	branchWhenPattern       = regexp.MustCompile(`\bwhen\b`)
+	branchOptionalPattern   = regexp.MustCompile(`\boptionally\b`)
+	branchEitherOrPattern   = regexp.MustCompile(`\beither\b[^,\n]*\bor\b`)
+)
+
 // CountBranches performs heuristic branch counting on RULES content.
 // This counts conditional paths that should be covered by examples.
 //
@@ -208,39 +218,59 @@ func CountBranches(rulesContent string) int {
 	content := strings.ToLower(rulesContent)
 	count := 0
 
-	// Pattern: "if ... or ..." → 2 branches
-	ifOrPattern := regexp.MustCompile(`\bif\b[^,\n]*\bor\b`)
-	ifOrMatches := ifOrPattern.FindAllString(content, -1)
-	count += len(ifOrMatches) * 2
+	// Pattern: "either X or Y" → 2 branches (counted first to avoid
+	// "either...or" lines being double-counted by the if-or pattern)
+	eitherOrMatches := branchEitherOrPattern.FindAllStringIndex(content, -1)
+	count += len(eitherOrMatches) * 2
 
-	// Pattern: "if ... otherwise/else ..." → 2 branches
-	ifElsePattern := regexp.MustCompile(`\bif\b[^,\n]*(otherwise|else)\b`)
-	ifElseMatches := ifElsePattern.FindAllString(content, -1)
-	count += len(ifElseMatches) * 2
+	// Build a set of positions consumed by "either...or" so we can
+	// exclude them from subsequent if-pattern matching.
+	isEitherLine := make(map[int]bool)
+	lines := strings.Split(content, "\n")
+	offset := 0
+	for i, line := range lines {
+		lineEnd := offset + len(line)
+		for _, m := range eitherOrMatches {
+			if m[0] >= offset && m[0] < lineEnd {
+				isEitherLine[i] = true
+			}
+		}
+		offset = lineEnd + 1 // +1 for the \n
+	}
 
-	// Pattern: simple "if X" (not already counted) → 1 branch
-	simpleIfPattern := regexp.MustCompile(`\bif\b`)
-	allIfMatches := simpleIfPattern.FindAllString(content, -1)
-	// Subtract already-counted complex if patterns
-	simpleIfCount := len(allIfMatches) - len(ifOrMatches) - len(ifElseMatches)
+	// Count if-patterns only on lines that aren't "either...or" lines
+	ifOrCount := 0
+	ifElseCount := 0
+	allIfCount := 0
+	for i, line := range lines {
+		if isEitherLine[i] {
+			continue
+		}
+		ifOrCount += len(branchIfOrPattern.FindAllString(line, -1))
+		ifElseCount += len(branchIfElsePattern.FindAllString(line, -1))
+		allIfCount += len(branchSimpleIfPattern.FindAllString(line, -1))
+	}
+
+	// "if ... or ..." → 2 branches each
+	count += ifOrCount * 2
+	// "if ... otherwise/else ..." → 2 branches each
+	count += ifElseCount * 2
+	// Simple "if X" (not already counted as if-or or if-else) → 1 branch each
+	simpleIfCount := allIfCount - ifOrCount - ifElseCount
 	if simpleIfCount > 0 {
 		count += simpleIfCount
 	}
 
-	// Pattern: "when X" → 1 branch
-	whenPattern := regexp.MustCompile(`\bwhen\b`)
-	whenMatches := whenPattern.FindAllString(content, -1)
-	count += len(whenMatches)
+	// "when X" → 1 branch (only on non-either lines)
+	for i, line := range lines {
+		if isEitherLine[i] {
+			continue
+		}
+		count += len(branchWhenPattern.FindAllString(line, -1))
+	}
 
-	// Pattern: "optionally" → 2 branches
-	optionalPattern := regexp.MustCompile(`\boptionally\b`)
-	optionalMatches := optionalPattern.FindAllString(content, -1)
-	count += len(optionalMatches) * 2
-
-	// Pattern: "either X or Y" → 2 branches
-	eitherPattern := regexp.MustCompile(`\beither\b[^,\n]*\bor\b`)
-	eitherMatches := eitherPattern.FindAllString(content, -1)
-	count += len(eitherMatches) * 2
+	// "optionally" → 2 branches
+	count += len(branchOptionalPattern.FindAllString(content, -1)) * 2
 
 	// Minimum of 1 branch if there are any rules
 	if count == 0 && strings.TrimSpace(rulesContent) != "" {

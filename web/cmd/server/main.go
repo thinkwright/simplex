@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"flag"
 	"io"
 	"io/fs"
@@ -9,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/brannn/simplex/lint"
 )
 
 //go:embed all:static
@@ -26,6 +29,10 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
+
+	// Lint API endpoint (must be registered before the /api/ catch-all proxy)
+	linter := lint.DefaultLinter()
+	mux.HandleFunc("/api/lint", lintHandler(linter))
 
 	// Proxy API requests to the LLM server (optional, for planner functionality)
 	if *apiURL != "" {
@@ -162,6 +169,39 @@ func wwwRedirect(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// lintHandler handles POST /api/lint requests using the canonical Go linter.
+func lintHandler(linter *lint.Linter) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20)) // 1MB limit
+		if err != nil {
+			http.Error(w, "Failed to read request body", http.StatusBadRequest)
+			return
+		}
+
+		var req struct {
+			Spec string `json:"spec"`
+		}
+		if err := json.Unmarshal(body, &req); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		if req.Spec == "" {
+			http.Error(w, `{"error":"spec field is required"}`, http.StatusBadRequest)
+			return
+		}
+
+		result := linter.Lint("input", req.Spec)
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(result)
+	}
 }
 
 // apiProxyHandler forwards requests to the LLM API server (for planner functionality)

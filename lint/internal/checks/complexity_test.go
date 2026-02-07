@@ -514,6 +514,22 @@ func TestCountBranches(t *testing.T) {
 	}
 }
 
+func TestCountBranches_EitherOrNotDoubleCounted(t *testing.T) {
+	// Regression test: "either X or Y" should count as 2 branches,
+	// not 2 (either-or) + 2 (if-or) = 4.
+	rules := "- either return success or fail with error"
+	count := CountBranches(rules)
+	assert.Equal(t, 2, count, "either-or should be 2 branches, not double-counted with if-or")
+}
+
+func TestCountBranches_EitherOrWithIfOnSameLine(t *testing.T) {
+	// "either...or" on one line, "if" on a separate line — no double counting
+	rules := "- either succeed or fail\n- if invalid, reject"
+	count := CountBranches(rules)
+	// either-or = 2, simple if = 1
+	assert.Equal(t, 3, count)
+}
+
 func TestComplexityChecker_NoRulesOrExamples(t *testing.T) {
 	// Test that checker handles missing RULES/EXAMPLES gracefully
 	// (structural checker would catch this, but complexity shouldn't crash)

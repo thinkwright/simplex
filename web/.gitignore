@@ -1,5 +1,6 @@
 # Binary
 simplex-web
+/server
 
 # Environment variables
 .env

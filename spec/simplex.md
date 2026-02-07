@@ -16,23 +16,21 @@ The motivation is practical. When agents work autonomously for extended periods,
 
 ## Pillars
 
-Six principles guide Simplex.
+Five pillars guide Simplex.
 
 **Enforced simplicity.** Simplex refuses to support constructs that would allow specifications to become unwieldy. If something cannot be expressed simply, it must be decomposed into smaller pieces first. This is a feature, not a limitation. Complexity that cannot be decomposed is complexity that is not yet understood.
 
-*Note: Enforcement happens through tooling, not the specification itself. A Simplex linter flags overly complex constructs—lengthy RULES blocks, excessive inputs, deep nesting—and rejects them. The specification defines what simplicity means; tooling enforces it. See the Linter Specification section.*
+*Note: Enforcement happens through tooling, not the specification itself. A Simplex linter flags overly complex constructs (lengthy RULES blocks, excessive inputs, deep nesting) and rejects them. The specification defines what simplicity means; tooling enforces it. See the Linter Specification section.*
 
-**Syntactic tolerance, semantic precision.** Simplex forgives formatting inconsistencies, typos, and notational variations. Agents interpret what you meant, not what you typed. However, the meaning itself must be unambiguous. If an agent would have to guess your intent, the specification is invalid. Sloppy notation is acceptable; vague meaning is not.
+**Syntactic tolerance, semantic precision.** Simplex allows for formatting inconsistencies, typos, and notational variations. Agents interpret what you meant, not what you typed. However, the meaning itself must be unambiguous. If an agent would have to guess your intent, the specification is invalid. Sloppy notation is acceptable; vague meaning is not.
 
 *Note: Semantic precision is validated through example coverage. If examples do not exercise every branch of the rules, or if examples could be satisfied by multiple conflicting interpretations, the specification is ambiguous and invalid. See Validation Criteria.*
 
-**Specification, not implementation.** A Simplex spec describes what and constraints, never how. The moment you find yourself specifying algorithms, data structures, or technology choices, you have crossed into implementation. Pull back. Describe the behavior you need and the conditions that must hold. Let agents determine the approach.
-
 **Testability.** Every function requires examples. These are not illustrations; they are contracts. The examples define what correct output looks like for given inputs. An agent's work is not complete until its output is consistent with the examples.
 
-**Completeness.** A valid specification must be sufficient to generate working code without further clarification. This is what distinguishes Simplex from a prompting language. There is no back-and-forth, no "what did you mean by X?" The spec must stand alone.
+**Completeness.** A valid specification must be sufficient to generate working code without further clarification. This is what distinguishes Simplex from a prompting approach. There is no back-and-forth, no "what did you mean by X?" The spec must stand alone.
 
-**Implementation opacity.** Specifications describe contracts and constraints. Implementation choices belong to agents. If a spec needs a persistent data store, it says so. Whether agents implement that as a graph database, a file system, or something else entirely is their concern. The spec neither knows nor cares.
+**Implementation autonomy.** Simplex describes behavior and constraints, never implementation. Algorithms, data structures, and technology choices belong to agents. If a spec needs persistent storage, it says so. Whether that becomes a graph database, file system, or something else is the agent's concern. The spec neither prescribes nor cares.
 
 ---
 

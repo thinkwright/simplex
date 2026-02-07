@@ -3,7 +3,7 @@ app = "simplex"
 primary_region = "iad"
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = "web/Dockerfile"
 
 [env]
   PORT = "8080"

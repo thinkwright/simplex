@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -595,6 +596,57 @@ ERRORS:
 
 	// Should have a parse warning about orphan RULES
 	assert.NotEmpty(t, spec.ParseWarnings)
+}
+
+func TestParser_Parse_LineNumberWarning_MultiDigit(t *testing.T) {
+	// Regression test: line numbers > 9 must render correctly in warnings.
+	// The old code used string(rune(lineNumber+'0')) which only works for 0-9.
+	var lines []string
+	for i := 0; i < 20; i++ {
+		lines = append(lines, "")
+	}
+	// Place an orphan RULES at line 21 (after 20 blank lines)
+	lines = append(lines, "RULES:")
+	lines = append(lines, "  - orphan at line 21")
+
+	input := strings.Join(lines, "\n")
+
+	p := NewParser()
+	spec := p.Parse(input)
+
+	require.NotEmpty(t, spec.ParseWarnings)
+	// Warning should contain the actual line number "21", not a garbled character
+	assert.Contains(t, spec.ParseWarnings[0], "21",
+		"Line number should be rendered as '21', not a single unicode codepoint")
+}
+
+func TestParser_Parse_UnrecognizedLandmark_MultiDigitLine(t *testing.T) {
+	// Build a spec where an unrecognized landmark appears past line 9
+	input := `FUNCTION: test() → result
+
+RULES:
+  - rule 1
+
+DONE_WHEN:
+  - done
+
+EXAMPLES:
+  () → ok
+
+ERRORS:
+  - fail
+
+CUSTOM_THING:
+  - unrecognized on line 15+`
+
+	p := NewParser()
+	spec := p.Parse(input)
+
+	require.NotEmpty(t, spec.ParseWarnings)
+	// Should contain actual line number, not garbage
+	for _, w := range spec.ParseWarnings {
+		assert.Regexp(t, `line \d+`, w, "Warning should contain numeric line number")
+	}
 }
 
 func TestParser_Parse_MalformedFunctionSignature(t *testing.T) {

@@ -67,8 +67,18 @@ func (c *StructuralChecker) checkRequiredLandmarks(spec *parser.ParsedSpec, r *r
 	}
 }
 
+// builtinTypes are common primitive/generic types that don't need DATA definitions.
+var builtinTypes = map[string]bool{
+	"string": true, "int": true, "integer": true, "number": true,
+	"bool": true, "boolean": true, "float": true, "double": true,
+	"list": true, "array": true, "map": true, "dict": true,
+	"any": true, "void": true, "none": true, "null": true,
+	"result": true, "output": true, "sum": true, "filtered": true,
+	"valid": true, "issues": true, "timestamp": true, "id": true,
+}
+
 // checkDataReferences verifies that referenced DATA types are defined.
-// Error E006: DATA type referenced but not defined
+// Warning W006: DATA type referenced but not defined
 func (c *StructuralChecker) checkDataReferences(spec *parser.ParsedSpec, r *result.LintResult) {
 	// Build set of defined DATA types
 	definedTypes := make(map[string]bool)
@@ -110,20 +120,10 @@ func extractTypeName(content string) string {
 
 // checkTypeReference checks if a type reference is valid.
 func checkTypeReference(typeName string, definedTypes map[string]bool, funcName string, r *result.LintResult, spec *parser.ParsedSpec) {
-	// Skip common built-in/primitive types
-	builtins := map[string]bool{
-		"string": true, "int": true, "integer": true, "number": true,
-		"bool": true, "boolean": true, "float": true, "double": true,
-		"list": true, "array": true, "map": true, "dict": true,
-		"any": true, "void": true, "none": true, "null": true,
-		"result": true, "output": true, "sum": true, "filtered": true,
-		"valid": true, "issues": true, "timestamp": true, "id": true,
-	}
-
 	// Normalize: lowercase, strip "list of", etc.
 	normalized := normalizeTypeName(typeName)
 
-	if builtins[normalized] {
+	if builtinTypes[normalized] {
 		return
 	}
 
@@ -134,7 +134,7 @@ func checkTypeReference(typeName string, definedTypes map[string]bool, funcName 
 
 	// Only report if we have DATA blocks defined (otherwise user isn't using typed specs)
 	if len(spec.DataBlocks) > 0 {
-		r.AddWarning("E006",
+		r.AddWarning("W006",
 			fmt.Sprintf("Return type '%s' may reference undefined DATA type", typeName),
 			formatFunctionLocation(funcName))
 	}
