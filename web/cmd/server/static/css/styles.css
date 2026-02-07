@@ -192,7 +192,7 @@ body {
     color: var(--accent-orange);
     font-size: 13px;
     line-height: 1.5;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2.5rem;
 }
 
 /* (Panel and example-item styles removed — replaced by reference modal) */
@@ -209,8 +209,8 @@ body {
 .planner-steps {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 2rem;
+    gap: 10px;
+    margin-bottom: 2.5rem;
     font-size: 13px;
     font-weight: 500;
 }
@@ -265,7 +265,7 @@ body {
     font-size: 18px;
     font-weight: 600;
     color: var(--accent-orange);
-    margin-bottom: 8px;
+    margin-bottom: 0.75rem;
     letter-spacing: -0.01em;
     text-align: left;
 }
@@ -273,7 +273,7 @@ body {
 .step-description {
     color: var(--text-secondary);
     font-size: 14px;
-    margin-bottom: 1.25rem;
+    margin-bottom: 2rem;
     line-height: 1.5;
     text-align: left;
 }
@@ -311,7 +311,7 @@ textarea::placeholder {
 /* Chat messages */
 .chat-messages {
     min-height: 200px;
-    max-height: 350px;
+    max-height: calc(100vh - 26rem);
     overflow-y: auto;
     margin-bottom: 1.5rem;
     padding: 1rem;
