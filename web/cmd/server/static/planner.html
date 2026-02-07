@@ -22,7 +22,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
+<body class="planner-body">
     <div id="app">
         <!-- Navigation -->
         <nav class="nav">
@@ -44,84 +44,74 @@
 
         <!-- Main content -->
         <main class="planner-main">
-            <div class="wizard-container">
-                <h1 class="planner-title">Draft a Simplex specification</h1>
-                <p class="planner-disclaimer">Simplex specifications can and should be written by hand. This tool provides optional assistance for exploration and drafting.</p>
+            <!-- Describe Step -->
+            <div class="wizard-step" id="step-describe">
+                <div class="describe-center">
+                    <h1 class="planner-title">Draft a Simplex specification</h1>
+                    <p class="planner-subtitle">Describe what you want to build.</p>
 
-                <nav class="planner-steps">
-                    <span class="planner-step active" data-step="1">Describe</span>
-                    <span class="planner-step-sep">&rarr;</span>
-                    <span class="planner-step" data-step="2">Refine</span>
-                    <span class="planner-step-sep">&rarr;</span>
-                    <span class="planner-step" data-step="3">Generate</span>
-                </nav>
-
-                <div class="wizard-content">
-                    <!-- Describe Step -->
-                    <div class="wizard-step" id="step-describe">
-                        <h2>Describe Your System</h2>
-                        <p class="step-description">Start by describing what you want to build at a high level.</p>
-
+                    <div class="describe-input-wrap">
                         <div class="type-toggle">
                             <button class="type-toggle-option active" id="type-greenfield" onclick="setProjectType('greenfield')" title="New project from scratch">Greenfield</button>
                             <button class="type-toggle-option" id="type-brownfield" onclick="setProjectType('brownfield')" title="Evolving an existing system">Brownfield</button>
                         </div>
+                        <textarea
+                            id="describe-input"
+                            placeholder="A function that authenticates users by email and password, returning user data on success or an error on failure..."
+                            rows="4"
+                        ></textarea>
+                    </div>
 
-                        <div class="input-container">
-                            <textarea
-                                id="describe-input"
-                                placeholder="Example: A function that authenticates users by email and password, returning user data on success or an error on failure..."
-                                rows="4"
-                            ></textarea>
-                        </div>
+                    <div class="describe-actions">
                         <div class="example-pills">
-                            <span class="example-pills-label">Try an example:</span>
                             <button class="example-pill" onclick="loadExample('minimal')">Minimal</button>
                             <button class="example-pill" onclick="loadExample('auth')">Auth</button>
                             <button class="example-pill" onclick="loadExample('cart')">Cart</button>
                             <button class="example-pill" onclick="loadExample('evolution')">Evolution</button>
                         </div>
-                        <button class="btn btn-primary" onclick="goToStep('refine')">
+                        <button class="btn btn-primary btn-sm" onclick="goToStep('refine')">
                             Continue &rarr;
                         </button>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Refine Step -->
-                    <div class="wizard-step hidden" id="step-refine">
-                        <h2>Refine Requirements</h2>
-                        <p class="step-description">Clarifying questions help produce a more complete specification.</p>
-                        <div class="chat-messages" id="chat-messages"></div>
+            <!-- Refine Step -->
+            <div class="wizard-step hidden" id="step-refine">
+                <div class="refine-layout">
+                    <div class="chat-messages" id="chat-messages"></div>
+                    <div class="chat-input-area">
                         <div class="chat-input-container">
                             <textarea
                                 id="chat-input"
                                 placeholder="Type your response..."
-                                rows="3"
+                                rows="2"
                             ></textarea>
                             <button class="btn btn-primary" onclick="sendChatMessage()">Send</button>
                         </div>
                         <a class="skip-link" href="javascript:void(0)" onclick="goToStep('generate')">Skip to generation &rarr;</a>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Generate Step -->
-                    <div class="wizard-step hidden" id="step-generate">
-                        <h2>Generated Specification</h2>
-                        <p class="step-description">Review and refine the generated specification as needed.</p>
-                        <div class="spec-output" id="spec-output"></div>
+            <!-- Generate Step -->
+            <div class="wizard-step hidden" id="step-generate">
+                <div class="generate-layout">
+                    <div class="spec-output" id="spec-output"></div>
 
-                        <details class="lint-results" id="lint-results" style="display: none;">
-                            <summary class="lint-header">
-                                <span class="lint-header-text">Validation</span>
-                                <span class="lint-badge" id="lint-badge"></span>
-                            </summary>
-                            <div class="lint-items" id="lint-items"></div>
-                        </details>
+                    <details class="lint-results" id="lint-results" style="display: none;">
+                        <summary class="lint-header">
+                            <span class="lint-header-text">Validation</span>
+                            <span class="lint-badge" id="lint-badge"></span>
+                        </summary>
+                        <div class="lint-items" id="lint-items"></div>
+                    </details>
 
-                        <div class="action-buttons">
-                            <button class="btn btn-primary" onclick="generateSpecification()">Regenerate</button>
-                            <button class="btn btn-secondary" onclick="copySpec()">Copy</button>
-                            <button class="btn btn-secondary" onclick="downloadSpec()">Download</button>
-                            <button class="btn btn-secondary" onclick="startOver()">Start Over</button>
-                        </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="generateSpecification()">Regenerate</button>
+                        <button class="btn btn-secondary" onclick="copySpec()">Copy</button>
+                        <button class="btn btn-secondary" onclick="downloadSpec()">Download</button>
+                        <button class="btn btn-secondary" onclick="startOver()">Start Over</button>
                     </div>
                 </div>
             </div>
@@ -258,35 +248,6 @@
                 </div>
             </div>
         </main>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>Navigation</h4>
-                    <ul>
-                        <li><a href="/">Home</a></li>
-                        <li><a href="/spec">Specification</a></li>
-                        <li><a href="/examples">Examples</a></li>
-                        <li><a href="/quickstart">Quick Start</a></li>
-                        <li><a href="/planner">Planner</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Resources</h4>
-                    <ul>
-                        <li><a href="https://github.com/brannn/simplex" target="_blank">GitHub Repository</a></li>
-                        <li><a href="https://github.com/brannn/simplex/blob/main/QUICKSTART.md" target="_blank">Quick Start Guide</a></li>
-                        <li><a href="https://github.com/brannn/simplex/blob/main/spec/simplex.md" target="_blank">Canonical Spec</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Simplex v0.5</h4>
-                    <p class="footer-text">A workflow specification for autonomous agents.</p>
-                    <p class="footer-text footer-license">Released under the MIT License</p>
-                </div>
-            </div>
-        </footer>
     </div>
 
     <script src="js/common.js"></script>
