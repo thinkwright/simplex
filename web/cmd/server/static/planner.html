@@ -47,6 +47,7 @@
             <div class="doc-container">
                 <h1 class="doc-title">Planner</h1>
                 <p class="doc-intro">Describe what you want to build. This tool drafts a Simplex specification through conversation.</p>
+                <p class="doc-note">Simplex specifications can and should be written by hand. This tool provides optional assistance for exploration and drafting.</p>
 
                 <!-- Describe Step -->
                 <div class="wizard-step" id="step-describe">
@@ -58,7 +59,7 @@
                     <textarea
                         id="describe-input"
                         placeholder="A function that authenticates users by email and password, returning user data on success or an error on failure..."
-                        rows="6"
+                        rows="4"
                     ></textarea>
 
                     <div class="planner-controls">
@@ -69,24 +70,33 @@
                             <button class="example-pill" onclick="loadExample('cart')">Cart</button>
                             <button class="example-pill" onclick="loadExample('evolution')">Evolution</button>
                         </div>
-                        <button class="btn btn-primary btn-sm" onclick="goToStep('refine')">
-                            Continue &rarr;
-                        </button>
+                        <div class="planner-actions">
+                            <button class="btn btn-primary btn-sm" onclick="goToStep('refine')">
+                                Continue &rarr;
+                            </button>
+                            <button class="ref-trigger-inline" onclick="toggleRefModal()" title="Simplex Reference">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                </svg>
+                                <span>Reference</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Refine Step -->
                 <div class="wizard-step hidden" id="step-refine">
                     <div class="chat-messages" id="chat-messages"></div>
-                    <div class="chat-input-container">
-                        <textarea
-                            id="chat-input"
-                            placeholder="Type your response..."
-                            rows="3"
-                        ></textarea>
-                        <button class="btn btn-primary" onclick="sendChatMessage()">Send</button>
+                    <textarea
+                        id="chat-input"
+                        placeholder="Type your response..."
+                        rows="3"
+                    ></textarea>
+                    <div class="refine-actions">
+                        <button class="btn btn-primary btn-sm" onclick="sendChatMessage()">Send</button>
+                        <a class="skip-link" href="javascript:void(0)" onclick="goToStep('generate')">Skip to generation &rarr;</a>
                     </div>
-                    <a class="skip-link" href="javascript:void(0)" onclick="goToStep('generate')">Skip to generation &rarr;</a>
                 </div>
 
                 <!-- Generate Step -->
@@ -109,15 +119,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Reference button -->
-            <button class="ref-trigger" onclick="toggleRefModal()" title="Simplex Reference">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                </svg>
-                <span>Reference</span>
-            </button>
 
             <!-- Reference modal -->
             <div class="ref-modal-overlay hidden" id="ref-modal" onclick="closeRefModalOnOverlay(event)">

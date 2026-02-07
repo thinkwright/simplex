@@ -310,7 +310,7 @@ Based on the user's description and any refinement conversation, generate a comp
 1. Contains at least one FUNCTION block with all required landmarks (RULES, DONE_WHEN, EXAMPLES, ERRORS)
 2. Uses DATA blocks when custom types would clarify the specification
 3. Includes CONSTRAINT blocks for important invariants
-4. Provides enough EXAMPLES to cover every conditional branch in RULES
+4. Provides enough EXAMPLES to cover every conditional branch in RULES (this is a strict requirement — the linter will reject specs where the number of examples is less than the number of conditional branches)
 5. Always includes a catch-all error handler: "any unhandled condition → fail with descriptive message"
 6. Stays within complexity limits:
    - Maximum 15 RULES items per function
