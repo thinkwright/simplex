@@ -307,18 +307,24 @@ ${COMPLEX_EXAMPLE}
 
 Based on the user's description and any refinement conversation, generate a complete Simplex specification that:
 
-1. Contains at least one FUNCTION block with all required landmarks (RULES, DONE_WHEN, EXAMPLES, ERRORS)
-2. Uses DATA blocks when custom types would clarify the specification
-3. Includes CONSTRAINT blocks for important invariants
-4. Provides enough EXAMPLES to cover every conditional branch in RULES (this is a strict requirement — the linter will reject specs where the number of examples is less than the number of conditional branches)
-5. Always includes a catch-all error handler: "any unhandled condition → fail with descriptive message"
-6. Stays within complexity limits:
+1. **CRITICAL STRUCTURE RULE**: All required landmarks (RULES, DONE_WHEN, EXAMPLES, ERRORS) MUST appear INSIDE a FUNCTION block, immediately after the FUNCTION declaration. They are NOT top-level landmarks. See the reference examples above for correct structure.
+
+2. **Top-level landmarks**: Only DATA and CONSTRAINT appear at the top level (outside FUNCTION blocks). Everything else goes inside FUNCTION blocks.
+
+3. **DATA types**: When using custom types in FUNCTION signatures (like "updated cart" or "PolicyRule"), you MUST define them with a DATA block BEFORE the FUNCTION that uses them. Never reference undefined types.
+
+4. **Example coverage**: Provide enough EXAMPLES to cover every conditional branch in RULES. The linter will reject specs where example count is less than conditional branch count.
+
+5. **Error handling**: Always include the catch-all error handler: "any unhandled condition → fail with descriptive message"
+
+6. **Complexity limits**:
    - Maximum 15 RULES items per function
    - Maximum 6 function inputs
    - Maximum 200 characters per single rule item
    - If more complex, decompose into multiple functions
 
-Generate ONLY the specification. No explanations, no markdown code blocks, no surrounding text. Output the raw Simplex spec text directly.`;
+**Output format**: Generate ONLY the specification. No explanations, no markdown code blocks, no surrounding text. Output the raw Simplex spec text directly.`;
+
 
 // Appended to BASE_SYSTEM_PROMPT when brownfield project type is selected
 const BROWNFIELD_PROMPT_FRAGMENT = `
@@ -327,12 +333,12 @@ const BROWNFIELD_PROMPT_FRAGMENT = `
 
 This is an EVOLUTIONARY specification for an existing codebase. You MUST include:
 
-1. **BASELINE** landmark with all three required fields:
+1. **BASELINE** landmark (inside FUNCTION block) with all three required fields:
    - reference: description or pointer to the current/prior state being evolved
    - preserve: list of behaviors, contracts, or APIs that must NOT regress
    - evolve: list of capabilities being added or changed
 
-2. **EVAL** landmark with all three required fields:
+2. **EVAL** landmark (inside FUNCTION block) with all three required fields:
    - preserve: pass^k threshold (e.g., pass^3 means all 3 trials must pass - for regression testing)
    - evolve: pass@k threshold (e.g., pass@5 means at least 1 of 5 must pass - for capability testing)
    - grading: code | model | outcome
@@ -340,6 +346,8 @@ This is an EVOLUTIONARY specification for an existing codebase. You MUST include
 3. In EXAMPLES, clearly separate:
    - Preserved behaviors (regression tests) - these verify nothing breaks
    - Evolved capabilities (capability tests) - these verify new functionality
+
+4. **Remember**: Define any custom types (like "AuthSystem") with DATA blocks BEFORE using them in FUNCTION signatures.
 
 Here is an evolutionary specification example:
 \`\`\`
@@ -349,24 +357,29 @@ ${EVOLUTION_EXAMPLE}
 // System prompt for refinement (used with temperature 0.7, max_tokens 1024)
 const REFINE_SYSTEM_PROMPT = `You are a helpful assistant that helps users refine their software requirements into clear, testable specifications for the Simplex specification (v0.5).
 
-Simplex specs have these required landmarks:
-- FUNCTION: The name, inputs, and return type
-- RULES: Business logic and behavioral constraints
-- DONE_WHEN: Observable completion criteria
-- EXAMPLES: Input/output pairs showing expected behavior
-- ERRORS: Error conditions and how they should be handled
+## Simplex Structure
 
-Optional landmarks include:
-- DATA: Type definitions (use when custom types clarify the spec)
-- CONSTRAINT: Global invariants
-- BASELINE/EVAL: For evolutionary specs (modifying existing systems)
-- DETERMINISM: Output variance control (level: strict | structural | semantic)
+A Simplex spec has this hierarchy:
+- **Top-level**: DATA (type definitions) and CONSTRAINT (global invariants)
+- **FUNCTION blocks** contain:
+  - FUNCTION: name(inputs) → return_type
+  - RULES: behavioral specification (outcomes, not steps)
+  - DONE_WHEN: observable completion criteria
+  - EXAMPLES: concrete input/output pairs (must cover every RULES branch)
+  - ERRORS: error conditions and responses
+  - Optional: READS, WRITES, TRIGGERS, NOT_ALLOWED, HANDOFF, UNCERTAIN, DETERMINISM
 
-Your job is to ask clarifying questions to gather enough information to generate a complete spec. Focus on:
-1. Data types and structures needed
-2. Business rules and constraints
-3. Edge cases and error conditions
-4. Concrete examples of expected behavior
+For evolutionary specs (modifying existing systems):
+- BASELINE: reference (prior state), preserve (unchanged behaviors), evolve (new capabilities)
+- EVAL: preserve (pass^k), evolve (pass@k), grading (code/model/outcome)
+
+## Your Job
+
+Ask clarifying questions to gather enough information to generate a complete spec. Focus on:
+1. **What types are needed?** (Will become DATA blocks if not obvious primitive types)
+2. **What are the behavioral rules?** (Outcomes, not implementation steps)
+3. **What are the edge cases?** (Every conditional needs an example)
+4. **How should errors be handled?** (Specific conditions and responses)
 
 Be conversational but focused. Ask 2-3 questions at a time. When you have enough information (usually after 3-4 exchanges), let the user know they can proceed to generate the spec.
 
