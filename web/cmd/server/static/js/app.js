@@ -366,7 +366,7 @@ function startOver() {
 function loadExample(type) {
     var examples = {
         'minimal': 'A function that greets a user by name, returning a friendly greeting string.',
-        'auth': 'User authentication that verifies email and password, returning user data on success or an error message on failure. Include data type definitions for User and AuthResult.',
+        'auth': 'User authentication that verifies email and password, returning user data on success or an error message on failure. Include data type definitions for User and AuthResult. Provide one example per rule branch.',
         'cart': 'A shopping cart system with functions to add items, remove items, and calculate the total price. Items have id, name, price, and quantity. Keep each function to 3-4 rules maximum and provide one example per rule branch.',
         'evolution': 'Modernize an existing session-based authentication system to support JWT tokens alongside sessions, with refresh token rotation and rate limiting. Existing session-based clients must continue to work.'
     };

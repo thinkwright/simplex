@@ -297,11 +297,12 @@ const BASE_SYSTEM_PROMPT = `Generate Simplex v0.5 specifications. Follow this st
 5. EXAMPLES: (inside FUNCTION) - input/output pairs
 6. ERRORS: (inside FUNCTION) - error conditions
 
-**RULES:**
-- Count "if" conditions in RULES
-- Provide AT LEAST that many EXAMPLES
-- Every branch needs an example
-- Always end ERRORS with: "any unhandled condition → fail with descriptive message"
+**CRITICAL RULES:**
+1. Count EVERY "if" condition in RULES (including "if not", "if no", "if empty", etc.)
+2. You MUST provide EXACTLY that many EXAMPLES (or more)
+3. Each conditional branch = one example. 6 branches = 6 examples minimum
+4. This is STRICTLY ENFORCED - specs will FAIL validation if examples < branches
+5. Always end ERRORS with: "any unhandled condition → fail with descriptive message"
 
 **Optional landmarks (inside FUNCTION, use when spec requires):**
 - READS: Shared memory this function consumes (multi-agent coordination)
