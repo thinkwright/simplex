@@ -362,6 +362,33 @@ ERRORS:
   - any unhandled condition → fail with descriptive message
 \`\`\`
 
+**❌ WRONG - Insufficient example coverage:**
+\`\`\`
+RULES:
+  - if cart is empty, create new cart with item
+  - if cart has items, append item to list
+  - if item already exists, increment quantity
+
+EXAMPLES:
+  (empty_cart, item) → cart with one item
+  (cart_with_items, new_item) → cart with added item
+\`\`\`
+This has 3 branches but only 2 examples. WILL FAIL with E012 error.
+
+**✅ CORRECT - Complete example coverage:**
+\`\`\`
+RULES:
+  - if cart is empty, create new cart with item
+  - if cart has items, append item to list
+  - if item already exists, increment quantity
+
+EXAMPLES:
+  (empty_cart, item) → cart with one item
+  (cart_with_items, new_item) → cart with added item
+  (cart_with_items, existing_item) → cart with incremented quantity
+\`\`\`
+3 branches = 3 examples. Every conditional path is covered.
+
 ## Generation Instructions
 
 Based on the user's description and any refinement conversation, generate a complete Simplex specification that:
@@ -372,7 +399,7 @@ Based on the user's description and any refinement conversation, generate a comp
 
 3. **DATA types**: When using custom types in FUNCTION signatures (like "updated cart" or "PolicyRule"), you MUST define them with a DATA block BEFORE the FUNCTION that uses them. Never reference undefined types. Use simple types (list, number, string, boolean) when they suffice.
 
-4. **Example coverage**: Provide enough EXAMPLES to cover every conditional branch in RULES. The linter will reject specs where example count is less than conditional branch count.
+4. **Example coverage (CRITICAL)**: Count the "if" statements in RULES. You MUST provide at least that many EXAMPLES. Each conditional branch needs its own example. If RULES has 3 "if" conditions, you need AT LEAST 3 examples. This is strictly enforced - specs with fewer examples than branches will FAIL with E012 error.
 
 5. **Error handling**: Always include the catch-all error handler: "any unhandled condition → fail with descriptive message"
 
