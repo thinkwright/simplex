@@ -1,7 +1,7 @@
 // Planner application JavaScript
 // Depends on: simplex-spec.js (system prompt constants)
 
-const MODEL_NAME = 'mistralai/Mixtral-8x7B-Instruct-v0.1';
+const MODEL_NAME = 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo';
 
 // State management
 const state = {

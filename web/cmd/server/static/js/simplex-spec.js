@@ -303,6 +303,65 @@ Here is a more complex specification with DATA types and multiple functions:
 ${COMPLEX_EXAMPLE}
 \`\`\`
 
+## CRITICAL: Common Mistakes to Avoid
+
+**❌ WRONG - Landmarks outside FUNCTION block:**
+\`\`\`
+RULES:
+  - if user exists, authenticate them
+
+FUNCTION: login(email, password) → session
+\`\`\`
+This will FAIL linting. RULES must be INSIDE the FUNCTION block.
+
+**✅ CORRECT - Landmarks inside FUNCTION block:**
+\`\`\`
+FUNCTION: login(email, password) → session
+
+RULES:
+  - if user exists, authenticate them
+  - if credentials valid, create session
+
+DONE_WHEN:
+  - session created with valid expiration
+
+EXAMPLES:
+  ("user@example.com", "pass123") → Session{id: "...", expires: ...}
+
+ERRORS:
+  - invalid credentials → fail with "authentication failed"
+  - any unhandled condition → fail with descriptive message
+\`\`\`
+
+**❌ WRONG - Undefined DATA type:**
+\`\`\`
+FUNCTION: add_item(cart, item) → updated cart
+\`\`\`
+"updated cart" is not a recognized type. You must define it.
+
+**✅ CORRECT - Define DATA types before use:**
+\`\`\`
+DATA: Cart
+  items: list of Item
+  total: number
+
+FUNCTION: add_item(cart, item) → Cart
+
+RULES:
+  - add item to cart items list
+  - recalculate total
+
+DONE_WHEN:
+  - item appears in cart
+  - total reflects new item price
+
+EXAMPLES:
+  (Cart{items: [], total: 0}, Item{price: 10}) → Cart{items: [Item], total: 10}
+
+ERRORS:
+  - any unhandled condition → fail with descriptive message
+\`\`\`
+
 ## Generation Instructions
 
 Based on the user's description and any refinement conversation, generate a complete Simplex specification that:
@@ -311,7 +370,7 @@ Based on the user's description and any refinement conversation, generate a comp
 
 2. **Top-level landmarks**: Only DATA and CONSTRAINT appear at the top level (outside FUNCTION blocks). Everything else goes inside FUNCTION blocks.
 
-3. **DATA types**: When using custom types in FUNCTION signatures (like "updated cart" or "PolicyRule"), you MUST define them with a DATA block BEFORE the FUNCTION that uses them. Never reference undefined types.
+3. **DATA types**: When using custom types in FUNCTION signatures (like "updated cart" or "PolicyRule"), you MUST define them with a DATA block BEFORE the FUNCTION that uses them. Never reference undefined types. Use simple types (list, number, string, boolean) when they suffice.
 
 4. **Example coverage**: Provide enough EXAMPLES to cover every conditional branch in RULES. The linter will reject specs where example count is less than conditional branch count.
 
