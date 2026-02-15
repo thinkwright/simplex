@@ -60,32 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
         createTableOfContents();
     }
 
-    // Fetch GitHub star count
-    const starEl = document.getElementById('github-stars');
-    if (starEl) {
-        fetch('https://api.github.com/repos/thinkwright/simplex')
-            .then(r => r.json())
-            .then(data => {
-                if (data.stargazers_count != null) {
-                    starEl.textContent = data.stargazers_count;
-                }
-            })
-            .catch(() => {});
-    }
-
-    // Add floating overview badge (except on overview page itself)
-    if (!window.location.pathname.includes('/overview')) {
-        const badgeContainer = document.createElement('div');
-        badgeContainer.className = 'overview-badge';
-
-        const badgeLink = document.createElement('a');
-        badgeLink.href = '/overview';
-        badgeLink.className = 'overview-badge-inner';
-        badgeLink.innerHTML = '<span class="overview-badge-icon">▶</span><span>Simplex in 5 Minutes</span>';
-
-        badgeContainer.appendChild(badgeLink);
-        document.body.appendChild(badgeContainer);
-    }
 });
 
 // Smooth scroll with offset for fixed navbar
