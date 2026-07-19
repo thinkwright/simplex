@@ -31,7 +31,7 @@ jobs:
         run: |
           COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
           echo "Overall coverage: ${COVERAGE}%"
-          if [ "$(echo "$COVERAGE < 75" | bc -l)" -eq 1 ]; then
+          if awk -v coverage="$COVERAGE" 'BEGIN { exit (coverage < 75 ? 0 : 1) }'; then
             echo "::error::Coverage ${COVERAGE}% is below minimum 75%"
             exit 1
           fi
@@ -41,7 +41,7 @@ jobs:
           go test -coverprofile=coverage-internal.out -covermode=atomic ./internal/...
           COVERAGE=$(go tool cover -func=coverage-internal.out | grep total | awk '{print $3}' | sed 's/%//')
           echo "Internal coverage: ${COVERAGE}%"
-          if [ "$(echo "$COVERAGE < 85" | bc -l)" -eq 1 ]; then
+          if awk -v coverage="$COVERAGE" 'BEGIN { exit (coverage < 85 ? 0 : 1) }'; then
             echo "::error::Internal coverage ${COVERAGE}% is below minimum 85%"
             exit 1
           fi

@@ -1,15 +1,24 @@
+SIMPLEX: 0.6
+
 FUNCTION: greet(name) → greeting
 
 RULES:
-  - return a greeting that includes the name
+  - [R1] return a friendly greeting that includes the non-empty name
 
 DONE_WHEN:
-  - greeting contains the name
-  - greeting is friendly
+  - [D1] greeting contains the name
+  - [D2] greeting is friendly
 
 EXAMPLES:
-  ("Alice") → "Hello, Alice!"
-  ("Bob") → "Hello, Bob!"
+  - [E1] value: ("Alice") → "Hello, Alice!"
+  - [E2] value: ("Bob") → "Hello, Bob!"
+  - [E3] error: ("") → "Name cannot be empty"
 
 ERRORS:
-  - empty name → "Name cannot be empty"
+  - [X1] empty name → "Name cannot be empty"
+  - any unhandled condition → fail with descriptive message
+
+COVERS:
+  - E1 → R1, D1, D2
+  - E2 → R1, D1, D2
+  - E3 → X1

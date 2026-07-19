@@ -278,3 +278,48 @@ func TestLintResult_ToJSON_WithStats(t *testing.T) {
 	assert.Contains(t, jsonStr, `"examples": 8`)
 	assert.Contains(t, jsonStr, `"examples_per_branch": 0.8`)
 }
+
+func TestLintResult_RendersSpecificationAndTraceabilityMetadata(t *testing.T) {
+	r := NewLintResult("traceable.simplex")
+	r.SpecificationVersion = "0.6"
+	r.SupportedVersion = "0.6"
+	r.Stats.Traceability = &TraceabilityStats{
+		Declared:       true,
+		Links:          2,
+		CoverableItems: 2,
+		CoveredItems:   2,
+		Complete:       true,
+		ExampleKinds:   map[string]int{"value": 1},
+	}
+
+	text := r.ToText()
+	assert.Contains(t, text, "specification: 0.6 (supported through 0.6)")
+	assert.Contains(t, text, "declared traceability: complete (2/2 items, 2 link(s))")
+
+	jsonBytes, err := r.ToJSON()
+	require.NoError(t, err)
+	jsonText := string(jsonBytes)
+	assert.Contains(t, jsonText, `"specification_version": "0.6"`)
+	assert.Contains(t, jsonText, `"supported_specification_version": "0.6"`)
+	assert.Contains(t, jsonText, `"traceability"`)
+	assert.Contains(t, jsonText, `"complete": true`)
+}
+
+func TestLintResult_RendersUnspecifiedVersionWhenLinterSetsSupport(t *testing.T) {
+	r := NewLintResult("legacy.simplex")
+	r.SupportedVersion = "0.6"
+	assert.Contains(t, r.ToText(), "specification: unspecified (supported through 0.6)")
+}
+
+func TestLintResult_DoesNotCallIdentifierInventoryDeclaredCoverage(t *testing.T) {
+	r := NewLintResult("legacy.simplex")
+	r.Stats.Traceability = &TraceabilityStats{
+		Declared:    false,
+		Identifiers: 7,
+	}
+
+	text := r.ToText()
+
+	assert.Contains(t, text, "traceability: not declared (7 identifier(s))")
+	assert.NotContains(t, text, "declared traceability: incomplete")
+}

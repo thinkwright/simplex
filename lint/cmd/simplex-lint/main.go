@@ -32,11 +32,12 @@ func main() {
 var rootCmd = &cobra.Command{
 	Use:   "simplex-lint [files...]",
 	Short: "Lint Simplex specification files",
-	Long: `simplex-lint validates Simplex specification files for structural
-correctness, complexity limits, evolution metadata, and determinism declarations.
+	Long: `simplex-lint checks Simplex specification files for structural
+requirements, complexity limits, evolution metadata, determinism declarations,
+language versions, and author-declared traceability.
 
 Checks are deterministic. The linter does not execute examples or perform
-LLM-based semantic validation.
+LLM-based semantic validation, and COVERS links are not proof of semantic coverage.
 
 Examples:
   simplex-lint spec.md

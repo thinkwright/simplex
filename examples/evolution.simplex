@@ -3,6 +3,8 @@
 # Demonstrates BASELINE and EVAL landmarks for evolutionary specifications.
 # Use these when evolving an existing system rather than building greenfield.
 
+SIMPLEX: 0.6
+
 DATA: AuthSystem
   session_support: boolean
   jwt_support: boolean
@@ -14,46 +16,61 @@ FUNCTION: modernize_authentication(config) → AuthSystem
 BASELINE:
   reference: "session-based auth, commit abc123"
   preserve:
-    - POST /login returns { session_id, expires_at }
-    - session timeout is 30 minutes
-    - existing client SDKs continue to work
+    - [P1] POST /login returns { session_id, expires_at }
+    - [P2] session timeout is 30 minutes
+    - [P3] existing client SDKs continue to work
   evolve:
-    - add JWT token issuance alongside sessions
-    - implement refresh token rotation
-    - add rate limiting on auth endpoints
+    - [V1] add JWT token issuance alongside sessions
+    - [V2] implement refresh token rotation
+    - [V3] add rate limiting on auth endpoints
 
 RULES:
-  - authenticate user credentials against user store
-  - issue JWT token with configurable expiration
-  - issue refresh token that rotates on each use
-  - maintain session-based auth for backward compatibility
-  - rate limit failed attempts per IP address
+  - [R1] authenticate user credentials against user store
+  - [R2] issue JWT token with configurable expiration
+  - [R3] issue refresh token that rotates on each use
+  - [R4] maintain session-based auth for backward compatibility
+  - [R5] rate limit failed attempts per IP address
 
 DONE_WHEN:
-  - valid credentials produce both session and JWT
-  - refresh tokens rotate correctly
-  - rate limiting activates after threshold
-  - existing session-based clients unaffected
+  - [D1] valid credentials produce both session and JWT
+  - [D2] refresh tokens rotate correctly
+  - [D3] rate limiting activates after threshold
+  - [D4] existing session-based clients are unaffected
 
 EXAMPLES:
   # Preserved behaviors (regression tests)
-  (valid_creds, session_mode) → { session_id: "...", expires_at: +30min }
-  (invalid_creds, any_mode) → { error: "unauthorized" }
+  - [E1] value: (valid_creds, session_mode) → { session_id: "...", expires_at: +30min }
+  - [E2] error: (invalid_creds, any_mode) → { error: "unauthorized" }
 
   # Evolved capabilities (capability tests)
-  (valid_creds, jwt_mode) → { token: "...", refresh: "...", expires_at: +1hr }
-  (expired_token, valid_refresh) → { token: "new...", refresh: "new..." }
-  (any_creds, after_rate_limit) → { error: "rate limited", retry_after: 60 }
+  - [E3] value: (valid_creds, jwt_mode) → { token: "...", refresh: "...", expires_at: +1hr }
+  - [E4] value: (expired_token, valid_refresh) → { token: "new...", refresh: "new..." }
+  - [E5] error: (any_creds, after_rate_limit) → { error: "rate limited", retry_after: 60 }
+  - [E6] error: (credentials while user store unavailable) → { error: "auth service unavailable" }
+  - [E7] error: (malformed credentials) → { error: "invalid request format" }
+  - [E8] outcome: run the existing v1 SDK integration suite → all tests pass without client changes
 
 ERRORS:
-  - user store unavailable → "auth service unavailable"
-  - malformed credentials → "invalid request format"
-  - rate limit exceeded → "rate limited, retry after {seconds}"
+  - [X1] user store unavailable → "auth service unavailable"
+  - [X2] malformed credentials → "invalid request format"
+  - [X3] rate limit exceeded → "rate limited, retry after {seconds}"
+  - [X4] invalid credentials → "unauthorized"
+  - any unhandled condition → fail with descriptive message
 
 EVAL:
   preserve: pass^3
   evolve: pass@5
   grading: code
 
+COVERS:
+  - E1 → P1, P2, R1, R4
+  - E2 → R1, X4
+  - E3 → V1, R1, R2, D1
+  - E4 → V2, R3, D2
+  - E5 → V3, R5, D3, X3
+  - E6 → X1
+  - E7 → X2
+  - E8 → P3, D4, C1
+
 CONSTRAINT: backward_compatibility
-  existing v1 API clients must work without modification
+  - [C1] existing v1 API clients must work without modification

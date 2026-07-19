@@ -21,8 +21,8 @@ type EvolutionChecker struct {
 // NewEvolutionChecker creates a new EvolutionChecker.
 func NewEvolutionChecker() *EvolutionChecker {
 	return &EvolutionChecker{
-		preservePattern: regexp.MustCompile(`^pass\^(\d+)$`),
-		evolvePattern:   regexp.MustCompile(`^pass@(\d+)$`),
+		preservePattern: regexp.MustCompile(`^pass\^([1-9]\d*)$`),
+		evolvePattern:   regexp.MustCompile(`^pass@([1-9]\d*)$`),
 	}
 }
 
@@ -124,7 +124,6 @@ func (c *EvolutionChecker) checkBaselineStructure(fn parser.FunctionBlock, r *re
 // Error E063: preserve threshold must use pass^k notation
 // Error E064: evolve threshold must use pass@k notation
 // Error E065: grading must be code, model, or outcome
-// Error E066: threshold k must be positive integer
 func (c *EvolutionChecker) checkEvalStructure(fn parser.FunctionBlock, r *result.LintResult) {
 	content := fn.GetEval()
 	loc := formatFunctionLocation(fn.Name) + " EVAL"

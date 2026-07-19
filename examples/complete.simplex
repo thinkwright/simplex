@@ -1,3 +1,5 @@
+SIMPLEX: 0.6
+
 DATA: User
   id: string
   name: string
@@ -12,29 +14,39 @@ DATA: AuthResult
 FUNCTION: authenticate(email, password) → AuthResult
 
 RULES:
-  - look up user by email
-  - if user not found, return failure
-  - verify password matches stored hash
-  - if password invalid, return failure
-  - return success with user data
+  - [R1] look up user by email
+  - [R2] if user not found, return failure
+  - [R3] verify password matches stored hash
+  - [R4] if password invalid, return failure
+  - [R5] return success with user data
 
 DONE_WHEN:
-  - valid credentials return user
-  - invalid credentials return error
-  - result always has either user or error, never both
+  - [D1] valid credentials return user
+  - [D2] invalid credentials return error
+  - [D3] result always has either user or error, never both
 
 EXAMPLES:
-  ("alice@example.com", "correct") → { success: true, user: User, error: null }
-  ("alice@example.com", "wrong") → { success: false, user: null, error: "Invalid password" }
-  ("unknown@example.com", "any") → { success: false, user: null, error: "User not found" }
+  - [E1] value: ("alice@example.com", "correct") → { success: true, user: User, error: null }
+  - [E2] error: ("alice@example.com", "wrong") → { success: false, user: null, error: "Invalid password" }
+  - [E3] error: ("unknown@example.com", "any") → { success: false, user: null, error: "User not found" }
+  - [E4] error: (credentials while database unavailable) → { success: false, user: null, error: "Service temporarily unavailable" }
+  - [E5] property: any authentication attempt → logs and responses contain no plaintext password
 
 ERRORS:
-  - user not found → "User not found"
-  - invalid password → "Invalid password"
-  - database unavailable → "Service temporarily unavailable"
+  - [X1] user not found → "User not found"
+  - [X2] invalid password → "Invalid password"
+  - [X3] database unavailable → "Service temporarily unavailable"
+  - any unhandled condition → fail with descriptive message
 
 READS:
-  - Database.users
+  - [A1] Database.users
+
+COVERS:
+  - E1 → R1, R3, R5, D1, D3, A1
+  - E2 → R1, R3, R4, D2, D3, X2, A1
+  - E3 → R1, R2, D2, D3, X1, A1
+  - E4 → D2, D3, X3, A1
+  - E5 → C1
 
 CONSTRAINT: password_security
-  passwords are never logged or returned in responses
+  - [C1] passwords are never logged or returned in responses

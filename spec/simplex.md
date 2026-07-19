@@ -2,15 +2,15 @@
 
 A workflow specification for autonomous agents.
 
-Version 0.5
+Version 0.6
 
 ---
 
 ## Purpose
 
-Simplex is a specification for describing work that autonomous agents will perform. It captures what needs to be done and how to know when it's done, without prescribing how to do it. Simplex is optimized for high-fidelity interpretation by large language models.
+Simplex is a specification for describing work that autonomous agents will perform. It captures what needs to be done and how to know when it's done, without prescribing how to do it. It is designed for direct interpretation by large language models.
 
-The motivation is practical. When agents work autonomously for extended periods, they need instructions that are complete enough to act on without clarification, yet flexible enough to allow implementation choices. Simplex occupies this middle ground between natural language (too ambiguous) and programming languages (too prescriptive).
+The motivation is practical. When agents work autonomously for extended periods, they need instructions that are complete enough to act on without clarification, yet flexible enough to allow implementation choices. Simplex adds repeatable structure to prose while leaving algorithms, data structures, and technology choices unspecified.
 
 ---
 
@@ -22,9 +22,9 @@ Five pillars guide Simplex.
 
 *Note: Enforcement happens through tooling, not the specification itself. The current Simplex linter enforces limits on RULES items and function inputs, and warns about long rules and large function counts. The specification defines the broader simplicity principle; tooling enforces only its documented checks. See the Linter Specification section.*
 
-**Syntactic tolerance, semantic precision.** Simplex allows for formatting inconsistencies, typos, and notational variations. Agents interpret what you meant, not what you typed. However, the meaning itself must be unambiguous. If an agent would have to guess your intent, the specification is invalid. Sloppy notation is acceptable; vague meaning is not.
+**Syntactic tolerance, semantic precision.** Agent interpretation may tolerate formatting inconsistencies and minor notational variations, while the intended meaning must remain unambiguous. Tooling supports only its documented tolerance; for example, a misspelled required landmark can still be reported as missing. If an agent would have to guess the author's intent, the specification is invalid.
 
-*Note: Semantic precision is assessed through example coverage and interpretation review. If examples do not exercise every branch of the rules, or if examples could be satisfied by multiple conflicting interpretations, the specification is ambiguous and invalid. The current linter uses a count-based branch/example heuristic; it does not prove semantic coverage or interpretation uniqueness. See Validation Criteria.*
+*Note: Authors and reviewers assess semantic precision through example coverage and interpretation review. If examples do not exercise every branch of the rules, or if examples could be satisfied by multiple conflicting interpretations, the specification is ambiguous and invalid. The current linter uses a count-based branch/example heuristic; it does not prove semantic coverage or interpretation uniqueness. See Validation Criteria.*
 
 **Testability.** Every function requires examples. These are not illustrations; they are contracts. The examples define what correct output looks like for given inputs. An agent's work is not complete until its output is consistent with the examples.
 
@@ -48,9 +48,21 @@ Agents scan for landmarks, extract the content associated with each, and build u
 
 ## Landmarks
 
-Simplex defines sixteen landmarks. Five describe structure. Eleven describe functions.
+Simplex defines eighteen landmarks. Six describe structure. Twelve describe functions.
 
 ### Structural Landmarks
+
+**SIMPLEX** optionally declares the language version used by a document. The declaration has a
+single `major.minor` value and, when present, must appear only once.
+
+```
+SIMPLEX: 0.6
+```
+
+Documents without a SIMPLEX declaration remain valid for backward compatibility. Tooling must
+report a declared version it does not support rather than claiming that all applicable checks
+passed. The declaration selects specification semantics; it is independent from the version of a
+particular linter binary.
 
 **DATA** defines the shape of a type. It names a concept and lists its fields with descriptions and constraints. DATA blocks help agents understand what they are working with, but they are optional. If a function's inputs and outputs are clear from context, explicit DATA definitions are unnecessary.
 
@@ -212,6 +224,60 @@ EXAMPLES:
   ([p1, p2, p3], [p1.id], [python]) → union          # both provided
 ```
 
+An example may optionally declare one of four observable kinds before its content:
+
+- **value**: a concrete input produces an exact or structurally described value
+- **error**: an input produces an observable failure response
+- **outcome**: a setup or action produces observable state, files, artifacts, or other effects
+- **property**: a behavioral property holds over a stated class of inputs or repeated observations
+
+```
+EXAMPLES:
+  - [E1] value: (2, 3) → 5
+  - [E2] error: ("x", 3) → fail with "input must be numeric"
+  - [E3] outcome: build valid project → package imports and declared tests pass
+  - [E4] property: any finite numeric a and b → add(a, b) equals add(b, a)
+```
+
+Kinds are optional authoring metadata. An unannotated example retains the v0.5 meaning. Every
+example must still state an input, setup, or condition and an observable expected result; a kind
+does not make a vague example valid.
+
+**Stable item identifiers** may prefix list items in contract landmarks and examples. An
+identifier uses ASCII letters, digits, `.`, `_`, and `-`, starts with a letter, and is enclosed in
+square brackets. Identifiers are unique across the document. They do not change the meaning or
+priority of an item.
+
+```
+RULES:
+  - [R1] if neither ids nor tags are provided, return all policies
+
+DONE_WHEN:
+  - [D1] the returned list contains exactly the matching policies
+```
+
+Identifiers are optional unless another declaration references them. Prefixes such as `R`, `D`,
+`E`, `X`, `P`, and `V` are conventions for readability, not separate namespaces or semantics.
+
+**COVERS** declares traceability from identified examples to identified contract items. It is
+optional and appears within a FUNCTION block.
+
+```
+COVERS:
+  - E1 → R1, D1
+  - E2 → R2, X1
+```
+
+Each row has exactly one source example and one or more targets. The source must identify an item
+in that function's EXAMPLES block. A target must identify a contract item in the same function or
+an item in a document-level CONSTRAINT block. A COVERS row cannot refer to another function's
+local items.
+
+COVERS records the author's claim that an example supplies evidence for a requirement. A linter
+can deterministically verify identifier uniqueness, reference integrity, and whether identified
+items have declared links. It cannot prove that an example actually exercises the target's
+meaning. Reports must therefore distinguish **declared coverage** from proven semantic coverage.
+
 **ERRORS** specifies what to do when things go wrong. It maps conditions to responses. This landmark is required. At minimum, it must specify default failure behavior.
 
 A valid minimal ERRORS block:
@@ -317,7 +383,7 @@ DETERMINISM interacts with EVAL thresholds. A function marked `level: strict` wi
 
 ## Required and Optional
 
-Of the sixteen landmarks, five are always required for a valid specification. One additional landmark is conditionally required.
+Of the eighteen landmarks, five are always required for a valid specification. One additional landmark is conditionally required.
 
 **FUNCTION** is required because without it there is no work to describe.
 
@@ -331,7 +397,7 @@ Of the sixteen landmarks, five are always required for a valid specification. On
 
 **EVAL** is conditionally required: when BASELINE is present, EVAL must also be present. Without EVAL, BASELINE's preserve/evolve distinction would have no measurement criteria, violating the completeness pillar.
 
-Everything else is optional. A minimal valid spec consists of a function with rules, completion criteria, examples, and error handling. A minimal valid evolution spec adds BASELINE and EVAL. The optional landmarks add precision when needed, but their absence does not invalidate a spec.
+Everything else is optional. A minimal valid spec consists of a function with rules, completion criteria, examples, and error handling. A minimal valid evolution spec adds BASELINE and EVAL. SIMPLEX declares language semantics when version-aware tooling is needed. COVERS adds auditable traceability when stable evidence links are useful. The optional landmarks add precision when needed, but their absence does not invalidate a spec.
 
 **Variance control landmarks.** Three landmarks specifically target implementation variance:
 - **DATA** (as output schema): When a function's return type references a DATA block, outputs must conform exactly
@@ -358,6 +424,10 @@ A specification is valid if it passes structural and semantic validation.
 - If BASELINE is present, EVAL must also be present
 - If EVAL is present with BASELINE, it must contain preserve and evolve thresholds
 - EVAL.grading must be one of: code, model, outcome
+- If SIMPLEX is present, it occurs once and declares a supported `major.minor` version
+- Stable item identifiers are unique across the document
+- Every COVERS source resolves to an identified example in the same function
+- Every COVERS target resolves to an identified local contract item or document-level constraint
 
 ### Semantic Validation
 
@@ -391,22 +461,14 @@ Semantic validation ensures the specification is unambiguous.
 - Evolved capabilities need examples that demonstrate the new behavior
 - Examples should be classifiable as testing preserved vs. evolved behavior based on what they exercise
 
----
+**Declared traceability.** When COVERS is present, every mapping must resolve and tooling should
+report identified requirements or examples that have no declared link.
 
-## Composition
-
-Simplex does not have a composition construct. There is no way to formally specify that one function calls another, or that functions must execute in a particular order.
-
-**Design Note:** This is intentional and represents a research hypothesis. Simplex is designed for autonomous agent workflows where agents operate over extended periods. The hypothesis is that agents can infer task dependencies and decomposition from context, potentially discovering structures the specification author did not anticipate. Prescribed composition would constrain this emergent behavior.
-
-If a spec author wants to suggest relationships between functions, they can:
-- Use READS/WRITES to show data dependencies
-- Use TRIGGERS to show activation conditions
-- Write prose in HANDOFF describing what the next stage expects
-
-But Simplex does not enforce ordering. Agents determine sequencing based on their understanding of the full specification.
-
-This design choice is experimental. Future versions may revisit it based on empirical results from autonomous agent research.
+- A complete mapping is evidence that the author connected examples to contract items
+- It is not proof that the examples semantically exercise those items
+- Semantic review remains necessary to detect false, weak, or misleading mappings
+- The catch-all `any unhandled` error is not an automatic coverage obligation because it does not
+  identify a concrete failure scenario; specific error conditions remain traceable items
 
 ---
 
@@ -432,9 +494,11 @@ Whether SharedMemory is a graph database, a Redis instance, or a directory of JS
 
 ## Linter Specification
 
-The following specification defines a Simplex linter. The linter enforces the "enforced simplicity" pillar through concrete limits and checks.
-
-**Implementation status.** This section is normative design for the linter, not a claim that every listed check is implemented. The current Go linter performs deterministic structural, complexity, BASELINE/EVAL, and DETERMINISM-level checks. It does not execute examples, prove branch coverage, check interpretation uniqueness or observability, validate output schemas, or perform LLM-based semantic review.
+The following specification describes the deterministic checks implemented by the bundled Go
+linter. It enforces a limited, mechanically checkable subset of the broader validation criteria.
+The linter does not execute examples, prove branch coverage or COVERS claims, check interpretation
+uniqueness or observability, validate output schemas, or perform LLM-based semantic review. Its
+`valid` field means that the implemented error checks passed.
 
 ```
 DATA: LintResult
@@ -457,9 +521,10 @@ FUNCTION: lint_spec(spec_text) → LintResult
   RULES:
     - parse spec_text to identify all landmarks and their content
     - check structural validity: required landmarks present
-    - check complexity limits (see thresholds below)
-    - check semantic validity: example coverage, interpretation uniqueness
-    - check style guidance: behavioral rules, observable completion
+    - check declared language version when present
+    - check stable identifiers and COVERS reference integrity
+    - check complexity limits and compare heuristic branch and example counts
+    - check BASELINE, EVAL, and DETERMINISM fields supported by this linter
     - collect all errors and warnings
     - spec is valid only if zero errors
 
@@ -470,12 +535,36 @@ FUNCTION: lint_spec(spec_text) → LintResult
 
   EXAMPLES:
     (minimal valid spec) → {valid: true, errors: [], warnings: []}
-    (missing ERRORS landmark) → {valid: false, errors: [{code: "E001", ...}], warnings: []}
+    (missing ERRORS landmark) → {valid: false, errors: [{code: "E005", ...}], warnings: []}
     (RULES block over limit) → {valid: false, errors: [{code: "E010", ...}], warnings: []}
-    (uncovered branch in RULES) → {valid: false, errors: [{code: "E020", ...}], warnings: []}
+    (fewer examples than heuristic branches) → {valid: false, errors: [{code: "E012", ...}], warnings: []}
+    (COVERS references unknown ID) → {valid: false, errors: [{code: "E103", ...}], warnings: []}
 
   ERRORS:
-    - unparseable input → fail with "cannot parse spec: {details}"
+    - lint findings are returned in LintResult rather than thrown
+    - CLI input or option failure → terminate the invocation with a descriptive message
+
+FUNCTION: check_structure(spec) → list of LintError
+
+  RULES:
+    - no FUNCTION block → error E001
+    - missing RULES, DONE_WHEN, EXAMPLES, or ERRORS → error E002, E003, E004, or E005
+    - required landmark present without content → error E006
+    - repeated function-level landmark → error E007
+    - malformed FUNCTION signature → error E008
+    - repeated FUNCTION name in one document → error E009
+    - return type that may reference an undefined DATA block → warning W006
+
+  DONE_WHEN:
+    - all functions and required landmarks examined
+    - structural issues collected
+
+  EXAMPLES:
+    (one well-formed function with all required landmarks) → []
+    (function with an empty ERRORS block) → [E006]
+    (two functions with the same name) → [E009]
+
+  ERRORS:
     - any unhandled condition → fail with descriptive message
 
 FUNCTION: check_complexity(spec) → list of LintError
@@ -483,7 +572,7 @@ FUNCTION: check_complexity(spec) → list of LintError
   RULES:
     - RULES block exceeds 15 items → error E010 "RULES too complex: {count} items, max 15"
     - FUNCTION has more than 6 inputs → error E011 "too many inputs: {count}, max 6"
-    - EXAMPLES fewer than branch count in RULES → error E020 "insufficient examples: {count} examples for {branches} branches"
+    - EXAMPLES fewer than heuristic branch count in RULES → error E012
     - single RULES item exceeds 200 characters → warning W010 "rule may be too complex"
     - spec contains more than 10 FUNCTION blocks → warning W011 "consider splitting into multiple specs"
 
@@ -495,75 +584,32 @@ FUNCTION: check_complexity(spec) → list of LintError
     (spec with 5 RULES items, 3 inputs, 4 examples for 4 branches) → []
     (spec with 20 RULES items) → [E010]
     (spec with 8 inputs) → [E011]
-    (spec with 2 examples for 4 branches) → [E020]
+    (spec with 2 examples for 4 heuristic branches) → [E012]
 
   ERRORS:
     - any unhandled condition → fail with descriptive message
 
-FUNCTION: check_coverage(rules, examples) → list of LintError
+FUNCTION: check_version(spec) → declared version or unspecified
 
   RULES:
-    - identify all conditional branches in rules
-    - "if X" introduces one branch
-    - "if X or Y" introduces two branches
-    - "if X, otherwise Y" introduces two branches
-    - "optionally" introduces two branches (with and without)
-    - for each branch, verify at least one example exercises it
-    - uncovered branch → error E020
+    - SIMPLEX is optional for backward compatibility
+    - when present, SIMPLEX must contain one major.minor version
+    - malformed or extra declaration content → error E090
+    - unsupported declared version → error E091
+    - repeated SIMPLEX declaration → error E092
+    - COVERS with declared version 0.5 → error E093
+    - COVERS without a declaration → warning W090
+    - supported declared versions are 0.5 and 0.6
+    - report the declared version separately from the newest supported version
 
   DONE_WHEN:
-    - all branches identified
-    - all branches checked against examples
-    - errors collected
+    - all SIMPLEX declarations examined
+    - version-dependent COVERS use checked
 
   EXAMPLES:
-    (4 branches, 4 examples each covering one) → []
-    (4 branches, 3 examples covering 3) → [E020 for uncovered branch]
-    ("if X or Y" with only X shown) → [E020 "branch 'Y' not covered by examples"]
-
-  ERRORS:
-    - cannot parse RULES structure → error E021 "cannot identify branches in RULES"
-    - any unhandled condition → fail with descriptive message
-
-FUNCTION: check_observability(done_when) → list of LintError
-
-  RULES:
-    - each criterion in DONE_WHEN must be externally observable
-    - references to "internal state" → error E030
-    - references to "variable" or "data structure" → error E030
-    - valid: references to outputs, return values, side effects, written files
-    - valid: references to SharedMemory state
-
-  DONE_WHEN:
-    - all DONE_WHEN criteria examined
-    - non-observable criteria flagged
-
-  EXAMPLES:
-    ("output contains no duplicates") → []
-    ("internal counter reaches zero") → [E030]
-    ("all items processed") → warning W030 "may not be observable without clarification"
-
-  ERRORS:
-    - any unhandled condition → fail with descriptive message
-
-FUNCTION: check_behavioral(rules) → list of LintError
-
-  RULES:
-    - RULES must describe outcomes, not procedures
-    - procedural indicators: "loop", "iterate", "for each", "step 1", "then"
-    - procedural indicators: "create a variable", "initialize", "increment"
-    - finding procedural language → error E040 "RULES should be behavioral, not procedural"
-    - valid: describes what is true of output
-    - valid: describes conditions and their corresponding outcomes
-
-  DONE_WHEN:
-    - all RULES items examined
-    - procedural language flagged
-
-  EXAMPLES:
-    ("items matching criteria are included") → []
-    ("loop through items and add matches") → [E040]
-    ("first, parse the input, then validate") → [E040]
+    (no declaration and no COVERS) → unspecified with no version issue
+    (SIMPLEX 0.6 with COVERS) → version 0.6 with no version issue
+    (SIMPLEX 0.5 with COVERS) → E093
 
   ERRORS:
     - any unhandled condition → fail with descriptive message
@@ -604,7 +650,7 @@ FUNCTION: check_eval(eval, baseline_present) → list of LintError
     - preserve threshold must be pass^k notation → error E063 "preserve threshold must use pass^k notation"
     - evolve threshold must be pass@k notation → error E064 "evolve threshold must use pass@k notation"
     - grading must be code, model, or outcome → error E065 "grading must be code, model, or outcome"
-    - k in pass^k and pass@k must be positive integer → error E066 "threshold k must be positive integer"
+    - k in pass^k and pass@k must be a positive integer; otherwise report E063 or E064
 
   DONE_WHEN:
     - EVAL presence checked against BASELINE
@@ -620,70 +666,52 @@ FUNCTION: check_eval(eval, baseline_present) → list of LintError
   ERRORS:
     - any unhandled condition → fail with descriptive message
 
-FUNCTION: check_evolution_coverage(baseline, examples) → list of LintError
-
-  RULES:
-    - every item in BASELINE.preserve should have at least one corresponding example
-    - every item in BASELINE.evolve should have at least one corresponding example
-    - uncovered preserve item → warning W050 "preserve item '{item}' has no corresponding example"
-    - uncovered evolve item → warning W051 "evolve item '{item}' has no corresponding example"
-    - examples should be classifiable as testing preserved vs evolved behavior
-
-  DONE_WHEN:
-    - all preserve items checked for coverage
-    - all evolve items checked for coverage
-    - warnings collected
-
-  EXAMPLES:
-    (3 preserve items, 3 evolve items, 6+ examples covering all) → []
-    (2 preserve items with only 1 covered) → [W050]
-    (2 evolve items with none covered) → [W051, W051]
-
-  ERRORS:
-    - any unhandled condition → fail with descriptive message
-
 FUNCTION: check_determinism(determinism) → list of LintError
 
   RULES:
     - if DETERMINISM is present, level must be one of: strict, structural, semantic
     - invalid level → error E070 "DETERMINISM level must be strict, structural, or semantic"
-    - if seed is present, must be one of: from input hash, from timestamp, none
-    - invalid seed → error E071 "DETERMINISM seed must be 'from input hash', 'from timestamp', or 'none'"
-    - if level is strict, seed should be specified → warning W070 "strict determinism should specify seed"
-    - if vary is present, stable should also be present for clarity → warning W071 "consider specifying stable alongside vary"
 
   DONE_WHEN:
     - DETERMINISM structure validated
-    - level and seed checked
-    - vary/stable consistency checked
+    - level checked
 
   EXAMPLES:
     (determinism with level: strict, seed: from input hash) → []
     (determinism with level: fuzzy) → [E070]
-    (determinism with level: strict, no seed) → [W070]
 
   ERRORS:
     - any unhandled condition → fail with descriptive message
 
-FUNCTION: check_output_schema(function, data_blocks) → list of LintError
+FUNCTION: check_traceability(spec) → declared coverage report
 
   RULES:
-    - if function return type references a DATA block, that DATA block must exist
-    - missing DATA block → error E080 "return type '{type}' references undefined DATA block"
-    - if return type references DATA, examples must produce outputs matching that schema
-    - example output missing required field → error E081 "example output missing required field '{field}'"
-    - example output with unexpected field → warning W080 "example output contains field '{field}' not in schema"
-    - example output with wrong type → error E082 "example output field '{field}' has wrong type"
+    - collect stable item identifiers at the start of contract and example items; duplicates → error E100
+    - parse each COVERS row as one example ID followed by one or more target IDs
+    - source IDs must resolve to EXAMPLES in the same function
+    - target IDs must resolve to contract items in that function or document-level CONSTRAINT items
+    - malformed COVERS row → error E101
+    - unknown or non-example source → error E102
+    - unknown or out-of-scope target → error E103
+    - target that resolves to another example → error E104
+    - invalid stable identifier → error E105
+    - identified expected target without a link → warning W100
+    - identified example without a link → warning W101
+    - unlabelled traceable items when COVERS is present → warning W102
+    - report counts for identifiers, links, coverable items, covered items, and gaps
+    - never describe declared links as proof of semantic coverage
 
   DONE_WHEN:
-    - return type DATA reference resolved
-    - all examples validated against schema
-    - errors and warnings collected
+    - all identifiers and COVERS rows examined
+    - broken references reported deterministically
+    - declared coverage statistics populated
 
   EXAMPLES:
-    (function returning Response, Response DATA exists, examples match) → []
-    (function returning Response, Response DATA missing) → [E080]
-    (function returning Response, example missing timestamp) → [E081]
+    - (E1 → R1 and both IDs resolve in one function) → one valid declared coverage link
+    - (E1 → missing) → E103
+    - (unknown → R1) → E102
+    - (duplicate R1 identifiers) → E100
+    - (COVERS present but R2 has no link) → W100 and incomplete declared traceability
 
   ERRORS:
     - any unhandled condition → fail with descriptive message
@@ -701,6 +729,8 @@ CONSTRAINT: linter_thresholds
 Simplex can describe itself. The following specification defines how agents should interpret Simplex documents.
 
 ```simplex
+SIMPLEX: 0.6
+
 DATA: Landmark
   name: string, all caps
   purpose: what it communicates
@@ -717,7 +747,7 @@ FUNCTION: parse_spec(text) → Spec
     - landmarks are all-caps words followed by colon
     - required: FUNCTION, RULES, DONE_WHEN, EXAMPLES, ERRORS
     - conditionally required: EVAL (when BASELINE present)
-    - optional: DATA, CONSTRAINT, BASELINE, EVAL, READS, WRITES, TRIGGERS, NOT_ALLOWED, HANDOFF, UNCERTAIN, DETERMINISM
+    - optional: SIMPLEX, DATA, CONSTRAINT, BASELINE, EVAL, COVERS, READS, WRITES, TRIGGERS, NOT_ALLOWED, HANDOFF, UNCERTAIN, DETERMINISM
     - content continues until next landmark or end
     - tolerate formatting inconsistency
     - extract meaning not syntax
@@ -743,20 +773,19 @@ FUNCTION: validate_spec(spec) → valid | issues
 
   RULES:
     - FUNCTION requires RULES, DONE_WHEN, EXAMPLES, ERRORS
-    - RULES must be behavioral, not procedural
-    - DONE_WHEN must be externally observable
-    - EXAMPLES must cover every conditional branch in RULES
-    - EXAMPLES must not be satisfiable by conflicting interpretations
+    - RULES must be behavioral rather than procedural, and DONE_WHEN must be externally observable
+    - EXAMPLES must cover every conditional branch and must not permit conflicting interpretations
     - ERRORS must specify at least default failure behavior
-    - DATA types referenced must be defined or obvious
-    - CONSTRAINT must state verifiable invariants
-    - if BASELINE present, must contain reference, preserve, evolve
-    - if BASELINE present, EVAL must also be present
-    - if EVAL present with BASELINE, must contain preserve and evolve thresholds
-    - EVAL.grading must be code, model, or outcome
+    - referenced DATA types must be defined or obvious, and CONSTRAINT must state verifiable invariants
+    - BASELINE requires reference, preserve, evolve, and a corresponding EVAL
+    - EVAL with BASELINE requires preserve/evolve thresholds and grading of code, model, or outcome
     - preserve/evolve items in BASELINE should have corresponding examples
     - if DETERMINISM present, level must be valid (strict, structural, semantic)
     - if return type references DATA, examples must conform to that schema
+    - if SIMPLEX present, it must declare a supported language version
+    - stable item identifiers must be document-unique
+    - COVERS references must resolve within their declared scope
+    - declared coverage completeness is reported separately from semantic coverage
 
   DONE_WHEN:
     - structural checks complete
@@ -771,14 +800,15 @@ FUNCTION: validate_spec(spec) → valid | issues
 
   EXAMPLES:
     (complete spec with full coverage) → valid
-    (missing ERRORS landmark) → issues: ["E001: ERRORS required"]
-    (uncovered branch) → issues: ["E020: branch X not covered"]
-    (procedural RULES) → issues: ["E040: RULES should be behavioral"]
-    (non-observable DONE_WHEN) → issues: ["E030: criterion not observable"]
+    (missing ERRORS landmark) → issues: ["E005: ERRORS required"]
+    (uncovered branch) → issues: ["semantic review: branch X not covered"]
+    (procedural RULES) → issues: ["semantic review: RULES should be behavioral"]
+    (non-observable DONE_WHEN) → issues: ["semantic review: criterion not observable"]
     (BASELINE without EVAL) → issues: ["E060: EVAL required when BASELINE present"]
     (EVAL with invalid threshold) → issues: ["E063: preserve threshold must use pass^k notation"]
     (DETERMINISM with invalid level) → issues: ["E070: DETERMINISM level must be strict, structural, or semantic"]
-    (example missing required field from output schema) → issues: ["E081: example output missing required field"]
+    (example missing required field from output schema) → issues: ["schema review: required field missing"]
+    (COVERS target does not resolve) → issues: ["E103: unknown COVERS target"]
 
 CONSTRAINT: self_description
   this specification is parseable by parse_spec
@@ -802,6 +832,10 @@ Write the error handling. At minimum, specify that unhandled conditions fail wit
 
 Add optional landmarks only as needed. A simple function may need nothing beyond the required five. A function that interacts with shared memory or has complex coordination needs benefits from READS, WRITES, TRIGGERS. A function operating in uncertain environments benefits from UNCERTAIN.
 
+Add stable identifiers and COVERS when reviewers or tools need to audit how examples relate to
+requirements. Treat the resulting map as a traceability assertion. Review whether each mapped
+example really exercises its targets; a mechanically complete map can still be semantically weak.
+
 If a specification becomes unwieldy, decompose it. Multiple simple specs are better than one complex spec. If the linter flags complexity errors, that is a signal to break the work into smaller pieces.
 
 Run the linter before considering a specification complete. A passing result means the document satisfies the checks implemented by that linter version. Semantic validity remains a broader requirement and still requires review beyond the current deterministic checks.
@@ -810,7 +844,13 @@ Run the linter before considering a specification complete. A passing result mea
 
 ## Version History
 
-**v0.5** — Current version. Added variance reduction features. Enhanced CONSTRAINT as behavioral anchors with examples of state invariants, output guarantees, and boundary conditions. Added DETERMINISM landmark for explicit control over output consistency (strict/structural/semantic levels, seed specification, vary/stable fields). Strengthened DATA as required output schemas—when a function return type references a DATA block, outputs must conform exactly. Added `not allowed` field annotation and conditional field presence. Added deterministic DETERMINISM-level checks; output-schema validation remains specified but is not implemented. Updated meta-specification and validation for new landmarks.
+**v0.6** — Added optional SIMPLEX language-version declarations, document-wide stable item
+identifiers, the COVERS landmark for example-to-contract traceability, and optional value, error,
+outcome, and property example kinds. Declared coverage is explicitly distinguished from semantic
+coverage proof. A v0.5 document does not need identifiers or COVERS to remain valid. Added deterministic checks for
+version declarations, identifier uniqueness, COVERS reference integrity, and traceability gaps.
+
+**v0.5** — Added variance reduction features. Enhanced CONSTRAINT as behavioral anchors with examples of state invariants, output guarantees, and boundary conditions. Added DETERMINISM landmark for explicit control over output consistency (strict/structural/semantic levels, seed specification, vary/stable fields). Strengthened DATA as required output schemas—when a function return type references a DATA block, outputs must conform exactly. Added `not allowed` field annotation and conditional field presence. Added deterministic DETERMINISM-level checks; output-schema validation remains specified but is not implemented. Updated meta-specification and validation for new landmarks.
 
 *v0.5 variance reduction features address the gap between specification intent and implementation variance. When agents have implementation freedom, outputs can vary in structure, ordering, and detail even when semantically equivalent. These landmarks provide spec authors with tools to constrain variance where consistency matters.*
 
@@ -818,7 +858,7 @@ Run the linter before considering a specification complete. A passing result mea
 
 *v0.4 landmark additions informed by SWE-EVO research [1].*
 
-**v0.3** — Made ERRORS required. Added UNCERTAIN landmark for confidence signaling. Added Validation Criteria section with semantic ambiguity detection. Added Linter Specification. Clarified that composition absence is an intentional research hypothesis. Updated meta-specification for new requirements.
+**v0.3** — Made ERRORS required. Added UNCERTAIN landmark for confidence signaling. Added Validation Criteria section with semantic ambiguity detection. Added Linter Specification and updated the meta-specification for new requirements.
 
 **v0.2** — Established pillars, landmarks, interpretation model, and meta-specification.
 

@@ -1,8 +1,10 @@
 package checks
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/thinkwright/simplex/lint/internal/parser"
 	"github.com/thinkwright/simplex/lint/internal/result"
 )
@@ -511,4 +513,107 @@ ERRORS:
 	if len(r.Errors) > 0 {
 		t.Errorf("Expected no errors for spec without BASELINE/EVAL, got: %v", r.Errors)
 	}
+}
+
+func TestEvolutionChecker_ThresholdsRequirePositiveK(t *testing.T) {
+	tests := []struct {
+		name     string
+		preserve string
+		evolve   string
+		code     string
+	}{
+		{name: "zero preserve threshold", preserve: "pass^0", evolve: "pass@1", code: "E063"},
+		{name: "zero evolve threshold", preserve: "pass^1", evolve: "pass@0", code: "E064"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			spec := fmt.Sprintf(`FUNCTION: evolve() → result
+
+EVAL:
+  preserve: %s
+  evolve: %s
+`, test.preserve, test.evolve)
+			parsed := parser.NewParser().Parse(spec)
+			r := result.NewLintResult("test")
+
+			NewEvolutionChecker().Check(parsed, r)
+
+			found := false
+			for _, issue := range r.Errors {
+				if issue.Code == test.code {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Fatalf("expected %s for preserve=%q evolve=%q, got %v", test.code, test.preserve, test.evolve, r.Errors)
+			}
+		})
+	}
+}
+
+func TestEvolutionChecker_ReportsMissingAndEmptyBaselineFields(t *testing.T) {
+	tests := []struct {
+		name     string
+		baseline string
+		codes    []string
+	}{
+		{
+			name: "missing preserve",
+			baseline: `reference: current
+
+  evolve:
+    - new behavior`,
+			codes: []string{"E051"},
+		},
+		{
+			name: "empty preserve and evolve",
+			baseline: `reference: current
+  preserve:
+
+  evolve:`,
+			codes: []string{"E053", "E054"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			source := `FUNCTION: evolve() → result
+BASELINE:
+  ` + test.baseline + `
+EVAL:
+  preserve: pass^1
+  evolve: pass@1`
+			parsed := parser.NewParser().Parse(source)
+			r := result.NewLintResult("test")
+
+			NewEvolutionChecker().Check(parsed, r)
+
+			for _, code := range test.codes {
+				assert.Contains(t, issueCodes(r.Errors), code)
+			}
+		})
+	}
+}
+
+func TestEvolutionChecker_RequiresThresholdsWithBaseline(t *testing.T) {
+	source := `FUNCTION: evolve() → result
+BASELINE:
+  reference: current
+  preserve:
+    - old behavior
+  evolve:
+    - new behavior
+EVAL:
+  # thresholds intentionally absent
+
+  grading: code`
+	parsed := parser.NewParser().Parse(source)
+	r := result.NewLintResult("test")
+
+	NewEvolutionChecker().Check(parsed, r)
+
+	assert.Contains(t, issueCodes(r.Errors), "E061")
+	assert.Contains(t, issueCodes(r.Errors), "E062")
 }

@@ -249,6 +249,29 @@ ERRORS:
 	assert.True(t, containsWarning(spec.ParseWarnings, "unterminated Simplex fence"))
 }
 
+func TestInputModeFallbacks(t *testing.T) {
+	mode, warnings := resolveInputMode("FUNCTION: f() → result", ParseOptions{})
+	assert.Equal(t, InputModeRaw, mode)
+	assert.Empty(t, warnings)
+
+	mode, warnings = resolveInputMode("FUNCTION: f() → result", ParseOptions{Mode: InputMode("invalid")})
+	assert.Equal(t, InputModeRaw, mode)
+	require.Len(t, warnings, 1)
+	assert.Contains(t, warnings[0], "unrecognized input mode")
+
+	regions, warnings := selectInputRegions("FUNCTION: f() → result", InputMode("invalid"), 1)
+	require.Len(t, regions, 1)
+	assert.Empty(t, warnings)
+}
+
+func TestParseFenceOpeningRejectsShortMarkerAndBacktickInInfo(t *testing.T) {
+	_, ok := parseFenceOpening("``x")
+	assert.False(t, ok)
+
+	_, ok = parseFenceOpening("```simplex`invalid")
+	assert.False(t, ok)
+}
+
 func containsWarning(warnings []string, substring string) bool {
 	for _, warning := range warnings {
 		if strings.Contains(warning, substring) {

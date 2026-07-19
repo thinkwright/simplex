@@ -13,6 +13,14 @@ import (
 	"github.com/thinkwright/simplex/lint/internal/result"
 )
 
+func lintIssueCodes(issues []result.LintError) []string {
+	codes := make([]string, 0, len(issues))
+	for _, issue := range issues {
+		codes = append(codes, issue.Code)
+	}
+	return codes
+}
+
 func TestPublicLinterWithConfig(t *testing.T) {
 	config := lint.Config{
 		MaxRules:  20,
@@ -280,6 +288,15 @@ func TestOutputSingle_Text(t *testing.T) {
 
 func TestOutputSingle_JSON(t *testing.T) {
 	r := result.NewLintResult("test.md")
+	r.SpecificationVersion = "0.6"
+	r.SupportedVersion = "0.6"
+	r.Stats.Traceability = &result.TraceabilityStats{
+		Declared:       true,
+		Links:          2,
+		CoverableItems: 2,
+		CoveredItems:   2,
+		Complete:       true,
+	}
 
 	// Capture stdout
 	old := os.Stdout
@@ -296,6 +313,10 @@ func TestOutputSingle_JSON(t *testing.T) {
 	output := buf.String()
 
 	assert.Contains(t, output, `"file": "test.md"`)
+	assert.Contains(t, output, `"specification_version": "0.6"`)
+	assert.Contains(t, output, `"supported_specification_version": "0.6"`)
+	assert.Contains(t, output, `"traceability": {`)
+	assert.Contains(t, output, `"complete": true`)
 	assert.Contains(t, output, `"valid": true`)
 }
 
@@ -371,6 +392,38 @@ func TestIntegration_ValidComplex(t *testing.T) {
 	assert.True(t, result.Valid)
 	assert.Empty(t, result.Errors)
 	assert.Equal(t, 3, result.Stats.Functions)
+}
+
+func TestIntegration_ValidTraceability(t *testing.T) {
+	content, err := os.ReadFile("../../testdata/valid_traceability.md")
+	require.NoError(t, err)
+
+	linter := lint.DefaultLinter()
+	lintResult := linter.Lint("valid_traceability.md", string(content))
+
+	assert.True(t, lintResult.Valid)
+	assert.Empty(t, lintResult.Errors)
+	assert.Empty(t, lintResult.Warnings)
+	assert.Equal(t, "0.6", lintResult.SpecificationVersion)
+	assert.Equal(t, lint.SupportedSpecVersion, lintResult.SupportedVersion)
+	require.NotNil(t, lintResult.Stats.Traceability)
+	assert.True(t, lintResult.Stats.Traceability.Declared)
+	assert.True(t, lintResult.Stats.Traceability.Complete)
+	assert.Equal(t, 3, lintResult.Stats.Traceability.CoverableItems)
+	assert.Equal(t, 3, lintResult.Stats.Traceability.CoveredItems)
+}
+
+func TestIntegration_InvalidTraceability(t *testing.T) {
+	content, err := os.ReadFile("../../testdata/invalid_traceability.md")
+	require.NoError(t, err)
+
+	linter := lint.DefaultLinter()
+	lintResult := linter.Lint("invalid_traceability.md", string(content))
+
+	assert.False(t, lintResult.Valid)
+	assert.Contains(t, lintIssueCodes(lintResult.Errors), "E103")
+	require.NotNil(t, lintResult.Stats.Traceability)
+	assert.False(t, lintResult.Stats.Traceability.Complete)
 }
 
 func TestIntegration_InvalidMissingErrors(t *testing.T) {

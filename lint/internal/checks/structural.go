@@ -23,7 +23,10 @@ func (c *StructuralChecker) Check(spec *parser.ParsedSpec, r *result.LintResult)
 	if len(spec.Functions) == 0 {
 		return // No point checking function landmarks if no functions exist
 	}
+	c.checkFunctionSignatures(spec, r)
+	c.checkFunctionNames(spec, r)
 	c.checkRequiredLandmarks(spec, r)
+	c.checkDuplicateLandmarks(spec, r)
 	c.checkDataReferences(spec, r)
 }
 
@@ -46,14 +49,20 @@ func (c *StructuralChecker) checkRequiredLandmarks(spec *parser.ParsedSpec, r *r
 
 		if !fn.HasLandmark(parser.LandmarkRULES) {
 			r.AddError("E002", "FUNCTION missing RULES landmark", loc)
+		} else if strings.TrimSpace(fn.GetRules()) == "" {
+			r.AddError("E006", "FUNCTION RULES landmark is empty", loc)
 		}
 
 		if !fn.HasLandmark(parser.LandmarkDONE_WHEN) {
 			r.AddError("E003", "FUNCTION missing DONE_WHEN landmark", loc)
+		} else if strings.TrimSpace(fn.GetDoneWhen()) == "" {
+			r.AddError("E006", "FUNCTION DONE_WHEN landmark is empty", loc)
 		}
 
 		if !fn.HasLandmark(parser.LandmarkEXAMPLES) {
 			r.AddError("E004", "FUNCTION missing EXAMPLES landmark", loc)
+		} else if strings.TrimSpace(fn.GetExamples()) == "" {
+			r.AddError("E006", "FUNCTION EXAMPLES landmark is empty", loc)
 		}
 
 		if !fn.HasLandmark(parser.LandmarkERRORS) {
@@ -64,7 +73,57 @@ func (c *StructuralChecker) checkRequiredLandmarks(spec *parser.ParsedSpec, r *r
 				"Add ERRORS: block with at least: - any unhandled condition → fail with descriptive message",
 				true,
 			)
+		} else if strings.TrimSpace(fn.GetErrors()) == "" {
+			r.AddError("E006", "FUNCTION ERRORS landmark is empty", loc)
 		}
+	}
+}
+
+// checkDuplicateLandmarks rejects repeated function-level landmarks. The parser
+// retains the first block so later checks never silently validate only the last.
+func (c *StructuralChecker) checkDuplicateLandmarks(spec *parser.ParsedSpec, r *result.LintResult) {
+	for _, fn := range spec.Functions {
+		for _, duplicate := range fn.DuplicateLandmarks {
+			r.AddError(
+				"E007",
+				fmt.Sprintf("FUNCTION has duplicate %s landmark", duplicate.Name),
+				fmt.Sprintf("%s, line %d", formatFunctionLocation(fn.Name), duplicate.LineNumber),
+			)
+		}
+	}
+}
+
+// checkFunctionSignatures rejects signatures that the parser could not
+// structurally identify. Previously these silently became an opaque name.
+func (c *StructuralChecker) checkFunctionSignatures(spec *parser.ParsedSpec, r *result.LintResult) {
+	for _, fn := range spec.Functions {
+		if !fn.SignatureParsed {
+			r.AddError(
+				"E008",
+				"FUNCTION signature must use name(inputs) → return type",
+				fmt.Sprintf("line %d", fn.LineNumber),
+			)
+		}
+	}
+}
+
+// checkFunctionNames makes references and diagnostics unambiguous within one
+// document.
+func (c *StructuralChecker) checkFunctionNames(spec *parser.ParsedSpec, r *result.LintResult) {
+	seen := make(map[string]int)
+	for _, fn := range spec.Functions {
+		if !fn.SignatureParsed {
+			continue
+		}
+		if firstLine, exists := seen[fn.Name]; exists {
+			r.AddError(
+				"E009",
+				fmt.Sprintf("duplicate FUNCTION name %q (first declared at line %d)", fn.Name, firstLine),
+				fmt.Sprintf("line %d", fn.LineNumber),
+			)
+			continue
+		}
+		seen[fn.Name] = fn.LineNumber
 	}
 }
 
@@ -104,6 +163,7 @@ func (c *StructuralChecker) checkDataReferences(spec *parser.ParsedSpec, r *resu
 // extractTypeName extracts the type name from DATA block content.
 // DATA content format: "TypeName\n  field: type\n  ..."
 func extractTypeName(content string) string {
+	content = strings.TrimSpace(content)
 	// First line or first word is the type name
 	for i, ch := range content {
 		if ch == '\n' || ch == ' ' || ch == '\t' {

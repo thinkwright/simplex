@@ -28,7 +28,6 @@ func (c *DeterminismChecker) Check(spec *parser.ParsedSpec, r *result.LintResult
 
 // checkDeterminismStructure validates DETERMINISM landmark content.
 // Error E070: DETERMINISM level must be strict, structural, or semantic
-// Error E071: DETERMINISM seed must be a value or "from_input"
 func (c *DeterminismChecker) checkDeterminismStructure(fn parser.FunctionBlock, r *result.LintResult) {
 	content := fn.GetDeterminism()
 	loc := formatFunctionLocation(fn.Name) + " DETERMINISM"

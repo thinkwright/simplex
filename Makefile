@@ -36,10 +36,10 @@ clean:
 	@echo "Cleaning..."
 	rm -rf $(BUILD_DIR)
 
-## release: Create a tagged release (usage: make release VERSION=0.5.0)
+## release: Create a tagged release (usage: make release VERSION=0.6)
 release: test lint build
 	@if [ "$(VERSION)" = "dev" ] || [ -z "$(VERSION)" ]; then \
-		echo "Error: VERSION must be specified (e.g., make release VERSION=0.5.0)"; \
+		echo "Error: VERSION must be specified (e.g., make release VERSION=0.6)"; \
 		exit 1; \
 	fi
 	@echo "Creating release v$(VERSION)..."

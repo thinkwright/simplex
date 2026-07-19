@@ -62,3 +62,38 @@ func TestDefaultLinterRemainsRaw(t *testing.T) {
 	assert.True(t, result.Valid)
 	assert.Empty(t, result.Warnings)
 }
+
+func TestLinterSupportsTraceableV06AndReportsDeclaredCoverage(t *testing.T) {
+	result := DefaultLinter().Lint("traceable.simplex", `SIMPLEX: 0.6
+
+FUNCTION: identity(value) → value
+RULES:
+  - [R1] return value
+DONE_WHEN:
+  - [D1] returned value equals input
+EXAMPLES:
+  - [E1] value: (1) → 1
+COVERS:
+  - E1 → R1, D1
+ERRORS:
+  - [X1] any unhandled condition → fail descriptively`)
+
+	assert.True(t, result.Valid)
+	assert.Equal(t, "0.6", result.SpecificationVersion)
+	assert.Equal(t, SupportedSpecVersion, result.SupportedVersion)
+	assert.Empty(t, result.Errors)
+	assert.Empty(t, result.Warnings)
+	require.NotNil(t, result.Stats.Traceability)
+	assert.True(t, result.Stats.Traceability.Complete)
+}
+
+func TestLinterKeepsUnversionedV05DocumentsBackwardCompatible(t *testing.T) {
+	result := DefaultLinter().Lint("legacy.simplex", validSimplexBlock)
+
+	assert.True(t, result.Valid)
+	assert.Empty(t, result.SpecificationVersion)
+	assert.Equal(t, SupportedSpecVersion, result.SupportedVersion)
+	assert.Nil(t, result.Stats.Traceability)
+	assert.Empty(t, result.Errors)
+	assert.Empty(t, result.Warnings)
+}

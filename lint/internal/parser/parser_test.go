@@ -34,6 +34,7 @@ ERRORS:
 	assert.Equal(t, "add", fn.Name)
 	assert.Equal(t, []string{"a", "b"}, fn.Inputs)
 	assert.Equal(t, "sum", fn.ReturnType)
+	assert.True(t, fn.SignatureParsed)
 
 	assert.True(t, fn.HasLandmark(LandmarkRULES))
 	assert.True(t, fn.HasLandmark(LandmarkDONE_WHEN))
@@ -672,8 +673,52 @@ ERRORS:
 
 	// Name should be the whole content since signature parsing failed
 	assert.Equal(t, "not_a_proper_signature", fn.Name)
+	assert.False(t, fn.SignatureParsed)
 	assert.Empty(t, fn.Inputs)
 	assert.Empty(t, fn.ReturnType)
+}
+
+func TestParser_Parse_SimplexVersionAndCovers(t *testing.T) {
+	input := `SIMPLEX: 0.6
+
+FUNCTION: test() → result
+
+RULES:
+  - [R1] return result
+
+EXAMPLES:
+  - [E1] value: input → result
+
+COVERS:
+  - E1 → R1`
+
+	spec := NewParser().Parse(input)
+
+	require.Len(t, spec.SimplexDeclarations, 1)
+	assert.Equal(t, "0.6", spec.SimplexDeclarations[0].Content)
+	require.Len(t, spec.Functions, 1)
+	assert.True(t, spec.Functions[0].HasLandmark(LandmarkCOVERS))
+	assert.Contains(t, spec.Functions[0].GetCovers(), "E1 → R1")
+	assert.Empty(t, spec.ParseWarnings)
+}
+
+func TestParser_Parse_RetainsFirstDuplicateLandmarkForDiagnostics(t *testing.T) {
+	input := `FUNCTION: test() → result
+
+RULES:
+  - first rule
+
+RULES:
+  - second rule`
+
+	spec := NewParser().Parse(input)
+	require.Len(t, spec.Functions, 1)
+	fn := spec.Functions[0]
+	assert.Contains(t, fn.GetRules(), "first rule")
+	assert.NotContains(t, fn.GetRules(), "second rule")
+	require.Len(t, fn.DuplicateLandmarks, 1)
+	assert.Equal(t, LandmarkRULES, fn.DuplicateLandmarks[0].Name)
+	assert.Contains(t, fn.DuplicateLandmarks[0].Content, "second rule")
 }
 
 func TestParser_Parse_FunctionSignatureOnSeparateLine(t *testing.T) {
@@ -702,6 +747,32 @@ ERRORS:
 	assert.Equal(t, "test", fn.Name)
 	assert.Equal(t, []string{"x", "y"}, fn.Inputs)
 	assert.Equal(t, "result", fn.ReturnType)
+}
+
+func TestFunctionBlockEvolutionDeterminismAndCoversAccessors(t *testing.T) {
+	fn := FunctionBlock{Landmarks: map[string]Landmark{
+		LandmarkBASELINE:    {Name: LandmarkBASELINE, Content: "reference: current"},
+		LandmarkEVAL:        {Name: LandmarkEVAL, Content: "grading: code"},
+		LandmarkDETERMINISM: {Name: LandmarkDETERMINISM, Content: "level: strict"},
+		LandmarkCOVERS:      {Name: LandmarkCOVERS, Content: "E1 → R1"},
+	}}
+
+	assert.Equal(t, "reference: current", fn.GetBaseline())
+	assert.True(t, fn.HasBaseline())
+	assert.Equal(t, "grading: code", fn.GetEval())
+	assert.True(t, fn.HasEval())
+	assert.Equal(t, "level: strict", fn.GetDeterminism())
+	assert.True(t, fn.HasDeterminism())
+	assert.Equal(t, "E1 → R1", fn.GetCovers())
+
+	empty := FunctionBlock{Landmarks: map[string]Landmark{}}
+	assert.Empty(t, empty.GetBaseline())
+	assert.False(t, empty.HasBaseline())
+	assert.Empty(t, empty.GetEval())
+	assert.False(t, empty.HasEval())
+	assert.Empty(t, empty.GetDeterminism())
+	assert.False(t, empty.HasDeterminism())
+	assert.Empty(t, empty.GetCovers())
 }
 
 func TestParser_Parse_LandmarkRegexEdgeCases(t *testing.T) {

@@ -27,19 +27,38 @@ type LintError struct {
 
 // LintStats provides summary statistics for a linted spec.
 type LintStats struct {
-	Functions         int     `json:"functions"`
-	Branches          int     `json:"branches"`
-	Examples          int     `json:"examples"`
-	ExamplesPerBranch float64 `json:"examples_per_branch,omitempty"`
+	Functions         int                `json:"functions"`
+	Branches          int                `json:"branches"`
+	Examples          int                `json:"examples"`
+	ExamplesPerBranch float64            `json:"examples_per_branch,omitempty"`
+	Traceability      *TraceabilityStats `json:"traceability,omitempty"`
+}
+
+// TraceabilityStats summarizes author-declared example-to-contract links. It
+// reports reference completeness, not proof that a mapping is semantically true.
+type TraceabilityStats struct {
+	Declared           bool           `json:"declared"`
+	Identifiers        int            `json:"identifiers"`
+	ExampleIdentifiers int            `json:"example_identifiers"`
+	Links              int            `json:"links"`
+	CoverableItems     int            `json:"coverable_items"`
+	CoveredItems       int            `json:"covered_items"`
+	UncoveredItems     int            `json:"uncovered_items"`
+	UnlabelledItems    int            `json:"unlabelled_items"`
+	UnlinkedExamples   int            `json:"unlinked_examples"`
+	Complete           bool           `json:"complete"`
+	ExampleKinds       map[string]int `json:"example_kinds,omitempty"`
 }
 
 // LintResult represents the complete linting output for a single file.
 type LintResult struct {
-	File     string      `json:"file"`
-	Valid    bool        `json:"valid"`
-	Errors   []LintError `json:"errors"`
-	Warnings []LintError `json:"warnings"`
-	Stats    LintStats   `json:"stats"`
+	File                 string      `json:"file"`
+	SpecificationVersion string      `json:"specification_version,omitempty"`
+	SupportedVersion     string      `json:"supported_specification_version"`
+	Valid                bool        `json:"valid"`
+	Errors               []LintError `json:"errors"`
+	Warnings             []LintError `json:"warnings"`
+	Stats                LintStats   `json:"stats"`
 }
 
 // MultiResult aggregates results from multiple files.
@@ -144,6 +163,33 @@ func (r *LintResult) ToText() string {
 	// Summary
 	summaryColor := color.New(color.Bold)
 	summaryColor.Fprintln(&sb, "SUMMARY:")
+	if r.SupportedVersion != "" {
+		if r.SpecificationVersion == "" {
+			sb.WriteString(fmt.Sprintf("  specification: unspecified (supported through %s)\n", r.SupportedVersion))
+		} else {
+			sb.WriteString(fmt.Sprintf("  specification: %s (supported through %s)\n", r.SpecificationVersion, r.SupportedVersion))
+		}
+	}
+	if trace := r.Stats.Traceability; trace != nil {
+		if !trace.Declared {
+			sb.WriteString(fmt.Sprintf(
+				"  traceability: not declared (%d identifier(s))\n",
+				trace.Identifiers,
+			))
+		} else {
+			status := "incomplete"
+			if trace.Complete {
+				status = "complete"
+			}
+			sb.WriteString(fmt.Sprintf(
+				"  declared traceability: %s (%d/%d items, %d link(s))\n",
+				status,
+				trace.CoveredItems,
+				trace.CoverableItems,
+				trace.Links,
+			))
+		}
+	}
 	sb.WriteString(fmt.Sprintf("  %d error(s), %d warning(s)\n", len(r.Errors), len(r.Warnings)))
 
 	if r.Valid {

@@ -1,647 +1,379 @@
-# Simplex Lint — Design Document
+# Simplex Lint — Design and Implementation
 
-Version 0.2
+Document revision 0.3
 
-**Status:** Partially implemented design document. The current Go linter is deterministic and implements the parser, result model, structural checks, complexity heuristics, BASELINE/EVAL checks, and DETERMINISM-level checks. Sections explicitly marked **planned** describe unimplemented ideas, not available capabilities.
+This document describes the Go linter included in this repository for Simplex v0.6. It records
+implemented behavior and explicit boundaries. The language definition remains
+[`spec/simplex.md`](../spec/simplex.md).
 
----
+## Purpose and boundaries
 
-## Overview
+`simplex-lint` is an offline, deterministic static checker for Simplex documents. It uses a
+tolerant landmark parser and reports errors, warnings, and summary statistics.
 
-Simplex Lint is a deterministic linter for Simplex specification files. It performs structural checks, configurable complexity checks, count-based example/branch heuristics, and validation of selected evolution and determinism fields.
+A result with `valid: true` means that no implemented check produced an error. It does not mean
+that the specification is complete in every semantic sense or that an implementation conforms to
+the specification.
 
-The linter enforces a documented subset of the "enforced simplicity" pillar through concrete, configurable limits. It does not execute examples or perform semantic/LLM validation.
+The linter currently checks:
 
-**Implementation Language:** Go
+- input selection and landmark extraction;
+- required structure and function signatures;
+- configurable rule and input limits;
+- a count-based branch/example heuristic;
+- selected `BASELINE`, `EVAL`, and `DETERMINISM` fields;
+- optional Simplex language-version declarations; and
+- stable identifiers and author-declared `COVERS` traceability.
 
----
-
-## Goals
-
-1. **Check Simplex structure** before specifications are used by autonomous agents
-2. **Catch deterministic errors early** — missing landmarks, complexity violations, and malformed evolution metadata
-3. **Remain offline and reproducible** — current checks require no model or network access
-4. **Integrate with workflows** — human-readable output for interactive use, JSON for CI/CD
-5. **Distribute as one binary** — no runtime dependencies
-
-LLM-backed semantic review was considered for a later phase but is not implemented or exposed by the CLI.
-
----
+It does not execute examples, grade `EVAL` trials, validate outputs against `DATA` schemas, prove
+branch coverage, prove `COVERS` assertions, assess observability or ambiguity, call an LLM, cache
+model results, or modify source files.
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         CLI Interface                            │
-│                         (cmd/simplex-lint/main.go)               │
-└─────────────────────────────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                       Soft Parser                                │
-│                       (internal/parser/)                         │
-│                                                                  │
-│  Input: source text, source name, and input mode                 │
-│  Output: ParsedSpec (landmarks, content, structure)              │
-│                                                                  │
-│  - Identifies landmarks via pattern matching                     │
-│  - Extracts content blocks                                       │
-│  - Associates nested landmarks with parent FUNCTION              │
-│  - Tolerates formatting variation                                │
-└─────────────────────────────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      Check Pipeline                              │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
-│  │   Structural    │  │   Complexity    │  │ Evolution/Det.  │  │
-│  │ (internal/      │  │ (internal/      │  │ (internal/      │  │
-│  │  checks/struct) │  │  checks/complx) │  │  checks/evol,det│  │
-│  │                 │  │                 │  │                 │  │
-│  │  E001: missing  │  │  E010: rules    │  │ E050+: metadata │  │
-│  │  landmarks      │  │  too complex    │  │ E070: det. level│  │
-│  │                 │  │  E011: too many │  │                 │  │
-│  │                 │  │  inputs         │  │                 │  │
-│  │  [Deterministic]│  │  [Deterministic]│  │  [Deterministic]│  │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘  │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                       Result Aggregation                         │
-│                       (internal/result/)                         │
-│                                                                  │
-│  - Collects errors and warnings from all checks                  │
-│  - Determines whether implemented checks passed                  │
-│  - Formats output (human-readable or JSON)                       │
-└─────────────────────────────────────────────────────────────────┘
+```text
+source files or stdin
+        |
+        v
+input-mode selection
+        |
+        v
+tolerant landmark parser
+        |
+        v
+version -> structure -> complexity -> evolution -> determinism -> traceability
+        |
+        v
+result aggregation and text or JSON formatting
 ```
 
----
+The public pipeline is assembled in `lint.go`. The CLI in `cmd/simplex-lint/main.go` reads input,
+constructs the linter configuration, and formats one or more results.
 
-## Design Decisions
+## Input interpretation
 
-| Question | Decision | Rationale |
-|----------|----------|-----------|
-| Multi-file | Yes, `simplex-lint *.md` works | Practical for batch validation |
-| Auto-fix | Not implemented or exposed | Suggestions are reported but files are never modified |
-| Config file | No; use threshold flags | Keep the implemented surface small |
-| IDE/LSP | Post-MVP | Nice to have, not essential |
-| Caching | Not implemented | Deterministic local checks are inexpensive |
+The parser supports four input modes:
 
----
+| Mode | Behavior |
+|---|---|
+| `raw` | Parses the whole source while masking content inside fenced literal blocks |
+| `markdown` | Parses only fenced blocks whose first info word is `simplex` |
+| `extracted` | Parses the caller-provided text as an already extracted Simplex region |
+| `auto` | Uses `extracted` for stdin, `raw` for `.simplex` and other non-Markdown files, and live `simplex` fences for Markdown when present |
 
-## Components
+In `auto` mode, a Markdown file without a live `simplex` fence falls back to raw parsing and emits
+`W001`. An unterminated live fence is parsed through the end of input and also emits `W001`.
 
-### 1. CLI Interface (`cmd/simplex-lint/main.go`)
+The CLI supplies `auto` by default. The Go library's zero-value `Config.InputMode`, including
+`DefaultLinter`, is interpreted as `raw`; callers that want filename-sensitive selection must set
+`InputModeAuto` explicitly.
 
-Entry point for the linter. Built with [Cobra](https://github.com/spf13/cobra).
+Raw mode masks fenced content so examples that contain literal code with words such as `RULES:` do
+not create landmarks. Markdown mode ignores prose and non-Simplex fences.
 
-```
-simplex-lint [OPTIONS] <files...>
+## Parser model
 
-Arguments:
-  <files...>          One or more Simplex spec files (or - for stdin)
+The parser recognizes a landmark with this line-oriented pattern:
 
-Options:
-  --format <fmt>      Output format: text (default), json
-  --input-mode <mode> Input interpretation: auto (default), raw, markdown, extracted
-  --max-rules <n>     Override max RULES items (default: 15)
-  --max-inputs <n>    Override max inputs (default: 6)
-  --version           Show version and exit
-  --help              Show this help and exit
-
-Environment Variables:
-  NO_COLOR            Disable colored text output
-
-Exit Codes:
-  0   All files pass implemented checks (no errors)
-  1   One or more specs invalid (has errors)
-  2   Linter error (could not complete checks)
+```text
+^[ \t]*([A-Z][A-Z_]+):[ \t]*(.*)$
 ```
 
-#### Example Usage
+`[ \t]*` is intentional. It accepts horizontal spacing without allowing an empty landmark to
+consume the next line as same-line content.
 
-```bash
-# Basic usage
-simplex-lint my-spec.md
-
-# Multiple files
-simplex-lint specs/*.md
-
-# JSON output for CI
-simplex-lint --format json my-spec.md
-
-# Parse only fenced blocks labeled simplex
-simplex-lint --input-mode markdown guide.md
-
-# Override complexity limits
-simplex-lint --max-rules 20 --max-inputs 8 my-spec.md
-
-# Pipe from stdin
-cat my-spec.md | simplex-lint -
-```
-
-### 2. Soft Parser (`internal/parser/`)
-
-Extracts structure from spec text without enforcing strict grammar.
-
-#### Data Structures
+The principal internal structures are:
 
 ```go
-// Landmark represents a parsed landmark block
 type Landmark struct {
-    Name       string // e.g., "FUNCTION", "RULES"
-    Content    string // raw content after landmark
-    LineNumber int    // for error reporting
-}
-
-// FunctionBlock represents a parsed FUNCTION with its nested landmarks
-type FunctionBlock struct {
-    Signature  string              // e.g., "filter_policies(policies, ids, tags) → filtered list"
-    Name       string              // e.g., "filter_policies"
-    Inputs     []string            // e.g., ["policies", "ids", "tags"]
-    ReturnType string              // e.g., "filtered list"
-    Landmarks  map[string]Landmark // nested landmarks (RULES, DONE_WHEN, etc.)
+    Name       string
+    Content    string
     LineNumber int
 }
 
-// ParsedSpec represents the fully parsed specification
+type FunctionBlock struct {
+    Signature          string
+    SignatureParsed    bool
+    Name               string
+    Inputs             []string
+    ReturnType         string
+    Landmarks          map[string]Landmark
+    DuplicateLandmarks []Landmark
+    LineNumber         int
+}
+
 type ParsedSpec struct {
-    Functions     []FunctionBlock
-    DataBlocks    []Landmark
-    Constraints   []Landmark
-    RawText       string
-    InputMode     InputMode
-    ParseWarnings []string // non-fatal parse issues
+    SimplexDeclarations []Landmark
+    Functions           []FunctionBlock
+    DataBlocks          []Landmark
+    Constraints         []Landmark
+    RawText             string
+    InputMode           InputMode
+    ParseWarnings       []string
 }
 ```
 
-#### Parsing Strategy
+The parser associates function landmarks with the most recent `FUNCTION` until another function
+or a top-level structural landmark ends that context. For a repeated function-level landmark it
+retains the first block in `Landmarks` and records later blocks in `DuplicateLandmarks`; this lets
+the structural checker report the duplicate without silently changing which content later checks
+inspect.
 
-1. **Input selection**:
-   - `raw`: parse the whole source while shielding fenced literal blocks
-   - `markdown`: parse only fences whose first info word is `simplex`
-   - `extracted`: parse a caller-provided Simplex block
-   - `auto`: use extracted mode for stdin, raw mode for `.simplex`, and labeled-fence Markdown mode when a `.md` file contains a live `simplex` fence; unmarked Markdown falls back to raw mode with a warning
-2. **Landmark detection**: Regex pattern `^[ \t]*([A-Z][A-Z_]+):\s*(.*)$` with multiline flag
-3. **Content extraction**: Everything from a landmark to the next landmark in the same live input region
-4. **Nesting**: Landmarks after FUNCTION are associated with that function until the next FUNCTION or structural landmark; function context can continue across consecutive live Markdown regions
-5. **Tolerance**:
-   - Accept minor spacing variations
-   - Accept indented landmarks
-   - Accept landmarks with trailing whitespace
-   - Accept content with inconsistent indentation
-   - Warn but don't fail on unrecognized landmarks
+Unknown landmarks and function landmarks outside a function become parse warnings. The parser is
+not a formal grammar and does not attempt to interpret the full meaning of prose.
 
-### 3. Structural Checks (`internal/checks/structural.go`)
+## Check pipeline
 
-Deterministic checks for required landmarks.
+Checks run in a fixed order after parsing:
 
-| Code | Check | Severity |
-|------|-------|----------|
-| E001 | No FUNCTION block found | Error |
-| E002 | FUNCTION missing RULES | Error |
-| E003 | FUNCTION missing DONE_WHEN | Error |
-| E004 | FUNCTION missing EXAMPLES | Error |
-| E005 | FUNCTION missing ERRORS | Error |
-| W006 | Return type may reference an undefined DATA type | Warning |
-| W001 | Parser/input warning, including unrecognized landmarks | Warning |
+1. Convert parser and input warnings to `W001`.
+2. Validate the optional language version.
+3. Validate required structure, signatures, duplicate names, and duplicate landmarks.
+4. Apply complexity thresholds and the branch/example count heuristic.
+5. Validate selected `BASELINE` and `EVAL` fields.
+6. Validate the `DETERMINISM.level` field.
+7. Validate stable identifiers and `COVERS` mappings.
+8. Populate function, example, branch, and ratio statistics.
 
-### 4. Complexity Checks (`internal/checks/complexity.go`)
+Errors set `valid` to `false`. Warnings do not affect `valid`.
 
-Deterministic checks for enforced simplicity.
+### Parser and structural diagnostics
 
-| Code | Check | Default Threshold | Severity |
-|------|-------|-------------------|----------|
-| E010 | RULES block has too many items | 15 | Error |
-| E011 | FUNCTION has too many inputs | 6 | Error |
-| E012 | EXAMPLES fewer than branch count | varies | Error |
-| W010 | Single RULES item too long | 200 chars | Warning |
-| W011 | Spec has many FUNCTION blocks | 10 | Warning |
+| Code | Severity | Condition |
+|---|---|---|
+| `W001` | Warning | Parser or input-selection warning |
+| `E001` | Error | No `FUNCTION` block |
+| `E002` | Error | Function missing `RULES` |
+| `E003` | Error | Function missing `DONE_WHEN` |
+| `E004` | Error | Function missing `EXAMPLES` |
+| `E005` | Error | Function missing `ERRORS` |
+| `E006` | Error | A required function landmark is present but empty |
+| `E007` | Error | Duplicate function-level landmark |
+| `E008` | Error | Function signature does not match `name(inputs) -> return type` or the Unicode-arrow equivalent |
+| `E009` | Error | Duplicate parsed function name in one document |
+| `W006` | Warning | A return type may reference an undefined `DATA` type when the document uses `DATA` blocks |
 
-#### Branch Counting Heuristics
+The undefined-type check is deliberately conservative. It recognizes common primitive and generic
+types and only warns when at least one `DATA` block exists.
 
-To check E012, we need to count conditional branches in RULES:
+### Complexity diagnostics
 
-```go
-// CountBranches performs heuristic branch counting on RULES content.
-//
-// Patterns that introduce branches:
-//   - "if X" → 1 branch (implicit else is no-op)
-//   - "if X or Y" → 2 branches
-//   - "if X, otherwise Y" / "if X, else Y" → 2 branches
-//   - "when X" → 1 branch
-//   - "optionally" → 2 branches (with/without)
-//   - "either X or Y" → 2 branches
-//
-// This is a count-based heuristic, not a semantic coverage proof.
-func CountBranches(rulesContent string) int {
-    // Implementation uses regex patterns to identify branch indicators
-}
-```
+| Code | Severity | Default condition |
+|---|---|---|
+| `E010` | Error | More than 15 list items in a `RULES` block |
+| `E011` | Error | More than 6 parsed function inputs |
+| `E012` | Error | Counted examples are fewer than heuristically counted branches |
+| `W010` | Warning | A rule item exceeds 200 characters |
+| `W011` | Warning | A document has more than 10 functions |
 
-### 5. Planned Semantic Checks (Not Implemented)
+`--max-rules` and `--max-inputs` configure the first two thresholds. The rule-length and function
+count thresholds are fixed in the current public configuration.
 
-The following LLM-based checks were considered in the original design. There is no `internal/checks/semantic/` package, provider integration, or CLI support for these checks. No diagnostic codes are reserved for these ideas.
+Branch counting uses lexical indicators such as `if`, `when`, `optionally`, and `either ... or`.
+It assigns at least one branch to a non-empty rule block. Example counting recognizes lines that
+start with `(` or contain `->` or `→`. `E012` is a numerical consistency check; it does not match a
+particular example to a particular branch.
 
-| Code | Check | Description |
-|------|-------|-------------|
-| — | Branch coverage | Every conditional path in RULES has an example |
-| — | Cannot identify branches | RULES structure too ambiguous to analyze |
-| — | Non-observable DONE_WHEN | Completion criteria reference internal state |
-| — | Ambiguous observability | Unclear if criterion is externally checkable |
-| — | Procedural RULES | Rules describe steps instead of outcomes |
-| — | Mixed behavioral/procedural | Some rules behavioral, some procedural |
-| — | Ambiguous interpretation | Examples satisfiable by conflicting implementations |
+### Evolution and determinism diagnostics
 
-#### LLM Prompt Design
+| Code | Severity | Condition |
+|---|---|---|
+| `E050` | Error | `BASELINE` missing `reference` |
+| `E051` | Error | `BASELINE` missing `preserve` |
+| `E052` | Error | `BASELINE` missing `evolve` |
+| `E053` | Error | `BASELINE.preserve` has no list item |
+| `E054` | Error | `BASELINE.evolve` has no list item |
+| `E060` | Error | `BASELINE` present without `EVAL` |
+| `E061` | Error | `EVAL` missing `preserve` while `BASELINE` is present |
+| `E062` | Error | `EVAL` missing `evolve` while `BASELINE` is present |
+| `E063` | Error | `EVAL.preserve` does not use `pass^k` syntax |
+| `E064` | Error | `EVAL.evolve` does not use `pass@k` syntax |
+| `E065` | Error | `EVAL.grading` is not `code`, `model`, or `outcome` |
+| `E070` | Error | `DETERMINISM` lacks a valid `strict`, `structural`, or `semantic` level |
 
-Each semantic check uses a structured prompt:
+The current determinism checker does not validate `seed`, `vary`, or `stable`. The evolution
+checker validates notation; it does not run trials or graders.
 
-```go
-const CoverageCheckPrompt = `You are validating a Simplex specification for branch coverage.
+### Language-version diagnostics
 
-RULES:
-%s
+`SIMPLEX` is optional. Unversioned documents and documents declaring `SIMPLEX: 0.5` remain
+accepted by the v0.6 linter when they do not use an incompatible landmark. The language version is
+separate from the CLI binary version.
 
-EXAMPLES:
-%s
+| Code | Severity | Condition |
+|---|---|---|
+| `E090` | Error | The declaration is missing a single `major.minor` value or contains extra non-comment content |
+| `E091` | Error | The declared version is neither `0.5` nor the supported `0.6` version |
+| `E092` | Error | More than one `SIMPLEX` declaration |
+| `E093` | Error | `COVERS` is used while the document declares `SIMPLEX: 0.5` |
+| `W090` | Warning | `COVERS` is used without a language declaration |
 
-Task:
-1. Identify all conditional branches in the RULES
-2. For each branch, determine if at least one EXAMPLE exercises it
-3. Report any uncovered branches
+An unsupported declaration produces an error rather than being silently treated as the newest
+known semantics. Other deterministic checks still run so one invocation can report additional
+local defects.
 
-Respond in JSON:
-{
-  "branches": [
-    {"description": "...", "covered": true/false, "covering_example": "..." or null}
-  ],
-  "uncovered_count": <int>,
-  "analysis": "brief explanation"
-}`
-```
+### Declared traceability diagnostics
 
-#### Provider Abstraction
+Stable identifiers use `[ID]` prefixes. A valid identifier starts with an ASCII letter and then
+uses ASCII letters, digits, `.`, `_`, or `-`. The linter inventories identifiers in:
 
-```go
-// Provider defines the interface for LLM backends
-type Provider interface {
-    Complete(ctx context.Context, prompt string) (string, error)
-    Name() string
-}
+- document-level `CONSTRAINT` list items;
+- `RULES`, `DONE_WHEN`, `EXAMPLES`, `ERRORS`, `NOT_ALLOWED`, `READS`, `WRITES`, `TRIGGERS`,
+  `HANDOFF`, and `UNCERTAIN` items;
+- list items under `BASELINE.preserve` and `BASELINE.evolve`; and
+- list items under `DETERMINISM.stable` and `DETERMINISM.vary`.
 
-// AnthropicProvider implements Provider for Claude models
-type AnthropicProvider struct {
-    apiKey string
-    model  string // default: "claude-sonnet-4-20250514"
-    client *http.Client
-}
+Identifiers must be document-wide unique even when `COVERS` is absent. When identifiers are
+present without `COVERS`, the linter reports inventory and example-kind counts but does not issue
+coverage-gap warnings.
 
-// OpenAICompatibleProvider implements Provider for OpenAI-compatible APIs
-// Works with OpenAI, GLM, MiniMax, Ollama, and other compatible endpoints
-type OpenAICompatibleProvider struct {
-    apiBase string
-    apiKey  string
-    model   string
-    client  *http.Client
-}
-```
+A `COVERS` row has one source example ID and one or more comma-separated target IDs. Square
+brackets around references are accepted but not required. The source must belong to the same
+function's `EXAMPLES`. A target may belong to the same function's contract or to a document-level
+`CONSTRAINT`; another function's local item is out of scope.
 
-### 6. Result Models (`internal/result/`)
+| Code | Severity | Condition |
+|---|---|---|
+| `E100` | Error | Duplicate stable identifier |
+| `E101` | Error | Empty or malformed `COVERS` content or malformed reference syntax |
+| `E102` | Error | Source does not resolve to an example in the same function |
+| `E103` | Error | Target is unknown or belongs to another function |
+| `E104` | Error | Target resolves to an example rather than a contract item |
+| `E105` | Error | Invalid stable identifier syntax |
+| `W100` | Warning | An identified expected contract item has no declared link |
+| `W101` | Warning | An identified example has no declared link |
+| `W102` | Warning | A traceable item lacks an identifier in a function that declares `COVERS` |
 
-```go
-// LintError represents a single linting issue
-type LintError struct {
-    Code       string  `json:"code"`       // e.g., "E001"
-    Message    string  `json:"message"`    // human-readable
-    Location   string  `json:"location"`   // e.g., "FUNCTION filter_policies" or "line 42"
-    Severity   string  `json:"severity"`   // "error" or "warning"
-    Suggestion *string `json:"suggestion,omitempty"` // optional fix suggestion
-    Fixable    bool    `json:"fixable"`    // suggestion metadata; CLI does not apply fixes
-}
+The catch-all `ERRORS` item containing `any unhandled` is not treated as an expected coverage
+obligation. Identified document-level constraints may be linked, but they are not automatically
+counted as obligations for every function.
 
-// LintStats provides summary statistics
-type LintStats struct {
-    Functions         int     `json:"functions"`
-    Branches          int     `json:"branches"`
-    Examples          int     `json:"examples"`
-    ExamplesPerBranch float64 `json:"examples_per_branch,omitempty"`
-}
+Repeated identical links are counted once. `traceability.complete` means that the implemented
+inventory has no malformed references, uncovered expected items, unlinked examples, or unlabelled
+traceable items in functions that declare `COVERS`. It is a statement about the declared map, not
+proof that the examples exercise the meaning of their targets.
 
-// LintResult represents the complete linting output for a single file
-type LintResult struct {
-    File     string      `json:"file"`
-    Valid    bool        `json:"valid"` // true when implemented checks have no errors
-    Errors   []LintError `json:"errors"`
-    Warnings []LintError `json:"warnings"`
-    Stats    LintStats   `json:"stats"`
-}
+## Result model
 
-// MultiResult aggregates results from multiple files
-type MultiResult struct {
-    Results    []LintResult `json:"results"`
-    TotalValid int          `json:"total_valid"`
-    TotalFiles int          `json:"total_files"`
-}
-
-func (r *LintResult) ToJSON() ([]byte, error)
-func (r *LintResult) ToText() string
-func (r *MultiResult) ToJSON() ([]byte, error)
-func (r *MultiResult) ToText() string
-```
-
-#### Output Formats
-
-**Text (human-readable):**
-
-```
-simplex-lint: my-spec.md
-
-ERRORS:
-  E005 [FUNCTION validate_input] Missing required ERRORS landmark
-  E010 [FUNCTION filter_policies] RULES block has 18 items (max 15)
-  E060 [FUNCTION modernize_auth] EVAL required when BASELINE present
-
-WARNINGS:
-  W010 [FUNCTION validate_input, RULES item 2] Rule exceeds 200 characters
-
-SUMMARY:
-  3 errors, 1 warning
-  Checks FAILED
-```
-
-**JSON (CI/CD):**
+The single-file JSON result has this shape:
 
 ```json
 {
-  "valid": false,
-  "errors": [
-    {
-      "code": "E005",
-      "message": "Missing required ERRORS landmark",
-      "location": "FUNCTION validate_input",
-      "severity": "error",
-      "suggestion": "Add ERRORS: block with at least default error handling"
-    }
-  ],
-  "warnings": [...],
+  "file": "example.simplex",
+  "specification_version": "0.6",
+  "supported_specification_version": "0.6",
+  "valid": true,
+  "errors": [],
+  "warnings": [],
   "stats": {
-    "functions": 2,
-    "branches": 8,
-    "examples": 5,
-    "examples_per_branch": 0.625
+    "functions": 1,
+    "branches": 1,
+    "examples": 1,
+    "examples_per_branch": 1,
+    "traceability": {
+      "declared": true,
+      "identifiers": 3,
+      "example_identifiers": 1,
+      "links": 2,
+      "coverable_items": 2,
+      "covered_items": 2,
+      "uncovered_items": 0,
+      "unlabelled_items": 0,
+      "unlinked_examples": 0,
+      "complete": true,
+      "example_kinds": {"value": 1}
+    }
   }
 }
 ```
 
----
+`specification_version` is omitted from JSON for an unversioned document.
+`supported_specification_version` reports the newest language version understood by the linter.
+`stats.traceability` is omitted when the document contains neither recognized stable identifiers
+nor `COVERS`.
 
-## Planned Caching (Not Implemented)
+`branches`, `examples`, and `examples_per_branch` are heuristic counts. They are not coverage
+measurements. Traceability fields report author-declared links and mechanically detected gaps.
 
-The original design proposed caching for semantic checks. No cache is implemented because the current checks are deterministic and local. The following structure is retained only as historical design context.
+Multiple input files produce a `MultiResult` with the individual results, `total_valid`, and
+`total_files`.
 
-```
-~/.cache/simplex-lint/
-├── v1/                   # cache version (invalidates on breaking changes)
-│   ├── a1b2c3d4e5f6.json # SHA-256 of spec content + model name
-│   └── ...
-└── metadata.json         # cache stats
-```
+## CLI contract
 
-**Cache key**: SHA-256 of `(normalized_spec_content + provider + model)`
+```text
+simplex-lint [OPTIONS] <files...>
 
-**Cache invalidation**:
-- Different linter version (cache version bump)
-- Different LLM model
-- Manual invalidation control (proposed)
-- Cache entry older than 30 days
-
-```go
-// Cache provides semantic check result caching
-type Cache struct {
-    dir     string
-    version string
-}
-
-func (c *Cache) Get(spec string, provider string, model string) (*SemanticResult, bool)
-func (c *Cache) Set(spec string, provider string, model string, result *SemanticResult) error
-func (c *Cache) Clear() error
+Options:
+  --format text|json
+  --input-mode auto|raw|markdown|extracted
+  --max-rules <positive integer>
+  --max-inputs <positive integer>
+  --version
+  --help
 ```
 
----
+With no file argument, or with `-`, the CLI reads stdin. It accepts multiple file paths. `NO_COLOR`
+disables colored text output.
 
-## Testing Strategy
+Exit codes are:
 
-### Unit Tests
+| Code | Meaning |
+|---|---|
+| `0` | Every input has no lint errors |
+| `1` | At least one input has a lint error |
+| `2` | The CLI could not read input, parse an option, or otherwise complete the invocation |
 
-```
-internal/parser/parser_test.go      — landmark extraction, nesting, tolerance
-internal/checks/structural_test.go  — each E00x error code
-internal/checks/complexity_test.go  — each E01x/W01x error code, threshold overrides
-internal/checks/evolution_test.go   — BASELINE and EVAL validation
-internal/result/result_test.go      — output formatting
-```
+The CLI has no provider, model, API-key, cache, semantic-review, or auto-fix flags.
 
-Semantic-check tests do not exist because semantic checks are not implemented.
+## Public Go API
 
-### Integration Tests
+The `lint` package exposes `New`, `DefaultLinter`, and `LintString`, plus aliases for results,
+issues, general statistics, and traceability statistics. `SupportedSpecVersion` exposes the newest
+language version known to the package.
 
-```
-cmd/simplex-lint/main_test.go — public linter pipeline with real fixtures
-```
+`Config` currently accepts `MaxRules`, `MaxInputs`, and `InputMode`. A non-positive rule or input
+value supplied through the Go API leaves the corresponding default in place; the CLI rejects
+non-positive flag values.
 
-Fixture specs in `testdata/`:
-- `valid_minimal.md` — passes all checks
-- `valid_complex.md` — passes implemented checks
-- `invalid_missing_errors.md` — E005
-- `invalid_too_complex.md` — deterministic complexity errors
-- etc.
+## Testing and verification
 
-### Planned LLM Tests (Not Implemented)
+Tests are organized by behavior:
 
-The original design called for mock providers, optional live tests, and golden model outputs. None currently exists.
-
----
-
-## Project Structure
-
-```
-simplex-lint/
-├── lint.go                    # public linter API and canonical check pipeline
-├── cmd/
-│   └── simplex-lint/
-│       ├── main.go           # thin CLI entry point
-│       └── main_test.go
-├── internal/
-│   ├── parser/
-│   │   ├── input.go          # raw, Markdown, extracted, and auto selection
-│   │   ├── input_test.go
-│   │   ├── parser.go         # landmark extraction and organization
-│   │   └── parser_test.go
-│   ├── checks/
-│   │   ├── structural.go     # required landmarks and type-reference warning
-│   │   ├── structural_test.go
-│   │   ├── complexity.go     # limits and branch/example count heuristic
-│   │   ├── complexity_test.go
-│   │   ├── evolution.go      # BASELINE and EVAL checks
-│   │   ├── evolution_test.go
-│   │   └── determinism.go    # DETERMINISM level check
-│   ├── result/
-│   │   ├── result.go         # LintResult, LintError
-│   │   └── result_test.go
-├── testdata/
-│   ├── valid_*.md
-│   └── invalid_*.md
-├── go.mod
-├── go.sum
-├── Makefile
-├── README.md
-└── LICENSE
+```text
+internal/parser/                 input selection and tolerant parsing
+internal/checks/structural_test.go
+internal/checks/complexity_test.go
+internal/checks/evolution_test.go
+internal/checks/determinism_test.go
+internal/checks/version_test.go
+internal/checks/traceability_test.go
+internal/result/result_test.go
+lint_test.go                     public pipeline integration
+cmd/simplex-lint/main_test.go    CLI helpers, output, and fixtures
+testdata/                        valid and invalid documents
 ```
 
----
+From `lint/`:
 
-## Dependencies
-
-```go
-// go.mod
-module github.com/thinkwright/simplex/lint
-
-go 1.22
-
-require (
-    github.com/spf13/cobra v1.8.0      // CLI framework
-    github.com/fatih/color v1.16.0     // colored output
-    github.com/stretchr/testify v1.9.0 // testing assertions
-)
+```bash
+go test ./...
+go test -race ./...
+go vet ./...
+go build ./cmd/simplex-lint
 ```
 
-No external dependencies for HTTP or JSON—using standard library.
+The module Makefile also defines strict local coverage targets: 98 percent for internal packages
+and 90 percent overall. The GitHub Actions workflow currently enforces 85 percent internal and 75
+percent overall. These thresholds are tooling quality controls, not properties of the Simplex
+language.
 
-### Build & Install
+## Distribution
 
-```makefile
-# Makefile
-VERSION := $(shell git describe --tags --always --dirty)
-LDFLAGS := -ldflags "-X main.version=$(VERSION)"
+The linter can be built from `lint/` or installed with:
 
-.PHONY: build install test lint clean
-
-build:
-	go build $(LDFLAGS) -o bin/simplex-lint ./cmd/simplex-lint
-
-install:
-	go install $(LDFLAGS) ./cmd/simplex-lint
-
-test:
-	go test ./...
-
-lint:
-	golangci-lint run
-
-clean:
-	rm -rf bin/
+```bash
+go install github.com/thinkwright/simplex/lint/cmd/simplex-lint@latest
 ```
 
-### Distribution
-
-- **Current:** Build from source or run `go install github.com/thinkwright/simplex/lint/cmd/simplex-lint@latest`.
-- **Not implemented:** Pre-built release binaries and a Homebrew tap.
-
----
-
-## Implementation Phases
-
-### Phase 1: Core Infrastructure
-- [x] Project setup (go.mod, structure, Makefile)
-- [x] CLI with Cobra
-- [x] Soft parser implementation
-- [x] Result models and output formatting (text + JSON)
-- [x] Unit tests for parser
-
-### Phase 2: Deterministic Checks
-- [x] Structural checks (E001-E005, W006)
-- [x] Complexity checks (E010-E012, W010-W011)
-- [x] Branch counting heuristics
-- [x] BASELINE/EVAL checks (E050-E065)
-- [x] DETERMINISM level check (E070)
-- [x] Unit tests for implemented deterministic checks
-- [x] Test fixtures (valid and invalid specs)
-
-### Phase 3: LLM Integration (Not Implemented)
-- [ ] Provider interface
-- [ ] Anthropic provider
-- [ ] OpenAI-compatible provider (for GLM, MiniMax, Ollama)
-- [ ] Mock provider for testing
-- [ ] Caching layer
-
-### Phase 4: Semantic Checks (Not Implemented)
-- [ ] Coverage check
-- [ ] Observability check
-- [ ] Behavioral check
-- [ ] Ambiguity check
-- [ ] Integration tests with mock provider
-- [ ] Optional live tests with real providers
-
-### Phase 5: Auto-fix (Not Implemented)
-- [ ] Fixer infrastructure
-- [ ] Fix E005 (add minimal ERRORS block)
-- [ ] Fix W010 (suggest rule splitting)
-- [ ] Dry-run mode (show what would be fixed)
-
-### Phase 6: Polish
-- [x] Error messages and suggestions
-- [x] README and usage documentation
-- [x] CI/CD setup (GitHub Actions)
-- [ ] Release automation (goreleaser)
-- [ ] Homebrew formula (optional)
-
----
-
-## Future Considerations
-
-These are explicitly out of scope for MVP but worth noting:
-
-1. **IDE/LSP integration** — Real-time linting in VSCode, GoLand, etc. Would require implementing Language Server Protocol.
-
-2. **Configuration file** — If threshold flags become unwieldy in practice, consider `.simplex-lint.yaml`.
-
-3. **Watch mode** — `simplex-lint --watch specs/` for continuous validation during authoring.
-
-4. **Spec generation** — Scaffolding tool to generate spec templates.
-
----
-
-## Appendix: Error Code Reference
-
-| Code | Category | Description |
-|------|----------|-------------|
-| E001 | Structural | No FUNCTION block found |
-| E002 | Structural | FUNCTION missing RULES |
-| E003 | Structural | FUNCTION missing DONE_WHEN |
-| E004 | Structural | FUNCTION missing EXAMPLES |
-| E005 | Structural | FUNCTION missing ERRORS |
-| E010 | Complexity | RULES block exceeds max items |
-| E011 | Complexity | FUNCTION has too many inputs |
-| E012 | Complexity | EXAMPLES fewer than branch count |
-| E050 | Evolution | BASELINE missing reference |
-| E051 | Evolution | BASELINE missing preserve field |
-| E052 | Evolution | BASELINE missing evolve field |
-| E053 | Evolution | BASELINE preserve list is empty |
-| E054 | Evolution | BASELINE evolve list is empty |
-| E060 | Evolution | EVAL required when BASELINE is present |
-| E061 | Evolution | EVAL missing preserve threshold |
-| E062 | Evolution | EVAL missing evolve threshold |
-| E063 | Evolution | Invalid preserve threshold notation |
-| E064 | Evolution | Invalid evolve threshold notation |
-| E065 | Evolution | Invalid grading value |
-| E070 | Determinism | Missing or invalid DETERMINISM level |
-| W001 | Parser | Parse warning or unrecognized landmark |
-| W006 | Structural | Return type may reference undefined DATA |
-| W010 | Complexity | Single RULES item too long |
-| W011 | Complexity | Many FUNCTION blocks in spec |
+This repository does not currently document prebuilt release binaries, a package-manager formula,
+an LSP, or release automation as available features.

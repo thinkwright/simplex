@@ -1,6 +1,7 @@
 package checks
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -175,6 +176,79 @@ ERRORS:
 
 	assert.True(t, r.Valid)
 	assert.Empty(t, r.Errors)
+}
+
+func TestStructuralChecker_E006_EmptyRequiredLandmarks(t *testing.T) {
+	for _, landmark := range []string{"RULES", "DONE_WHEN", "EXAMPLES", "ERRORS"} {
+		t.Run(landmark, func(t *testing.T) {
+			blocks := map[string]string{
+				"RULES":     "  - rule",
+				"DONE_WHEN": "  - done",
+				"EXAMPLES":  "  input → output",
+				"ERRORS":    "  - fail",
+			}
+			blocks[landmark] = ""
+			spec := "FUNCTION: test() → result\n\n" +
+				"RULES:\n" + blocks["RULES"] + "\n\n" +
+				"DONE_WHEN:\n" + blocks["DONE_WHEN"] + "\n\n" +
+				"EXAMPLES:\n" + blocks["EXAMPLES"] + "\n\n" +
+				"ERRORS:\n" + blocks["ERRORS"]
+
+			parsed := parser.NewParser().Parse(spec)
+			r := result.NewLintResult("test.simplex")
+			NewStructuralChecker().Check(parsed, r)
+
+			assert.Contains(t, issueCodes(r.Errors), "E006")
+		})
+	}
+}
+
+func TestStructuralChecker_E007_DuplicateLandmark(t *testing.T) {
+	spec := `FUNCTION: test() → result
+RULES:
+  - first
+RULES:
+  - second
+DONE_WHEN:
+  - done
+EXAMPLES:
+  input → output
+ERRORS:
+  - fail`
+	r := result.NewLintResult("test.simplex")
+	NewStructuralChecker().Check(parser.NewParser().Parse(spec), r)
+	assert.Contains(t, issueCodes(r.Errors), "E007")
+}
+
+func TestStructuralChecker_E008_MalformedSignature(t *testing.T) {
+	spec := `FUNCTION: malformed
+RULES:
+  - rule
+DONE_WHEN:
+  - done
+EXAMPLES:
+  input → output
+ERRORS:
+  - fail`
+	r := result.NewLintResult("test.simplex")
+	NewStructuralChecker().Check(parser.NewParser().Parse(spec), r)
+	assert.Contains(t, issueCodes(r.Errors), "E008")
+}
+
+func TestStructuralChecker_E009_DuplicateFunctionName(t *testing.T) {
+	function := `FUNCTION: same() → result
+RULES:
+  - rule
+DONE_WHEN:
+  - done
+EXAMPLES:
+  input → output
+ERRORS:
+  - fail
+`
+	r := result.NewLintResult("test.simplex")
+	NewStructuralChecker().Check(parser.NewParser().Parse(function+"\n"+function), r)
+	assert.Contains(t, issueCodes(r.Errors), "E009")
 }
 
 func TestStructuralChecker_MultipleFunctions_MixedValidity(t *testing.T) {
@@ -475,6 +549,8 @@ func TestExtractTypeName(t *testing.T) {
 		{"simple type", "SimpleType", "SimpleType"},
 		{"type with space", "Type ", "Type"},
 		{"type with tab", "Type\tfield", "Type"},
+		{"leading whitespace", " Type", "Type"},
+		{"long undelimited content", strings.Repeat("X", 100), ""},
 		{"empty", "", ""},
 	}
 
@@ -498,6 +574,7 @@ func TestNormalizeTypeName(t *testing.T) {
 		{"LIST_OF_THINGS", "things"},
 		{"ArrayOfUser", "user"},
 		{"setofItem", "item"},
+		{"User-1", "user-1"},
 		{"simple", "simple"},
 	}
 
@@ -507,6 +584,23 @@ func TestNormalizeTypeName(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestCheckTypeReferenceSkipsEmptyUnionMembers(t *testing.T) {
+	r := result.NewLintResult("test")
+	spec := &parser.ParsedSpec{
+		DataBlocks: []parser.Landmark{{Name: parser.LandmarkDATA, Content: "User"}},
+	}
+
+	checkTypeReference(
+		"User | | null",
+		map[string]bool{"User": true, "user": true},
+		"lookup",
+		r,
+		spec,
+	)
+
+	assert.Empty(t, r.Warnings)
 }
 
 func TestFormatFunctionLocation(t *testing.T) {

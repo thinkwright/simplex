@@ -1,3 +1,5 @@
+SIMPLEX: 0.6
+
 DATA: Item
   id: string
   name: string
@@ -11,56 +13,80 @@ DATA: Cart
 FUNCTION: add_to_cart(cart, item) → Cart
 
 RULES:
-  - if item already in cart, increase quantity
-  - otherwise add item to cart
-  - recalculate total
+  - [add.R1] if item already in cart, increase quantity
+  - [add.R2] otherwise add item to cart
+  - [add.R3] recalculate total
 
 DONE_WHEN:
-  - item is in cart
-  - total reflects all items
+  - [add.D1] item is in cart
+  - [add.D2] total reflects all items
 
 EXAMPLES:
-  (empty_cart, item_a) → { items: [item_a], total: 10.00 }
-  (cart_with_a, item_a) → { items: [item_a(qty:2)], total: 20.00 }
-  (cart_with_a, item_b) → { items: [item_a, item_b], total: 25.00 }
+  - [add.E1] value: (empty_cart, item_a) → { items: [item_a], total: 10.00 }
+  - [add.E2] value: (cart_with_a, item_a) → { items: [item_a(qty:2)], total: 20.00 }
+  - [add.E3] value: (cart_with_a, item_b) → { items: [item_a, item_b], total: 25.00 }
+  - [add.E4] error: (empty_cart, invalid_item) → "Item must have id, name, and price"
+  - [add.E5] error: (empty_cart, negative_quantity_item) → "Quantity cannot be negative"
 
 ERRORS:
-  - invalid item → "Item must have id, name, and price"
-  - negative quantity → "Quantity cannot be negative"
+  - [add.X1] invalid item → "Item must have id, name, and price"
+  - [add.X2] negative quantity → "Quantity cannot be negative"
+  - any unhandled condition → fail with descriptive message
+
+COVERS:
+  - add.E1 → add.R2, add.R3, add.D1, add.D2
+  - add.E2 → add.R1, add.R3, add.D1, add.D2
+  - add.E3 → add.R2, add.R3, add.D1, add.D2
+  - add.E4 → add.X1
+  - add.E5 → add.X2
 
 
 FUNCTION: remove_from_cart(cart, item_id) → Cart
 
 RULES:
-  - find item by id
-  - remove it from cart
-  - recalculate total
+  - [remove.R1] find item by id
+  - [remove.R2] remove it from cart
+  - [remove.R3] recalculate total
 
 DONE_WHEN:
-  - item no longer in cart
-  - total is updated
+  - [remove.D1] item no longer in cart
+  - [remove.D2] total is updated
 
 EXAMPLES:
-  (cart_with_a_and_b, "a") → { items: [item_b], total: 15.00 }
-  (cart_with_a, "a") → { items: [], total: 0.00 }
-  (empty_cart, "a") → { items: [], total: 0.00 }
+  - [remove.E1] value: (cart_with_a_and_b, "a") → { items: [item_b], total: 15.00 }
+  - [remove.E2] value: (cart_with_a, "a") → { items: [], total: 0.00 }
+  - [remove.E3] value: (empty_cart, "a") → { items: [], total: 0.00 }
 
 ERRORS:
-  - item not found → return cart unchanged (not an error)
+  - [remove.X1] item not found → return cart unchanged (not an error)
+  - any unhandled condition → fail with descriptive message
+
+COVERS:
+  - remove.E1 → remove.R1, remove.R2, remove.R3, remove.D1, remove.D2
+  - remove.E2 → remove.R1, remove.R2, remove.R3, remove.D1, remove.D2
+  - remove.E3 → remove.R1, remove.R3, remove.D1, remove.D2, remove.X1
 
 
 FUNCTION: calculate_total(cart) → number
 
 RULES:
-  - sum price × quantity for all items
+  - [total.R1] sum price × quantity for all items
 
 DONE_WHEN:
-  - total is accurate
+  - [total.D1] total is accurate
 
 EXAMPLES:
-  (empty_cart) → 0.00
-  (cart_with_a) → 10.00
-  (cart_with_a_and_b) → 25.00
+  - [total.E1] value: (empty_cart) → 0.00
+  - [total.E2] value: (cart_with_a) → 10.00
+  - [total.E3] value: (cart_with_a_and_b) → 25.00
+  - [total.E4] value: (invalid_cart) → 0.00
 
 ERRORS:
-  - invalid cart → 0.00
+  - [total.X1] invalid cart → 0.00
+  - any unhandled condition → fail with descriptive message
+
+COVERS:
+  - total.E1 → total.R1, total.D1
+  - total.E2 → total.R1, total.D1
+  - total.E3 → total.R1, total.D1
+  - total.E4 → total.X1

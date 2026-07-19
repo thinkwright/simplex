@@ -12,6 +12,7 @@ import (
 // Known landmark names
 const (
 	// Structural landmarks
+	LandmarkSIMPLEX    = "SIMPLEX"
 	LandmarkDATA       = "DATA"
 	LandmarkCONSTRAINT = "CONSTRAINT"
 	LandmarkFUNCTION   = "FUNCTION"
@@ -22,6 +23,7 @@ const (
 	LandmarkRULES       = "RULES"
 	LandmarkDONE_WHEN   = "DONE_WHEN"
 	LandmarkEXAMPLES    = "EXAMPLES"
+	LandmarkCOVERS      = "COVERS"
 	LandmarkERRORS      = "ERRORS"
 	LandmarkREADS       = "READS"
 	LandmarkWRITES      = "WRITES"
@@ -34,6 +36,7 @@ const (
 
 // StructuralLandmarks are top-level landmarks that define spec structure.
 var StructuralLandmarks = map[string]bool{
+	LandmarkSIMPLEX:    true,
 	LandmarkDATA:       true,
 	LandmarkCONSTRAINT: true,
 	LandmarkFUNCTION:   true,
@@ -46,6 +49,7 @@ var FunctionLandmarks = map[string]bool{
 	LandmarkRULES:       true,
 	LandmarkDONE_WHEN:   true,
 	LandmarkEXAMPLES:    true,
+	LandmarkCOVERS:      true,
 	LandmarkERRORS:      true,
 	LandmarkREADS:       true,
 	LandmarkWRITES:      true,
@@ -75,22 +79,25 @@ type Landmark struct {
 
 // FunctionBlock represents a parsed FUNCTION with its nested landmarks.
 type FunctionBlock struct {
-	Signature  string              // e.g., "filter_policies(policies, ids, tags) → filtered list"
-	Name       string              // e.g., "filter_policies"
-	Inputs     []string            // e.g., ["policies", "ids", "tags"]
-	ReturnType string              // e.g., "filtered list"
-	Landmarks  map[string]Landmark // nested landmarks (RULES, DONE_WHEN, etc.)
-	LineNumber int                 // 1-based line number where FUNCTION starts
+	Signature          string              // e.g., "filter_policies(policies, ids, tags) → filtered list"
+	SignatureParsed    bool                // true when Signature matched the supported tolerant shape
+	Name               string              // e.g., "filter_policies"
+	Inputs             []string            // e.g., ["policies", "ids", "tags"]
+	ReturnType         string              // e.g., "filtered list"
+	Landmarks          map[string]Landmark // first nested landmark of each name
+	DuplicateLandmarks []Landmark          // later landmarks retained for deterministic diagnostics
+	LineNumber         int                 // 1-based line number where FUNCTION starts
 }
 
 // ParsedSpec represents the fully parsed specification.
 type ParsedSpec struct {
-	Functions     []FunctionBlock
-	DataBlocks    []Landmark
-	Constraints   []Landmark
-	RawText       string
-	InputMode     InputMode
-	ParseWarnings []string // non-fatal parse issues
+	SimplexDeclarations []Landmark
+	Functions           []FunctionBlock
+	DataBlocks          []Landmark
+	Constraints         []Landmark
+	RawText             string
+	InputMode           InputMode
+	ParseWarnings       []string // non-fatal parse issues
 }
 
 // landmarkMatch represents a regex match for a landmark.
@@ -117,7 +124,7 @@ func NewParser() *Parser {
 	return &Parser{
 		// Match optionally indented ALL_CAPS landmarks (with underscores), then colon.
 		// Captures: (1) landmark name, (2) rest of line after colon
-		landmarkPattern: regexp.MustCompile(`(?m)^[ \t]*([A-Z][A-Z_]+):\s*(.*)$`),
+		landmarkPattern: regexp.MustCompile(`(?m)^[ \t]*([A-Z][A-Z_]+):[ \t]*(.*)$`),
 		// Match function signature: name(args) → return_type
 		// Handles both → and -> for arrow
 		functionSigPattern: regexp.MustCompile(`^(\w+)\s*\(([^)]*)\)\s*(?:→|->)\s*(.+)$`),
@@ -135,12 +142,13 @@ func (p *Parser) ParseWithOptions(text string, options ParseOptions) *ParsedSpec
 	regions, regionWarnings := selectInputRegions(text, mode, options.startLine())
 
 	spec := &ParsedSpec{
-		Functions:     []FunctionBlock{},
-		DataBlocks:    []Landmark{},
-		Constraints:   []Landmark{},
-		RawText:       text,
-		InputMode:     mode,
-		ParseWarnings: append(modeWarnings, regionWarnings...),
+		SimplexDeclarations: []Landmark{},
+		Functions:           []FunctionBlock{},
+		DataBlocks:          []Landmark{},
+		Constraints:         []Landmark{},
+		RawText:             text,
+		InputMode:           mode,
+		ParseWarnings:       append(modeWarnings, regionWarnings...),
 	}
 
 	// Find all landmark matches
@@ -241,6 +249,10 @@ func (p *Parser) organizeLandmarks(spec *ParsedSpec, landmarks []Landmark) {
 
 	for _, lm := range landmarks {
 		switch {
+		case lm.Name == LandmarkSIMPLEX:
+			spec.SimplexDeclarations = append(spec.SimplexDeclarations, lm)
+			currentFunction = nil
+
 		case lm.Name == LandmarkFUNCTION:
 			// Start a new function block
 			fn := p.parseFunctionBlock(lm)
@@ -258,7 +270,11 @@ func (p *Parser) organizeLandmarks(spec *ParsedSpec, landmarks []Landmark) {
 		case FunctionLandmarks[lm.Name]:
 			// This is a function-level landmark
 			if currentFunction != nil {
-				currentFunction.Landmarks[lm.Name] = lm
+				if _, exists := currentFunction.Landmarks[lm.Name]; exists {
+					currentFunction.DuplicateLandmarks = append(currentFunction.DuplicateLandmarks, lm)
+				} else {
+					currentFunction.Landmarks[lm.Name] = lm
+				}
 			} else {
 				// Function landmark without parent FUNCTION - add warning
 				spec.ParseWarnings = append(spec.ParseWarnings,
@@ -292,6 +308,7 @@ func (p *Parser) parseFunctionBlock(lm Landmark) FunctionBlock {
 
 	matches := p.functionSigPattern.FindStringSubmatch(sigLine)
 	if len(matches) >= 4 {
+		fb.SignatureParsed = true
 		fb.Name = matches[1]
 		fb.ReturnType = strings.TrimSpace(matches[3])
 
@@ -349,6 +366,14 @@ func (fb *FunctionBlock) GetRules() string {
 // GetExamples returns the EXAMPLES landmark content, or empty string if not found.
 func (fb *FunctionBlock) GetExamples() string {
 	if lm := fb.GetLandmark(LandmarkEXAMPLES); lm != nil {
+		return lm.Content
+	}
+	return ""
+}
+
+// GetCovers returns the COVERS landmark content, or empty string if not found.
+func (fb *FunctionBlock) GetCovers() string {
+	if lm := fb.GetLandmark(LandmarkCOVERS); lm != nil {
 		return lm.Content
 	}
 	return ""

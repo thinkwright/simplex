@@ -16,6 +16,14 @@ type Error = result.LintError
 // Stats is summary statistics for a linted spec.
 type Stats = result.LintStats
 
+// TraceabilityStats summarizes declared evidence links without asserting that
+// those links prove semantic coverage.
+type TraceabilityStats = result.TraceabilityStats
+
+// SupportedSpecVersion is the newest Simplex language version understood by
+// this linter library.
+const SupportedSpecVersion = checks.SupportedSpecVersion
+
 // InputMode controls which parts of a source document are linted as Simplex.
 type InputMode string
 
@@ -39,12 +47,14 @@ type Config struct {
 
 // Linter performs linting on Simplex specifications.
 type Linter struct {
-	parser             *parser.Parser
-	structuralChecker  *checks.StructuralChecker
-	complexityChecker  *checks.ComplexityChecker
-	evolutionChecker   *checks.EvolutionChecker
-	determinismChecker *checks.DeterminismChecker
-	config             Config
+	parser              *parser.Parser
+	versionChecker      *checks.VersionChecker
+	structuralChecker   *checks.StructuralChecker
+	complexityChecker   *checks.ComplexityChecker
+	evolutionChecker    *checks.EvolutionChecker
+	determinismChecker  *checks.DeterminismChecker
+	traceabilityChecker *checks.TraceabilityChecker
+	config              Config
 }
 
 // New creates a new Linter with the given configuration.
@@ -58,18 +68,21 @@ func New(config Config) *Linter {
 	}
 
 	return &Linter{
-		parser:             parser.NewParser(),
-		structuralChecker:  checks.NewStructuralChecker(),
-		complexityChecker:  checks.NewComplexityCheckerWithConfig(complexityConfig),
-		evolutionChecker:   checks.NewEvolutionChecker(),
-		determinismChecker: checks.NewDeterminismChecker(),
-		config:             config,
+		parser:              parser.NewParser(),
+		versionChecker:      checks.NewVersionChecker(),
+		structuralChecker:   checks.NewStructuralChecker(),
+		complexityChecker:   checks.NewComplexityCheckerWithConfig(complexityConfig),
+		evolutionChecker:    checks.NewEvolutionChecker(),
+		determinismChecker:  checks.NewDeterminismChecker(),
+		traceabilityChecker: checks.NewTraceabilityChecker(),
+		config:              config,
 	}
 }
 
 // Lint validates a Simplex spec and returns the result.
 func (l *Linter) Lint(name, content string) *Result {
 	r := result.NewLintResult(name)
+	r.SupportedVersion = SupportedSpecVersion
 
 	spec := l.parser.ParseWithOptions(content, parser.ParseOptions{
 		Mode:       parser.InputMode(l.config.InputMode),
@@ -80,10 +93,12 @@ func (l *Linter) Lint(name, content string) *Result {
 		r.AddWarning("W001", w, "parse")
 	}
 
+	r.SpecificationVersion = l.versionChecker.Check(spec, r)
 	l.structuralChecker.Check(spec, r)
 	l.complexityChecker.Check(spec, r)
 	l.evolutionChecker.Check(spec, r)
 	l.determinismChecker.Check(spec, r)
+	l.traceabilityChecker.Check(spec, r)
 
 	r.Stats.Functions = len(spec.Functions)
 	r.Stats.Examples = l.countTotalExamples(spec)

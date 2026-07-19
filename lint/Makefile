@@ -38,7 +38,7 @@ test-cover-internal:
 	@go test -coverprofile=coverage-internal.out -covermode=atomic $(INTERNAL_PACKAGES) > /dev/null 2>&1 || (go test -v $(INTERNAL_PACKAGES) && exit 1)
 	@COVERAGE=$$(go tool cover -func=coverage-internal.out | grep total | awk '{print $$3}' | sed 's/%//'); \
 	echo "Internal packages coverage: $$COVERAGE%"; \
-	if [ $$(echo "$$COVERAGE < $(MIN_INTERNAL_COVERAGE)" | bc -l) -eq 1 ]; then \
+	if awk -v coverage="$$COVERAGE" -v minimum="$(MIN_INTERNAL_COVERAGE)" 'BEGIN { exit (coverage < minimum ? 0 : 1) }'; then \
 		echo "ERROR: Internal coverage $$COVERAGE% is below minimum required $(MIN_INTERNAL_COVERAGE)%"; \
 		echo ""; \
 		echo "Uncovered code in internal packages:"; \
@@ -60,7 +60,7 @@ test-cover-enforce:
 	@go test -coverprofile=coverage.out -covermode=atomic ./... > /dev/null 2>&1 || (go test -v ./... && exit 1)
 	@COVERAGE=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}' | sed 's/%//'); \
 	echo "Overall coverage: $$COVERAGE%"; \
-	if [ $$(echo "$$COVERAGE < $(MIN_COVERAGE)" | bc -l) -eq 1 ]; then \
+	if awk -v coverage="$$COVERAGE" -v minimum="$(MIN_COVERAGE)" 'BEGIN { exit (coverage < minimum ? 0 : 1) }'; then \
 		echo "ERROR: Overall coverage $$COVERAGE% is below minimum required $(MIN_COVERAGE)%"; \
 		echo ""; \
 		echo "Uncovered code:"; \
