@@ -1,0 +1,35 @@
+list_dir() → (empty: '.')
+run_command(python3 --version && python3 -c "import hashlib, json; print…) → exit: 0 (+2 lines)
+write_file(wirecodec/public.py) → wrote 5258 bytes to 'wirecodec/public.py'
+write_file(wirecodec/__init__.py) → wrote 181 bytes to 'wirecodec/__init__.py'
+write_file(verify_wirecodec.py) → wrote 6397 bytes to 'verify_wirecodec.py'
+run_command(python3 verify_wirecodec.py) → exit: 0 (+45 lines)
+run_command(cd /tmp && rm -rf cleancheck && mkdir cleancheck && cd clean…) → exit: 1 (+3 lines)
+run_command(pwd) → exit: 0 (+1 lines)
+run_command(cd /tmp && rm -rf cleancheck && mkdir cleancheck && cd clean…) → exit: 0 (+5 lines)
+run_command(cd /tmp/thinkbench-1475391/wirecodec_reject__simplex-fidelit…) → exit: 0 (+5 lines)
+run_command(cd /tmp/thinkbench-1475391/wirecodec_reject__simplex-fidelit…) → exit: 0 (+11 lines)
+run_command(cd /tmp/thinkbench-1475391/wirecodec_reject__simplex-fidelit…) → exit: 0 (+12 lines)
+
+--- final summary ---
+The task is complete and verified. The `__pycache__` directory is just a regenerated import cache (harmless).
+
+## Summary
+
+I implemented the `wirecodec` package from scratch in an empty project.
+
+**Files created:**
+- `wirecodec/public.py` — the implementation exposing `encode`, `decode`, and `CodecError`.
+- `wirecodec/__init__.py` — re-exports the public API.
+
+**How it satisfies the contract:**
+- **[C1]** Uses only the standard library (`json`, `hashlib`); the digest is SHA-256 (`hashlib.sha256(...).hexdigest()`).
+- **[R1]** `from wirecodec.public import encode, decode, CodecError` works (verified in a clean PYTHONPATH).
+- **[R2]/[X1]** `encode` requires a non-empty string `id` and an integer, non-boolean `value` (explicit `bool` exclusion since `bool` subclasses `int`), never mutates the input, and raises `ValueError` on invalid input (missing/empty/non-string id, missing/bool/float value, non-dict).
+- **[R3]/[V1]** `encode` returns compact JSON with sorted keys `{"checksum","id","value","version"}` at version 2; the checksum is the lowercase SHA-256 hex of the compact, key-sorted JSON of only `{id, value, version}`.
+- **[R4]/[P1]** `decode` accepts a JSON object string, treats absent `version` as 1, and returns a fresh dict `{id, value, version}`.
+- **[R5]/[V2]/[X2]** `decode` validates the version-2 checksum (constant-time compare) and raises `CodecError` for malformed JSON, non-object input, unsupported versions, invalid field types, or checksum mismatch.
+- **[R6]** Any unknown top-level field raises `CodecError` for both version 1 and 2 (so a v1 record carrying `checksum`, or any record with `note`, is rejected).
+- **[R7]** Deterministic output (sorted keys + compact separators + SHA-256) yields byte-for-byte identical strings across repeated calls.
+
+**Verification:** I ran a comprehensive script covering E1–E8 plus edge cases (malformed JSON, non-object JSON, unsupported versions, v1-with-checksum, v2-missing-checksum, negative values, extra encode fields without mutation, invalid decode field types, non-string decode input) — all passed. I also independently confirmed the produced checksum equals `sha256('{"id":"a","value":2,"version":2}')` and that repeated `encode` calls are byte-stable, then removed the temporary script.

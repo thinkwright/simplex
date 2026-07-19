@@ -1,0 +1,43 @@
+SIMPLEX: 0.6
+
+CONSTRAINT: idledger_contract
+  - [C1] balances and command amounts are integer cents and no successful operation may leave a negative balance
+  - [C2] use only the Python standard library
+
+FUNCTION: implement_idledger() → output
+
+RULES:
+  - [R1] create an importable idledger package exposing Ledger, InsufficientFunds, and CommandConflict from idledger.public
+  - [R2] Ledger(initial=None) accepts a mapping of account names to non-negative integer balances; snapshot returns a new account-name-sorted dict
+  - [R3] apply(command) accepts exactly id, account, kind, and amount where kind is credit or debit and amount is a positive integer; a success returns exactly id, account, and resulting balance
+  - [R4] repeating an identical successful command id returns the original result without applying the command again
+  - [R5] reusing a successful command id with different command content raises CommandConflict and leaves the original result and all balances unchanged
+  - [R6] a debit that would make a balance negative raises InsufficientFunds, leaves all state unchanged, and does not consume the command id
+  - [R7] invalid initial state or command structure raises ValueError and leaves all state and command history unchanged
+  - [R8] apply and snapshot are thread-safe; concurrent successful commands are each reflected exactly once
+
+DONE_WHEN:
+  - [D1] the public API imports and can apply a valid command in a clean Python 3.11 environment
+
+EXAMPLES:
+  - [E1] value: Ledger({a: 100}).apply({id: c1, account: a, kind: debit, amount: 40}) → {id: c1, account: a, balance: 60}
+  - [E2] property: applying the same successful command twice → the second result equals the first and the balance changes once
+  - [E3] outcome: reuse c1 with different content → CommandConflict and the original state remains
+  - [E4] error: debit 101 from balance 100 → InsufficientFunds and the command id remains reusable
+  - [E5] error: amount true, zero, or a command with extra fields → ValueError and no state change
+  - [E6] property: concurrent distinct credits → final balance equals the initial balance plus every credit exactly once
+  - [E7] outcome: inspect the idledger package dependencies → every imported dependency is from the Python standard library or idledger itself
+
+ERRORS:
+  - [X1] insufficient funds → raise InsufficientFunds atomically
+  - [X2] invalid initial state or command → raise ValueError atomically
+  - any unhandled condition → fail with descriptive message
+
+COVERS:
+  - E1 → R1, R2, R3, C1, D1
+  - E2 → R4
+  - E3 → R5
+  - E4 → R6, X1
+  - E5 → R7, X2
+  - E6 → R8
+  - E7 → C2

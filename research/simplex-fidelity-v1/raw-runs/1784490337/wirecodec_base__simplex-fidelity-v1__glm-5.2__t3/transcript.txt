@@ -1,0 +1,30 @@
+list_dir() → (empty: '.')
+grep(wirecodec) → (no matches for /wirecodec/)
+write_file(wirecodec/public.py) → wrote 3610 bytes to 'wirecodec/public.py'
+write_file(wirecodec/__init__.py) → wrote 173 bytes to 'wirecodec/__init__.py'
+run_command(cd "$(dirname "$(find . -name public.py -path '*wirecodec*' …) → exit: 0 (+2 lines)
+grep(^\s*(import|from)\s+\S+) → wirecodec/public.py:9:import hashlib (+2 lines)
+run_command(cd "$(dirname "$(find . -name public.py -path '*wirecodec*' …) → exit: 0 (+1 lines)
+
+--- final summary ---
+The implementation is complete and verified. Only standard-library imports (`hashlib`, `json`) are used, plus the internal relative import.
+
+## Summary
+
+I created the `wirecodec` package from scratch in an empty project:
+
+**Files changed:**
+- `wirecodec/public.py` — core implementation exposing `encode`, `decode`, and `CodecError`
+- `wirecodec/__init__.py` — package init re-exporting the public API
+
+**How it satisfies the contract:**
+- **C1**: Only `hashlib` (SHA-256) and `json` from the standard library are imported.
+- **R1**: `encode`, `decode`, `CodecError` are importable from `wirecodec.public` (and re-exported at `wirecodec`).
+- **R2**: `encode` validates that `id` is a non-empty string and `value` is an integer that is not a `bool` (explicit `bool` rejection since `bool` subclasses `int`); it reads via `.get()` and builds new dicts, so the input is never mutated; invalid input raises `ValueError`.
+- **R3**: Output is compact JSON (`separators=(",",":")`, `sort_keys=True`) with keys `checksum`, `id`, `value`, `version` (=2). The checksum is lowercase SHA-256 hex over the compact sorted-key JSON of only `id`, `value`, `version`.
+- **R4**: `decode` parses a JSON object, defaults absent `version` to 1, and returns a fresh `{id, value, version}` dict.
+- **R5**: Version 2 checksum is recomputed and compared before returning; malformed JSON, non-object input, unsupported versions, invalid fields, and checksum mismatches all raise `CodecError`.
+- **R6**: Unknown top-level fields are discarded (the return dict contains only `id`, `value`, `version`) after known-field validation.
+- **R7**: Deterministic `json.dumps` settings guarantee byte-for-byte identical output across repeated calls.
+
+**Verification:** Ran a comprehensive script covering E1–E8 plus edge cases (negative ints, explicit version 1, extra-field discarding, tampered checksum, missing/invalid fields, non-dict input, malformed JSON) — all assertions passed under Python 3.12, and the produced checksum matches an independently computed SHA-256.

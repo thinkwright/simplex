@@ -1,0 +1,34 @@
+list_dir(.) → (empty: '.')
+write_file(tokenquota/__init__.py) → wrote 128 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 249 bytes to 'tokenquota/public.py'
+write_file(tokenquota/_bucket.py) → wrote 3471 bytes to 'tokenquota/_bucket.py'
+run_command(python3 --version && python3 -c "import sys; print(sys.versi…) → exit: 0 (+2 lines)
+run_command(python3 -c "
+from tokenquota import Bucket
+
+# E1: capacity-2…) → exit: 0 (+10 lines)
+run_command(python3 -c "
+from tokenquota import Bucket
+
+class FakeClock:…) → exit: 0 (+10 lines)
+run_command(python3 -c "
+# Verify clean import and stdlib-only deps
+impo…) → exit: 0 (+2 lines)
+
+--- final summary ---
+Everything works. Here's a summary of what I built:
+
+**Files created:**
+- `tokenquota/__init__.py` — package entry, re-exports `Bucket`
+- `tokenquota/public.py` — public API surface, re-exports `Bucket` from `_bucket`
+- `tokenquota/_bucket.py` — implementation
+
+**Implementation highlights:**
+- `Bucket(capacity, refill_per_second, clock=None)` starts full; default clock is `time.monotonic()` (stdlib only).
+- Constructor validates capacity > 0 and refill_per_second ≥ 0, rejecting booleans; raises `ValueError` (R6).
+- `allow(amount=1)` validates amount (positive, non-boolean), refills under a lock, and consumes only if the balance covers it (R2, X1).
+- `_refill_locked` treats negative elapsed as 0, clamps to capacity, and floors the balance to an integer after each positive-time refill (R3, R4).
+- `available()` runs the same refill and returns the balance without consuming (R5).
+- A `threading.Lock` serialises refill+consume so concurrent successful `allow` calls cannot exceed available tokens (R7).
+
+**Verification:** All six examples (E1–E6) pass, plus extra checks for rounding (R4), invalid-amount non-consumption (X1), and backward-clock handling (R3). Only stdlib modules (`threading`, `time`, `typing`) are imported.

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "name": "simplex-fidelity-v1",
+  "status": "frozen-pre-inference",
+  "protocol_date": "2026-07-19",
+  "simplex_version": "0.6",
+  "condition": "simplex-fidelity-v1",
+  "job_seed": 2026071901,
+  "trials": 3,
+  "models": ["glm-5.2", "minimax-m3", "qwen3.7-max"],
+  "inference": {
+    "provider": "together",
+    "base_url": "https://api.together.xyz/v1",
+    "models_config": "models.together.json",
+    "effort_mode": "native",
+    "temperature": 0.3,
+    "parallel": 2,
+    "max_tokens_per_request": 65536,
+    "run_timeout_seconds": 600,
+    "grade_timeout_seconds": 60,
+    "max_agent_attempts": 3,
+    "max_request_attempts": 5,
+    "model_ids": {
+      "glm-5.2": "zai-org/GLM-5.2",
+      "minimax-m3": "MiniMaxAI/MiniMax-M3",
+      "qwen3.7-max": "Qwen/Qwen3.7-Max"
+    }
+  },
+  "revisions": {
+    "simplex": "9b1ad43674a715448141a6f09060c82ce626c9a3",
+    "thinkbench": "06425846016014bee7aade6e4a4ba5b75a321f93"
+  },
+  "families": [
+    {
+      "name": "cursorvault",
+      "mutation_target": "R4",
+      "variants": ["base", "inclusive", "offset"]
+    },
+    {
+      "name": "configweave",
+      "mutation_target": "R4",
+      "variants": ["base", "concat", "union"]
+    },
+    {
+      "name": "idledger",
+      "mutation_target": "R5",
+      "variants": ["base", "firstwins", "lastwins"]
+    },
+    {
+      "name": "tokenquota",
+      "mutation_target": "R4",
+      "variants": ["base", "floor", "ceiling"]
+    },
+    {
+      "name": "wirecodec",
+      "mutation_target": "R6",
+      "variants": ["base", "reject", "preserve"]
+    },
+    {
+      "name": "detreport",
+      "mutation_target": "R5",
+      "variants": ["base", "descending", "firstseen"]
+    }
+  ],
+  "matrix": {
+    "families": 6,
+    "variants_per_family": 3,
+    "tasks": 18,
+    "conditions": 1,
+    "models": 3,
+    "trials": 3,
+    "expected_cells": 162
+  }
+}

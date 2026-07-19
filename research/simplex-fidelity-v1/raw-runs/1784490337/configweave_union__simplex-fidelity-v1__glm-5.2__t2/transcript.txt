@@ -1,0 +1,37 @@
+list_dir() → (empty: '.')
+run_command(python3 --version && python3 -c "import sys; print(sys.execu…) → exit: 0 (+2 lines)
+write_file(configweave/__init__.py) → wrote 114 bytes to 'configweave/__init__.py'
+write_file(configweave/merge.py) → wrote 3710 bytes to 'configweave/merge.py'
+write_file(configweave/public.py) → wrote 117 bytes to 'configweave/public.py'
+write_file(_verify_configweave.py) → wrote 4067 bytes to '_verify_configweave.py'
+run_command(python3 _verify_configweave.py) → exit: 0 (+12 lines)
+grep(^\s*(import|from)\s+) → configweave/public.py:3:from configweave.merge import merge_layers (+1 lines)
+run_command(cd /tmp && python3 -c "
+import sys
+sys.path.insert(0, '/home…) → exit: 1 (+4 lines)
+run_command(ROOT="$(pwd)"; echo "project root: $ROOT"; ls -la configweav…) → exit: 0 (+11 lines)
+run_command(rm -f _verify_configweave.py && rm -rf configweave/__pycache…) → exit: 0 (+3 lines)
+run_command(ROOT="$(pwd)"; cd /tmp && PYTHONPATH="$ROOT" python3 -c "
+fr…) → exit: 0 (+1 lines)
+
+--- final summary ---
+The task is complete and verified.
+
+## Summary
+
+Created the `configweave` package (stdlib-only) with three files:
+
+- **`configweave/__init__.py`** — package marker with a docstring.
+- **`configweave/merge.py`** — the implementation. Imports only `copy` (stdlib). `merge_layers(layers)` validates all layers up front (raising `TypeError` for non-list `layers`, non-dict layers, or any non-string key at any nesting level, including inside list elements), then merges from first to last:
+  - `None` deletes the key at its level (no-op if absent) [R5]
+  - two dicts merge recursively [R3]
+  - two lists concatenate old-then-new keeping the first occurrence of each equality-distinct value [R4]
+  - otherwise the later value replaces [R3/R4]
+  - all values are placed via `_copy_value` (dicts re-merged to honor nested `None` deletions, lists copied element-wise, scalars deep-copied), so the result shares no mutable container with any input and no input is mutated [R6]
+- **`configweave/public.py`** — re-exports `merge_layers` from `configweave.merge` [R1].
+
+## Verification
+- Ran a comprehensive script covering E1–E6, R2–R7, X1, D1: all passed (examples, empty-list→`{}`, recursive merge, list dedup incl. dict-valued elements and within-old dedup, null deletion at nested levels and inside freshly-introduced dicts, deep-copy isolation with mutation checks in both directions, and `TypeError` for every invalid structure confirmed not to mutate inputs).
+- AST-scanned all package imports → only `copy` (stdlib) and `configweave.merge` (self) [C1/E6].
+- Confirmed a clean import from `/tmp` via `PYTHONPATH` works and merges correctly [D1].
+- Removed the temporary verification script and `__pycache__`; final tree contains only the three package files.

@@ -1,0 +1,32 @@
+list_dir() → (empty: '.')
+write_file(idledger/__init__.py) → wrote 203 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 429 bytes to 'idledger/public.py'
+write_file(idledger/ledger.py) → wrote 6421 bytes to 'idledger/ledger.py'
+run_command(python3 --version && python3 -c "import sys; print(sys.versi…) → exit: 0 (+2 lines)
+write_file(verify.py) → wrote 5538 bytes to 'verify.py'
+run_command(python3 verify.py) → exit: 0 (+34 lines)
+run_command(python3 -c "
+import ast, os
+for root, dirs, files in os.walk…) → exit: 0 (+3 lines)
+run_command(python3 -c "
+import sys
+# Simulate a clean import path
+mods_…) → exit: 0 (+3 lines)
+run_command(rm verify.py && ls -la idledger/) → exit: 0 (+7 lines)
+
+--- final summary ---
+Done.
+
+**Files created:**
+- `idledger/__init__.py` — package entry, re-exports the public API.
+- `idledger/public.py` — exposes `Ledger`, `InsufficientFunds`, `CommandConflict`.
+- `idledger/ledger.py` — the `Ledger` implementation.
+
+**Implementation notes:**
+- Uses only `threading.RLock` from the stdlib (C2, E7).
+- `Ledger(initial)` validates the mapping up front and raises `ValueError` on any bad entry (R7); balances are stored as ints and never go negative (C1).
+- `apply(command)` validates structure first (raises `ValueError` without touching state), then takes the lock. Idempotent replay returns the original result (R4). On conflict it reverses the original, attempts the replacement, and rolls back if the replacement raises `InsufficientFunds` (R5). A debit that would go negative raises `InsufficientFunds` and leaves state/history untouched, so the id is reusable (R6).
+- `snapshot()` returns a fresh account-name-sorted dict (R2).
+- All state mutation happens under `RLock`; the concurrent-credits test (200 threads) confirmed each credit is applied exactly once (R8, E6).
+
+**Verification:** Ran a 30-check script covering E1–E7, R1–R8, C1, X1, X2, and D1 — all passed.

@@ -1,0 +1,22 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/__init__.py) → wrote 146 bytes to 'cursorvault/__init__.py'
+write_file(cursorvault/public.py) → wrote 2083 bytes to 'cursorvault/public.py'
+run_command(cd /home/user && python3 -c "
+from cursorvault import pagina…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from cursorvault import paginate, CursorError
+
+…) → exit: 0 (+9 lines)
+
+--- final summary ---
+All tests passed successfully. The implementation correctly handles:
+
+- **E1**: Basic pagination returns correct items, next_cursor, and has_more
+- **E2**: Cursor-based pagination starts from the correct position
+- **E3**: Invalid limits (0, True) raise ValueError
+- **E4**: Records remain unchanged after pagination
+- **E5**: Invalid cursor raises CursorError
+- **Empty input**: Returns empty terminal page
+- **R6**: Repeated calls with same inputs return equal results
+
+The cursorvault package is complete and working as specified.

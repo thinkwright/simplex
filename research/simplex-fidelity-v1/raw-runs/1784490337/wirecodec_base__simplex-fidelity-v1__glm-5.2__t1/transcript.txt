@@ -1,0 +1,26 @@
+list_dir() → (empty: '.')
+run_command(python3 --version && python3 -c "import hashlib, json; print…) → exit: 0 (+2 lines)
+write_file(wirecodec/__init__.py) → wrote 347 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 4790 bytes to 'wirecodec/public.py'
+run_command(cd /tmp 2>/dev/null; cd ~ 2>/dev/null; cd - >/dev/null 2>&1;…) → exit: 1 (+3 lines)
+run_command(pwd && ls -la && find . -name "*.py" 2>/dev/null) → exit: 0 (+7 lines)
+run_command(python3 - <<'PY'
+import sys, hashlib, json, copy, os
+
+# --- …) → exit: 0 (+13 lines)
+run_command(cd /tmp/thinkbench-1475391/wirecodec_base__simplex-fidelity-…) → exit: 0 (+4 lines)
+
+--- final summary ---
+Done. The `wirecodec` package is implemented and verified.
+
+## Files changed
+- **`wirecodec/__init__.py`** — re-exports `encode`, `decode`, `CodecError` from `wirecodec.public` (stable public surface, R1/P2).
+- **`wirecodec/public.py`** — implements the codec using only `hashlib` (SHA-256) and `json` from the standard library (C1/E8).
+
+## How it satisfies the contract
+- **encode** (R2/R3/V1/R7): requires a dict with exactly `id` (non-empty string) and `value` (int, not bool — bool rejected explicitly since it subclasses `int`); raises `ValueError` on invalid input without mutating it; returns compact, key-sorted JSON with `checksum`, `id`, `value`, `version` where `checksum` is the lowercase SHA-256 hex over the canonical sorted JSON of only `id`/`value`/`version`. Deterministic across calls.
+- **decode** (R4/R5/R6/V2/P1): parses a JSON object string (absent `version` → 1), validates known fields, validates the v2 checksum, discards unknown top-level fields, and returns a fresh `{id, value, version}` dict. Raises `CodecError` for malformed JSON, non-objects, unsupported/invalid versions, invalid fields, and checksum mismatch.
+- **CodecError** is the single error type for all wire-input failures (X2); `ValueError` for encode-input failures (X1).
+
+## Verification
+Ran a comprehensive script covering E1–E8, R1–R7, C1, X1/X2, round-trips, and v1/v2 unknown-field discarding — all passed. Confirmed only stdlib imports (`hashlib`, `json`), a 64-char SHA-256 hex checksum, byte-for-byte determinism with no input mutation, and a clean-subprocess import+encode (D1).

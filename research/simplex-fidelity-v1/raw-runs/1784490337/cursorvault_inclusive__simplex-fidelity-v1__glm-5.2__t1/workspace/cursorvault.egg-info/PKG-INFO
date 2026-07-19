@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: cursorvault
+Version: 0.1.0
+Summary: Cursor-based pagination utilities using only the Python standard library.
+Requires-Python: >=3.11

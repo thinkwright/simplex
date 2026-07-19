@@ -1,0 +1,1913 @@
+{
+  "schema_version": 1,
+  "variants": [
+    {
+      "base": true,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "R4",
+            "R5",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R4",
+            "R5"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R3",
+            "X1"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R4",
+            "X2"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "C1"
+          ],
+          "id": "E6"
+        }
+      ],
+      "family": "cursorvault",
+      "mode": "exclusive",
+      "mutation_target": "R4",
+      "prompt": "prompt-pack/prompts/cursorvault_base.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        },
+        {
+          "id": "X2",
+          "role": "ERRORS"
+        }
+      ],
+      "task": "cursorvault_base",
+      "variant": "base"
+    },
+    {
+      "base": false,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "R4",
+            "R5",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R4",
+            "R5"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R3",
+            "X1"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R4",
+            "X2"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "C1"
+          ],
+          "id": "E6"
+        }
+      ],
+      "family": "cursorvault",
+      "mode": "inclusive",
+      "mutation_target": "R4",
+      "prompt": "prompt-pack/prompts/cursorvault_inclusive.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        },
+        {
+          "id": "X2",
+          "role": "ERRORS"
+        }
+      ],
+      "task": "cursorvault_inclusive",
+      "variant": "inclusive"
+    },
+    {
+      "base": false,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "R4",
+            "R5",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R4",
+            "R5"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R3",
+            "X1"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R4",
+            "X2"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "C1"
+          ],
+          "id": "E6"
+        }
+      ],
+      "family": "cursorvault",
+      "mode": "offset",
+      "mutation_target": "R4",
+      "prompt": "prompt-pack/prompts/cursorvault_offset.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        },
+        {
+          "id": "X2",
+          "role": "ERRORS"
+        }
+      ],
+      "task": "cursorvault_offset",
+      "variant": "offset"
+    },
+    {
+      "base": true,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "R3",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R4"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R5"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R7",
+            "X1"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "C1"
+          ],
+          "id": "E6"
+        }
+      ],
+      "family": "configweave",
+      "mode": "replace",
+      "mutation_target": "R4",
+      "prompt": "prompt-pack/prompts/configweave_base.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        }
+      ],
+      "task": "configweave_base",
+      "variant": "base"
+    },
+    {
+      "base": false,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "R3",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R4"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R5"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R7",
+            "X1"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "C1"
+          ],
+          "id": "E6"
+        }
+      ],
+      "family": "configweave",
+      "mode": "concat",
+      "mutation_target": "R4",
+      "prompt": "prompt-pack/prompts/configweave_concat.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        }
+      ],
+      "task": "configweave_concat",
+      "variant": "concat"
+    },
+    {
+      "base": false,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "R3",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R4"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R5"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R7",
+            "X1"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "C1"
+          ],
+          "id": "E6"
+        }
+      ],
+      "family": "configweave",
+      "mode": "union",
+      "mutation_target": "R4",
+      "prompt": "prompt-pack/prompts/configweave_union.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        }
+      ],
+      "task": "configweave_union",
+      "variant": "union"
+    },
+    {
+      "base": true,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "R3",
+            "C1",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R4"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R5"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6",
+            "X1"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R7",
+            "X2"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "R8"
+          ],
+          "id": "E6"
+        },
+        {
+          "covers": [
+            "C2"
+          ],
+          "id": "E7"
+        }
+      ],
+      "family": "idledger",
+      "mode": "conflict",
+      "mutation_target": "R5",
+      "prompt": "prompt-pack/prompts/idledger_base.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "C2",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "R8",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        },
+        {
+          "id": "X2",
+          "role": "ERRORS"
+        }
+      ],
+      "task": "idledger_base",
+      "variant": "base"
+    },
+    {
+      "base": false,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "R3",
+            "C1",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R4"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R5"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6",
+            "X1"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R7",
+            "X2"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "R8"
+          ],
+          "id": "E6"
+        },
+        {
+          "covers": [
+            "C2"
+          ],
+          "id": "E7"
+        }
+      ],
+      "family": "idledger",
+      "mode": "firstwins",
+      "mutation_target": "R5",
+      "prompt": "prompt-pack/prompts/idledger_firstwins.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "C2",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "R8",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        },
+        {
+          "id": "X2",
+          "role": "ERRORS"
+        }
+      ],
+      "task": "idledger_firstwins",
+      "variant": "firstwins"
+    },
+    {
+      "base": false,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "R3",
+            "C1",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R4"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R5"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6",
+            "X1"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R7",
+            "X2"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "R8"
+          ],
+          "id": "E6"
+        },
+        {
+          "covers": [
+            "C2"
+          ],
+          "id": "E7"
+        }
+      ],
+      "family": "idledger",
+      "mode": "lastwins",
+      "mutation_target": "R5",
+      "prompt": "prompt-pack/prompts/idledger_lastwins.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "C2",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "R8",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        },
+        {
+          "id": "X2",
+          "role": "ERRORS"
+        }
+      ],
+      "task": "idledger_lastwins",
+      "variant": "lastwins"
+    },
+    {
+      "base": true,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R3"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6",
+            "X1"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R7"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "C1",
+            "R3"
+          ],
+          "id": "E6"
+        }
+      ],
+      "family": "tokenquota",
+      "mode": "exact",
+      "mutation_target": "R4",
+      "prompt": "prompt-pack/prompts/tokenquota_base.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        }
+      ],
+      "task": "tokenquota_base",
+      "variant": "base"
+    },
+    {
+      "base": false,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R3"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6",
+            "X1"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R7"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "C1",
+            "R3"
+          ],
+          "id": "E6"
+        }
+      ],
+      "family": "tokenquota",
+      "mode": "floor",
+      "mutation_target": "R4",
+      "prompt": "prompt-pack/prompts/tokenquota_floor.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        }
+      ],
+      "task": "tokenquota_floor",
+      "variant": "floor"
+    },
+    {
+      "base": false,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R3",
+            "R4",
+            "R5"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R3"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6",
+            "X1"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R7"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "C1",
+            "R3"
+          ],
+          "id": "E6"
+        }
+      ],
+      "family": "tokenquota",
+      "mode": "ceiling",
+      "mutation_target": "R4",
+      "prompt": "prompt-pack/prompts/tokenquota_ceiling.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        }
+      ],
+      "task": "tokenquota_ceiling",
+      "variant": "ceiling"
+    },
+    {
+      "base": true,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "R3",
+            "V1",
+            "P2",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R4",
+            "P1"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R3",
+            "R4",
+            "R5",
+            "V2"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R5",
+            "X2"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "R2",
+            "R7"
+          ],
+          "id": "E6"
+        },
+        {
+          "covers": [
+            "R2",
+            "X1"
+          ],
+          "id": "E7"
+        },
+        {
+          "covers": [
+            "C1"
+          ],
+          "id": "E8"
+        }
+      ],
+      "family": "wirecodec",
+      "mode": "discard",
+      "mutation_target": "R6",
+      "prompt": "prompt-pack/prompts/wirecodec_base.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        },
+        {
+          "id": "X2",
+          "role": "ERRORS"
+        },
+        {
+          "id": "P1",
+          "role": "BASELINE.preserve"
+        },
+        {
+          "id": "P2",
+          "role": "BASELINE.preserve"
+        },
+        {
+          "id": "V1",
+          "role": "BASELINE.evolve"
+        },
+        {
+          "id": "V2",
+          "role": "BASELINE.evolve"
+        }
+      ],
+      "task": "wirecodec_base",
+      "variant": "base"
+    },
+    {
+      "base": false,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "R3",
+            "V1",
+            "P2",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R4",
+            "P1"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R3",
+            "R4",
+            "R5",
+            "V2"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R5",
+            "X2"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "R2",
+            "R7"
+          ],
+          "id": "E6"
+        },
+        {
+          "covers": [
+            "R2",
+            "X1"
+          ],
+          "id": "E7"
+        },
+        {
+          "covers": [
+            "C1"
+          ],
+          "id": "E8"
+        }
+      ],
+      "family": "wirecodec",
+      "mode": "reject",
+      "mutation_target": "R6",
+      "prompt": "prompt-pack/prompts/wirecodec_reject.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        },
+        {
+          "id": "X2",
+          "role": "ERRORS"
+        },
+        {
+          "id": "P1",
+          "role": "BASELINE.preserve"
+        },
+        {
+          "id": "P2",
+          "role": "BASELINE.preserve"
+        },
+        {
+          "id": "V1",
+          "role": "BASELINE.evolve"
+        },
+        {
+          "id": "V2",
+          "role": "BASELINE.evolve"
+        }
+      ],
+      "task": "wirecodec_reject",
+      "variant": "reject"
+    },
+    {
+      "base": false,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R2",
+            "R3",
+            "V1",
+            "P2",
+            "D1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R4",
+            "P1"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R3",
+            "R4",
+            "R5",
+            "V2"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R6"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R5",
+            "X2"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "R2",
+            "R7"
+          ],
+          "id": "E6"
+        },
+        {
+          "covers": [
+            "R2",
+            "X1"
+          ],
+          "id": "E7"
+        },
+        {
+          "covers": [
+            "C1"
+          ],
+          "id": "E8"
+        }
+      ],
+      "family": "wirecodec",
+      "mode": "preserve",
+      "mutation_target": "R6",
+      "prompt": "prompt-pack/prompts/wirecodec_preserve.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        },
+        {
+          "id": "X2",
+          "role": "ERRORS"
+        },
+        {
+          "id": "P1",
+          "role": "BASELINE.preserve"
+        },
+        {
+          "id": "P2",
+          "role": "BASELINE.preserve"
+        },
+        {
+          "id": "V1",
+          "role": "BASELINE.evolve"
+        },
+        {
+          "id": "V2",
+          "role": "BASELINE.evolve"
+        }
+      ],
+      "task": "wirecodec_preserve",
+      "variant": "preserve"
+    },
+    {
+      "base": true,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R3",
+            "R4",
+            "R6",
+            "D1",
+            "C1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R5"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R4"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R2",
+            "X1"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R6",
+            "S1"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "R7"
+          ],
+          "id": "E6"
+        },
+        {
+          "covers": [
+            "C1"
+          ],
+          "id": "E7"
+        }
+      ],
+      "family": "detreport",
+      "mode": "ascending",
+      "mutation_target": "R5",
+      "prompt": "prompt-pack/prompts/detreport_base.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        },
+        {
+          "id": "S1",
+          "role": "DETERMINISM.stable"
+        }
+      ],
+      "task": "detreport_base",
+      "variant": "base"
+    },
+    {
+      "base": false,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R3",
+            "R4",
+            "R6",
+            "D1",
+            "C1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R5"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R4"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R2",
+            "X1"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R6",
+            "S1"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "R7"
+          ],
+          "id": "E6"
+        },
+        {
+          "covers": [
+            "C1"
+          ],
+          "id": "E7"
+        }
+      ],
+      "family": "detreport",
+      "mode": "descending",
+      "mutation_target": "R5",
+      "prompt": "prompt-pack/prompts/detreport_descending.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        },
+        {
+          "id": "S1",
+          "role": "DETERMINISM.stable"
+        }
+      ],
+      "task": "detreport_descending",
+      "variant": "descending"
+    },
+    {
+      "base": false,
+      "examples": [
+        {
+          "covers": [
+            "R1",
+            "R3",
+            "R4",
+            "R6",
+            "D1",
+            "C1"
+          ],
+          "id": "E1"
+        },
+        {
+          "covers": [
+            "R5"
+          ],
+          "id": "E2"
+        },
+        {
+          "covers": [
+            "R4"
+          ],
+          "id": "E3"
+        },
+        {
+          "covers": [
+            "R2",
+            "X1"
+          ],
+          "id": "E4"
+        },
+        {
+          "covers": [
+            "R6",
+            "S1"
+          ],
+          "id": "E5"
+        },
+        {
+          "covers": [
+            "R7"
+          ],
+          "id": "E6"
+        },
+        {
+          "covers": [
+            "C1"
+          ],
+          "id": "E7"
+        }
+      ],
+      "family": "detreport",
+      "mode": "firstseen",
+      "mutation_target": "R5",
+      "prompt": "prompt-pack/prompts/detreport_firstseen.simplex",
+      "requirements": [
+        {
+          "id": "C1",
+          "role": "CONSTRAINT"
+        },
+        {
+          "id": "R1",
+          "role": "RULES"
+        },
+        {
+          "id": "R2",
+          "role": "RULES"
+        },
+        {
+          "id": "R3",
+          "role": "RULES"
+        },
+        {
+          "id": "R4",
+          "role": "RULES"
+        },
+        {
+          "id": "R5",
+          "role": "RULES"
+        },
+        {
+          "id": "R6",
+          "role": "RULES"
+        },
+        {
+          "id": "R7",
+          "role": "RULES"
+        },
+        {
+          "id": "D1",
+          "role": "DONE_WHEN"
+        },
+        {
+          "id": "X1",
+          "role": "ERRORS"
+        },
+        {
+          "id": "S1",
+          "role": "DETERMINISM.stable"
+        }
+      ],
+      "task": "detreport_firstseen",
+      "variant": "firstseen"
+    }
+  ]
+}

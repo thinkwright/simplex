@@ -1,0 +1,28 @@
+list_dir() → (empty: '.')
+write_file(tokenquota/__init__.py) → wrote 173 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 3898 bytes to 'tokenquota/public.py'
+write_file(pyproject.toml) → wrote 335 bytes to 'pyproject.toml'
+run_command(python3 --version && python3 - <<'PY'
+import threading
+from …) → exit: 0 (+9 lines)
+run_command(python3 -m py_compile tokenquota/__init__.py tokenquota/publ…) → exit: 0 (+4 lines)
+
+--- final summary ---
+## Summary
+
+Created the `tokenquota` package with a thread-safe token bucket implementation using only the Python standard library.
+
+**Files changed:**
+- `tokenquota/__init__.py` — re-exports `Bucket` from `tokenquota.public`
+- `tokenquota/public.py` — implements `Bucket(capacity, refill_per_second, clock=None)` with `allow(amount=1)` and `available()`
+- `pyproject.toml` — minimal packaging metadata (no external dependencies)
+
+**Key implementation points:**
+- Bucket starts full; uses a supplied `clock` callable (defaults to `time.monotonic`) for all elapsed-time decisions
+- `allow` refills first, consumes only when enough tokens exist, otherwise returns `False` without consuming
+- Refill adds `elapsed * refill_per_second`, caps at `capacity`, treats backward clock movement as zero elapsed time, and preserves fractional tokens exactly (no rounding)
+- `available()` performs the same refill and returns the balance without consuming
+- Validation raises `ValueError` for non-positive `capacity`, negative `refill_per_second`, and non-positive or boolean `amount` (without consuming tokens)
+- Thread safety via a `threading.Lock` around refill/consume
+
+**Verification:** Ran a single script covering E1–E6 plus extras (fractional preservation, default clock). All assertions passed: two successful `allow(1)` then failure for a capacity-2 bucket; `available() == 1.5` after 3s at 0.5/s; capacity cap and backward-clock safety; `ValueError` for capacity 0, negative refill, and `allow(True)`; exactly N successes under 200 concurrent `allow(1)` calls against a capacity-N no-refill bucket; and fake-clock control with only `threading`/`time` standard-library imports. `py_compile` also succeeded.

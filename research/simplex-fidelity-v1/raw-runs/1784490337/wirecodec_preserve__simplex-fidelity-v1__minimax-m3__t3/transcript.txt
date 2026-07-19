@@ -1,0 +1,34 @@
+list_dir() → (empty: '.')
+write_file(wirecodec/__init__.py) → wrote 193 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 146 bytes to 'wirecodec/public.py'
+write_file(wirecodec/_codec.py) → wrote 5253 bytes to 'wirecodec/_codec.py'
+run_command(python3 --version && python3 -c "import sys; print(sys.versi…) → exit: 0 (+2 lines)
+run_command(python3 -c "
+import json, hashlib
+
+# E1: encode({id: a, valu…) → exit: 0 (+17 lines)
+run_command(python3 -c "
+import json
+from wirecodec import encode, decod…) → exit: 0 (+12 lines)
+run_command(python3 -c "
+# P2: public encode, decode, CodecError imports…) → exit: 0 (+4 lines)
+
+--- final summary ---
+All requirements satisfied. Here's a summary of what was implemented:
+
+**Files created:**
+- `wirecodec/__init__.py` — package entry, re-exports `encode`, `decode`, `CodecError`
+- `wirecodec/public.py` — public API surface, re-exports from `_codec`
+- `wirecodec/_codec.py` — implementation
+
+**How each rule is satisfied:**
+- **C1**: Only `copy`, `hashlib`, `json` from stdlib; SHA-256 via `hashlib.sha256`
+- **R1**: `wirecodec.public` exposes `encode`, `decode`, `CodecError`
+- **R2**: `_validate_record` enforces non-empty string `id` and integer non-boolean `value`; `encode` deep-copies input so the caller's record is never mutated; raises `ValueError` on invalid input
+- **R3**: Output is compact JSON with sorted keys containing `version=2`, `id`, `value`, `checksum`; checksum is lowercase SHA-256 hex over compact sorted JSON of `{id, value, version}` only
+- **R4**: `decode` parses JSON object, treats absent `version` as 1, returns dict with `id`, `value`, `version`
+- **R5**: Version 2 checksum is recomputed and compared; `CodecError` raised for malformed JSON, unsupported versions, invalid fields, or checksum mismatch
+- **R6**: Unknown top-level fields (excluding `checksum`) are collected into `extras`; `extras` key is omitted when empty
+- **R7**: Deterministic encoding — same input always produces byte-identical output (verified across 3 repeated calls)
+
+**Verification:** Ran all 8 examples (E1–E8) plus edge cases (malformed JSON, unsupported version, missing checksum, invalid id/value, extras preservation, extras omission). All pass.

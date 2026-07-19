@@ -1,0 +1,26 @@
+list_dir() → (empty: '.')
+write_file(configweave/__init__.py) → wrote 133 bytes to 'configweave/__init__.py'
+write_file(configweave/public.py) → wrote 105 bytes to 'configweave/public.py'
+write_file(configweave/_core.py) → wrote 4336 bytes to 'configweave/_core.py'
+write_file() → error: write_file requires 'path'
+write_file(test_configweave.py) → wrote 4919 bytes to 'test_configweave.py'
+run_command(python3 test_configweave.py) → exit: 1 (+16 lines)
+run_command(python3 -c "import sys; print('copy' in sys.stdlib_module_na…) → exit: 0 (+1 lines)
+write_file(test_configweave.py) → wrote 4591 bytes to 'test_configweave.py'
+run_command(python3 test_configweave.py) → exit: 0 (+17 lines)
+run_command(python3 --version && python3 -c "
+# D1: clean import + merge…) → exit: 0 (+3 lines)
+run_command(rm test_configweave.py && ls -la configweave/) → exit: 0 (+7 lines)
+
+--- final summary ---
+Implementation complete.
+
+**Files created:**
+- `configweave/__init__.py` — package entry, re-exports `merge_layers`
+- `configweave/public.py` — public API surface
+- `configweave/_core.py` — implementation using only `copy` from stdlib
+
+**How verified:**
+- All contract examples (E1–E6) pass: nested mapping merge, list concatenation, null deletion, no input mutation, TypeError on invalid structure, stdlib-only imports.
+- All rules (R1–R7) covered: empty list → `{}`, recursive mapping merge, list concatenation, null deletion (including absent keys), deep copy with no shared containers, string-key validation at every nesting level.
+- `merge_layers` is importable from both `configweave` and `configweave.public` and merges valid nested layers correctly in a clean Python environment (D1).

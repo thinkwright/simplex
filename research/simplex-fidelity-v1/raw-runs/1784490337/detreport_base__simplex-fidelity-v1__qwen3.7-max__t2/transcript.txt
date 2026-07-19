@@ -1,0 +1,34 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 164 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 3615 bytes to 'detreport/public.py'
+write_file(detreport/__main__.py) → wrote 778 bytes to 'detreport/__main__.py'
+run_command(cd /home/user && python3 -c "
+from detreport import build_re…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from detreport import build_report, ReportError…) → exit: 0 (+10 lines)
+run_command(echo '[{"id":"b","category":"x","amount_cents":2},{"id":"a",…) → exit: 0 (+1 lines)
+run_command(python3 -c "
+from detreport import build_report, ReportError…) → exit: 0 (+7 lines)
+run_command(python3 -m detreport /tmp/test_input.json | xxd | tail -3) → exit: 0 (+3 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`detreport/__init__.py`** — Package init that re-exports `build_report` and `ReportError` from `detreport.public`.
+
+2. **`detreport/public.py`** — Core implementation:
+   - `ReportError` exception class
+   - `build_report(events)` function that validates input (exactly 3 keys per event: `id`, `category`, `amount_cents`; non-empty strings; int-not-bool amounts; unique ids), groups by category, sorts groups by Unicode code-point order, sorts event IDs ascending within each group, and returns compact JSON with `ensure_ascii=False` and `sort_keys=True`. Input is deep-copied to prevent mutation.
+
+3. **`detreport/__main__.py`** — CLI entry point (`python -m detreport INPUT_JSON`) that reads a JSON array from the file path, calls `build_report`, and prints the result followed by one newline.
+
+**Verified:**
+- E1: Single-category report with correct count, total, sorted events, grand total ✓
+- E2: Groups ordered alphabetically (alpha before beta) ✓
+- E3: Literal `café` in output (no ASCII escape) ✓
+- E4: Duplicate IDs, boolean amounts, missing/extra fields all raise `ReportError` ✓
+- E5: Byte-for-byte stable output, input unchanged ✓
+- E6: CLI prints result + one newline ✓
+- E7: Only stdlib imports (`json`, `copy`, `sys`) + `detreport` itself ✓

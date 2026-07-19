@@ -1,0 +1,35 @@
+list_dir() → (empty: '.')
+run_command(mkdir -p detreport) → exit: 0
+write_file(detreport/__init__.py) → wrote 164 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 3596 bytes to 'detreport/public.py'
+write_file(detreport/__main__.py) → wrote 777 bytes to 'detreport/__main__.py'
+run_command(cd /root && python3 -c "
+from detreport import build_report,…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from detreport import build_report, ReportError…) → exit: 0 (+11 lines)
+run_command(echo '[{"id":"b","category":"x","amount_cents":2},{"id":"a",…) → exit: 0 (+1 lines)
+run_command(# E6: verify stdout is exactly build_report output + one new…) → exit: 0 (+1 lines)
+run_command(# E7: verify all imports are stdlib or detreport
+python3 -c …) → exit: 0 (+6 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`detreport/__init__.py`** — Package init that re-exports `build_report` and `ReportError` from `detreport.public`.
+
+2. **`detreport/public.py`** — Core implementation:
+   - `ReportError` exception class
+   - `build_report(events)` function that validates input (exact keys, non-empty strings, non-boolean int amounts, unique IDs), groups by category, sorts event IDs ascending, orders groups by category descending (Unicode code-point), and returns compact JSON with `sort_keys=True` and `ensure_ascii=False`. Input is never mutated.
+
+3. **`detreport/__main__.py`** — CLI entry point (`python -m detreport INPUT_JSON`) that reads a JSON array from the file path, calls `build_report`, and prints the result followed by one newline.
+
+**Verified against all examples:**
+- E1: Single-category report with correct count, total, sorted events, grand total ✓
+- E2: Descending category order ✓
+- E3: Literal `café` (no ASCII escape) ✓
+- E4: ReportError for duplicate IDs, boolean amounts, missing/extra fields ✓
+- E5: Byte-for-byte deterministic, input unchanged ✓
+- E6: CLI stdout matches library output + newline ✓
+- E7: All imports are stdlib or detreport ✓

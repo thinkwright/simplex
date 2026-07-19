@@ -1,0 +1,26 @@
+list_dir() → (empty: '.')
+write_file(configweave/__init__.py) → wrote 137 bytes to 'configweave/__init__.py'
+write_file(configweave/public.py) → wrote 2766 bytes to 'configweave/public.py'
+run_command(cd /home/user && python3 -c "
+from configweave.public import…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from configweave.public import merge_layers
+imp…) → exit: 0 (+13 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+- `configweave/__init__.py` — Package init that re-exports `merge_layers` from `configweave.public`
+- `configweave/public.py` — Core implementation with `merge_layers(layers)`
+
+**How it satisfies each rule:**
+- **R1**: Importable `configweave` package with `merge_layers` exposed from `configweave.public`
+- **R2**: Empty layer list returns `{}`
+- **R3**: Recursive merge when both old/new are mappings; otherwise later value replaces
+- **R4**: List values are deep-copied and replace the earlier value
+- **R5**: `None` values delete keys (no-op if absent)
+- **R6**: All values are deep-copied during merge; inputs are never mutated
+- **R7**: All layers validated as dicts with string-only keys at every nesting level
+- **X1**: `TypeError` raised for invalid layers or non-string keys, validated before any merging
+- **C1**: Only stdlib imports (`copy`, `collections.abc`)

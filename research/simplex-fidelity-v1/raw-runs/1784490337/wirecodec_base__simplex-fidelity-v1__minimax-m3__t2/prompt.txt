@@ -1,0 +1,57 @@
+SIMPLEX: 0.6
+
+CONSTRAINT: wirecodec_contract
+  - [C1] use only the Python standard library and SHA-256 from hashlib
+
+FUNCTION: implement_wirecodec() → output
+
+RULES:
+  - [R1] create an importable wirecodec package exposing encode, decode, and CodecError from wirecodec.public
+  - [R2] encode(record) requires exactly a non-empty string id and an integer non-boolean value, does not mutate record, and raises ValueError for invalid input
+  - [R3] encode returns compact JSON with sorted object keys containing version 2, id, value, and checksum; checksum is lowercase SHA-256 hex over compact sorted JSON of only id, value, and version
+  - [R4] decode(text) accepts a JSON object string, treats absent version as version 1, and returns a new dict containing id, value, and version
+  - [R5] decode validates version 2 checksum before returning and raises CodecError for malformed JSON, unsupported versions, invalid fields, or checksum mismatch
+  - [R6] when decoding version 1 or 2, discard unknown top-level fields after validating known fields
+  - [R7] equal inputs produce byte-for-byte equal encoded strings across repeated calls
+
+BASELINE:
+  reference: version 1 JSON records containing id and value with no checksum
+  preserve:
+    - [P1] decode version 1 records where version is absent or equals 1
+    - [P2] the public encode, decode, and CodecError imports remain stable
+  evolve:
+    - [V1] encode deterministic version 2 records with a checksum
+    - [V2] decode version 2 records only when the checksum is valid
+
+EVAL:
+  preserve: pass^3
+  evolve: pass@3
+  grading: code
+
+DONE_WHEN:
+  - [D1] the public API imports and can encode a valid record in a clean Python 3.11 environment
+
+EXAMPLES:
+  - [E1] outcome: encode({id: a, value: 2}) → compact version 2 JSON whose checksum matches its canonical known-field payload
+  - [E2] value: decode("{\"id\":\"a\",\"value\":2}") → {id: a, value: 2, version: 1}
+  - [E3] value: decode(a valid encoded version 2 record) → {id: a, value: 2, version: 2}
+  - [E4] outcome: decode a valid record with unknown field note=ok → return only {id, value, version}; note is absent
+  - [E5] error: decode version 2 with a changed value but original checksum → CodecError
+  - [E6] property: repeated encode of the same valid record → identical bytes and no input mutation
+  - [E7] error: encode missing id or with boolean value → ValueError
+  - [E8] outcome: inspect wirecodec dependencies and a produced checksum → only standard-library imports are used and the digest is SHA-256
+
+ERRORS:
+  - [X1] invalid encode input → raise ValueError without mutating input
+  - [X2] malformed, unsupported, or checksum-invalid wire input → raise CodecError
+  - any unhandled condition → fail with descriptive message
+
+COVERS:
+  - E1 → R1, R2, R3, V1, P2, D1
+  - E2 → R4, P1
+  - E3 → R3, R4, R5, V2
+  - E4 → R6
+  - E5 → R5, X2
+  - E6 → R2, R7
+  - E7 → R2, X1
+  - E8 → C1

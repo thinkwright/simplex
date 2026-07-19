@@ -1,0 +1,42 @@
+list_dir() → (empty: '.')
+run_command(python3 --version && ls -la) → exit: 0 (+4 lines)
+write_file(cursorvault/errors.py) → wrote 162 bytes to 'cursorvault/errors.py'
+write_file(cursorvault/public.py) → wrote 2842 bytes to 'cursorvault/public.py'
+write_file(cursorvault/__init__.py) → wrote 168 bytes to 'cursorvault/__init__.py'
+run_command(python3 -c '
+import copy, sys
+from cursorvault.public import…) → exit: 1 (+3 lines)
+run_command(python3 -c '
+import copy
+from cursorvault.public import pagi…) → exit: 0 (+1 lines)
+run_command(echo "=== imports in cursorvault package ===" && grep -rn "^…) → exit: 0 (+8 lines)
+run_command(echo "=== project tree ===" && find . -type f -not -path '*/…) → exit: 0 (+7 lines)
+
+--- final summary ---
+The task is complete and verified. 
+
+## Summary
+
+Created the `cursorvault` package (3 files, standard library only):
+
+- **`cursorvault/errors.py`** — defines `CursorError` (exception for malformed/unknown cursors).
+- **`cursorvault/public.py`** — implements `paginate(records, cursor=None, limit=3)` and re-exports `CursorError`. Logic:
+  - Validates `limit` first (rejects non-ints and booleans, requires 1–100) → `ValueError` before touching records (X1).
+  - Validates cursor type (must be `str` or `None`) → `CursorError` (X2).
+  - Materializes records via `list(records)` (no mutation of caller's container), builds an `id → position` index.
+  - Validates cursor existence against the index → `CursorError` if missing (E5).
+  - Slices `record_list[start:start+limit]` for `items` (preserves order, references original dicts without mutating them), sets `has_more = end < len`, and `next_cursor` to the id of the first unreturned record when `has_more` is true, else `None` (R2/R4/R5). Empty input yields an empty terminal page.
+- **`cursorvault/__init__.py`** — re-exports `paginate` and `CursorError` for convenience.
+
+## Verification
+Ran an inline test suite covering all examples/rules:
+- E1/E2: exact expected outputs.
+- E3: `limit` of `0`, `True`, `False`, `101`, `1.5`, `"3"`, `None` → `ValueError`; `1`/`50`/`100` accepted.
+- E4: `records` deep-equal to a pre-call snapshot after `paginate`; `items` reference the original dicts (no copies/mutations).
+- E5: missing and non-string cursors → `CursorError`.
+- R5/R6: empty input terminal page, default limit, exact-page-fill, mid-list cursor, deterministic repeated calls, result has exactly `items`/`next_cursor`/`has_more`.
+- X1/X2: error paths leave records unchanged.
+- E6/C1: `grep` shows only `from cursorvault...` imports; module check confirms all package modules resolve within `cursorvault` — no third-party dependencies.
+- D1: clean `from cursorvault.public import paginate, CursorError` then paginate succeeds.
+
+All checks passed. No stray files were left (only the three package modules).

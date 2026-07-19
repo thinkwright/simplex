@@ -1,0 +1,30 @@
+list_dir() → (empty: '.')
+run_command(mkdir -p wirecodec) → exit: 0
+write_file(wirecodec/__init__.py) → wrote 189 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 4522 bytes to 'wirecodec/public.py'
+run_command(cd /root && python3 -c "
+from wirecodec import encode, decod…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from wirecodec import encode, decode, CodecErro…) → exit: 0 (+18 lines)
+run_command(python3 -c "
+import hashlib, json
+
+# Manually verify checksu…) → exit: 0 (+15 lines)
+
+--- final summary ---
+Implementation complete. Created the `wirecodec` package with:
+
+**Files created:**
+- `wirecodec/__init__.py` - Package entry point exposing encode, decode, CodecError
+- `wirecodec/public.py` - Core implementation
+
+**Key features:**
+- `encode(record)` - Creates version 2 records with SHA-256 checksums over canonical JSON payload
+- `decode(text)` - Handles both version 1 (no checksum) and version 2 (with checksum validation)
+- `CodecError` - Custom exception for wire format errors
+- Uses only Python standard library (json, hashlib)
+- Deterministic output with sorted keys and compact JSON
+- Validates inputs without mutation
+- Discards unknown fields during decode
+
+All requirements R1-R7, preservation rules P1-P2, evolution rules V1-V2, and examples E1-E8 verified passing.

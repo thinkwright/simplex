@@ -1,0 +1,21 @@
+list_dir() → (empty: '.')
+run_command(mkdir -p idledger) → exit: 0
+write_file(idledger/__init__.py) → wrote 133 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 5757 bytes to 'idledger/public.py'
+run_command(cd /home/user && python3 -c "
+from idledger import Ledger, I…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from idledger import Ledger, InsufficientFunds,…) → exit: 0 (+16 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`idledger/__init__.py`** — Package init that re-exports `Ledger`, `InsufficientFunds`, and `CommandConflict` from `idledger.public`.
+
+2. **`idledger/public.py`** — The full implementation containing:
+   - **`InsufficientFunds`** — Exception for atomic debit failures (R6, X1)
+   - **`CommandConflict`** — Exception for command id reuse with different content (R5)
+   - **`Ledger(initial=None)`** — Validates initial balances (non-negative ints, string keys), stores them in a dict. `snapshot()` returns a new account-name-sorted dict (R2). `apply(command)` validates exactly 4 keys (`id`, `account`, `kind`, `amount`), rejects bools/zero/negative amounts (R7, X2), supports idempotent replays (R4), detects conflicts (R5), atomically handles insufficient funds without consuming the command id (R6), and uses a `threading.Lock` for thread safety (R8).
+   - Only imports `threading` from the standard library (C2).

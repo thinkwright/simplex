@@ -1,0 +1,26 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/__init__.py) → wrote 179 bytes to 'cursorvault/__init__.py'
+write_file(cursorvault/public.py) → wrote 2542 bytes to 'cursorvault/public.py'
+run_command(cd /home/user && python3 -c "
+from cursorvault import pagina…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from cursorvault import paginate, CursorError
+
+…) → exit: 0 (+1 lines)
+
+--- final summary ---
+Implemented the `cursorvault` package with cursor-based pagination:
+
+**Files created:**
+- `cursorvault/__init__.py` - Package entry point exposing `paginate` and `CursorError`
+- `cursorvault/public.py` - Core implementation with validation and pagination logic
+
+**Key features:**
+- Validates `limit` is an integer 1-100 (rejects booleans per R3)
+- Uses `cursor` as the id of the first record to include (R4)
+- Returns `next_cursor` pointing to the first record not in the current page when `has_more` is true (R4, R5)
+- Never mutates input records (R6)
+- Raises `ValueError` for invalid limits and `CursorError` for unknown/malformed cursors (X1, X2)
+- Uses only Python standard library (C1)
+
+All specification examples and edge cases verified.

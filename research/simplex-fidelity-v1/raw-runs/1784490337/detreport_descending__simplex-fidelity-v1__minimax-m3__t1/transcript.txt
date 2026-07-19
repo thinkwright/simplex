@@ -1,0 +1,38 @@
+list_dir(.) → (empty: '.')
+write_file(detreport/__init__.py) → wrote 151 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 128 bytes to 'detreport/public.py'
+write_file(detreport/core.py) → wrote 4889 bytes to 'detreport/core.py'
+write_file(detreport/__main__.py) → wrote 103 bytes to 'detreport/__main__.py'
+run_command(python3 --version && python3 -c "
+from detreport.public impo…) → exit: 1 (+7 lines)
+run_command(python3 -c "
+from detreport.public import build_report, Repo…) → exit: 0 (+1 lines)
+run_command(python3 -c "
+from detreport.public import build_report, Repo…) → exit: 0 (+3 lines)
+run_command(python3 -c "
+from detreport.public import build_report, Repo…) → exit: 0 (+4 lines)
+run_command(python3 -c "
+from detreport.public import build_report
+event…) → exit: 0 (+3 lines)
+write_file(test_detreport.py) → wrote 4757 bytes to 'test_detreport.py'
+run_command(python3 test_detreport.py) → exit: 0 (+15 lines)
+read_file(detreport/core.py) → 85:     for category in groups_data: (+25 lines)
+write_file(detreport/core.py) → wrote 4753 bytes to 'detreport/core.py'
+run_command(python3 test_detreport.py && rm test_detreport.py && ls -la …) → exit: 0 (+23 lines)
+
+--- final summary ---
+All tests pass. The implementation is complete.
+
+## Summary
+
+Created the `detreport` package with the following files:
+
+- **`detreport/__init__.py`** — re-exports `ReportError` and `build_report` from `detreport.public`.
+- **`detreport/public.py`** — public API surface exposing `ReportError` and `build_report`.
+- **`detreport/core.py`** — core implementation:
+  - `ReportError` exception class
+  - `build_report(events)` — validates events (dict with exactly `id`, `category`, `amount_cents`; non-empty string id/category; integer non-boolean amount; unique ids), groups by category, sorts event ids ascending within each group, orders groups by descending Unicode code-point, and emits compact `ensure_ascii=False` JSON with sorted keys containing exactly `groups` and `grand_total_cents` at the top level. Input is materialized via `list()` so it is never mutated.
+  - `main(argv)` — CLI entry: reads JSON array from path, prints `build_report` output + one newline, exits 0.
+- **`detreport/__main__.py`** — enables `python -m detreport INPUT_JSON`.
+
+**Verification:** Ran a test script covering all examples E1–E7 plus R4 (top-level keys, compact JSON, sorted keys) and the CLI (E6). All checks passed: single-category report, descending category order, literal `café` preserved, all four error cases raise `ReportError`, deterministic output with no input mutation, only stdlib + detreport imports, and CLI output matches `build_report` + newline.

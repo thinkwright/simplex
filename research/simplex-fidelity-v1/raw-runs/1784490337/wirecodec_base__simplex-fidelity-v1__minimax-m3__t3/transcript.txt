@@ -1,0 +1,35 @@
+list_dir() → (empty: '.')
+write_file(wirecodec/__init__.py) → wrote 168 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 203 bytes to 'wirecodec/public.py'
+write_file(wirecodec/codec.py) → wrote 4210 bytes to 'wirecodec/codec.py'
+run_command(python3 --version && python3 -c "
+import sys, hashlib, json,…) → exit: 0 (+3 lines)
+run_command(python3 -c "
+from wirecodec import encode, decode, CodecErro…) → exit: 0 (+18 lines)
+run_command(python3 -c "
+# D1: clean import + encode
+from wirecodec impo…) → exit: 1 (+5 lines)
+run_command(python3 -c "
+import ast, pathlib
+stdlib = {'hashlib','json',…) → exit: 1 (+3 lines)
+run_command(python3 -c "
+import ast
+tree = ast.parse(open('wirecodec/__i…) → exit: 0 (+1 lines)
+run_command(python3 -c "
+import ast, pathlib
+stdlib = {'hashlib','json',…) → exit: 0 (+1 lines)
+run_command(python3 -c "
+from wirecodec import encode, decode, CodecErro…) → exit: 0 (+1 lines)
+
+--- final summary ---
+All rules verified. Summary:
+
+**Files created:**
+- `wirecodec/__init__.py` — package entry, re-exports `encode`, `decode`, `CodecError`
+- `wirecodec/public.py` — public API surface (R1)
+- `wirecodec/codec.py` — implementation
+
+**Verification:**
+- D1: `from wirecodec import encode, decode, CodecError` works in a clean subprocess; `encode({'id':'hello','value':42})` returns a valid v2 record.
+- C1: AST scan confirms only `hashlib`, `json`, `copy` (stdlib) plus relative imports.
+- E1–E8, R1–R7, P1–P2, V1–V2, X1–X2: all pass via the comprehensive test script above.

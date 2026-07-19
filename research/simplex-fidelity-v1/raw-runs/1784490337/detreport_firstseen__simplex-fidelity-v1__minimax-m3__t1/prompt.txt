@@ -1,0 +1,45 @@
+SIMPLEX: 0.6
+
+CONSTRAINT: detreport_contract
+  - [C1] amounts and totals are integer cents and use only the Python standard library
+
+FUNCTION: implement_detreport() → output
+
+RULES:
+  - [R1] create an importable detreport package exposing build_report and ReportError from detreport.public plus python -m detreport INPUT_JSON
+  - [R2] each event must be a dict with exactly unique non-empty string id, non-empty string category, and integer non-boolean amount_cents; invalid input raises ReportError
+  - [R3] group events by category into objects with exactly category, count, total_cents, and events; events is the list of event ids sorted ascending
+  - [R4] return compact ensure_ascii=false JSON with sorted object keys and exactly groups plus grand_total_cents at the top level
+  - [R5] order group objects by the first appearance of each category in the input sequence
+  - [R6] grand_total_cents is the sum of every event amount and input events are never mutated
+  - [R7] the CLI reads a JSON array from the supplied path, prints exactly build_report output plus one newline, and exits successfully
+
+DETERMINISM:
+  level: strict
+  stable:
+    - [S1] the complete report string is byte-for-byte stable for the same ordered input
+
+DONE_WHEN:
+  - [D1] the public API imports and can build a valid single-category report in a clean Python 3.11 environment
+
+EXAMPLES:
+  - [E1] value: events [{id: b, category: x, amount_cents: 2}, {id: a, category: x, amount_cents: -1}] → group x has count 2, total_cents 1, events [a, b], and grand total 1
+  - [E2] value: categories encountered as beta then alpha → groups ordered [beta, alpha]
+  - [E3] outcome: category café → output contains literal café rather than an ASCII escape
+  - [E4] error: duplicate ids, boolean amount, missing field, or extra field → ReportError
+  - [E5] property: repeating build_report on the same ordered events → identical bytes and unchanged input
+  - [E6] outcome: python -m detreport input.json → stdout is the library result followed by one newline
+  - [E7] outcome: inspect the detreport package dependencies → every imported dependency is from the Python standard library or detreport itself
+
+ERRORS:
+  - [X1] invalid event collection or event → raise ReportError without mutating input
+  - any unhandled condition → fail with descriptive message
+
+COVERS:
+  - E1 → R1, R3, R4, R6, D1, C1
+  - E2 → R5
+  - E3 → R4
+  - E4 → R2, X1
+  - E5 → R6, S1
+  - E6 → R7
+  - E7 → C1

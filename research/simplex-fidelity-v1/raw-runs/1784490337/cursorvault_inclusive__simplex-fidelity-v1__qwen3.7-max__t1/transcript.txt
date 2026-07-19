@@ -1,0 +1,21 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/__init__.py) → wrote 158 bytes to 'cursorvault/__init__.py'
+write_file(cursorvault/public.py) → wrote 2345 bytes to 'cursorvault/public.py'
+run_command(cd /home/user && python3 -c "
+from cursorvault import pagina…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from cursorvault import paginate, CursorError
+
+…) → exit: 0 (+1 lines)
+run_command(python3 -c "
+import ast, sys
+
+with open('cursorvault/public.…) → exit: 0 (+2 lines)
+
+--- final summary ---
+Done. Created the `cursorvault` package with two files:
+
+- **cursorvault/__init__.py** - Package entry point exposing `paginate` and `CursorError`
+- **cursorvault/public.py** - Implementation with validation for limit (1-100, no booleans), cursor (string or None, must exist in records), and pagination logic that returns `{items, next_cursor, has_more}` without mutating input
+
+All examples verified: E1-E6 pass, including edge cases like empty input, boolean limits, invalid cursors, and immutability checks. Only standard library used (no external dependencies).

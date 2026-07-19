@@ -1,0 +1,29 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 151 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 129 bytes to 'detreport/public.py'
+write_file(detreport/_core.py) → wrote 2953 bytes to 'detreport/_core.py'
+write_file(detreport/__main__.py) → wrote 814 bytes to 'detreport/__main__.py'
+run_command(python3 --version && python3 -c "
+import json
+
+# E1: single …) → exit: 1 (+7 lines)
+run_command(python3 -c "
+out3 = '{\"grand_total_cents\":5,\"groups\":[{\…) → exit: 0 (+3 lines)
+run_command(python3 -c "
+from detreport.public import build_report
+event…) → exit: 0 (+3 lines)
+write_file(verify.py) → wrote 4421 bytes to 'verify.py'
+run_command(python3 verify.py) → exit: 0 (+18 lines)
+run_command(ls -la detreport/ && echo '---' && echo '[{"id":"b","categor…) → exit: 0 (+12 lines)
+run_command(rm -rf detreport/__pycache__ verify.py /tmp/in.json && ls -l…) → exit: 0 (+7 lines)
+
+--- final summary ---
+Done. Summary of changes:
+
+**Files created:**
+- `detreport/__init__.py` — package init re-exporting `build_report` and `ReportError`
+- `detreport/public.py` — public API surface
+- `detreport/_core.py` — implementation: validates events (exact keys, non-empty string id/category, integer non-boolean amount_cents, unique ids), groups by category, sorts event ids ascending within groups, sorts groups by category ascending Unicode code-point order, emits compact `ensure_ascii=False` JSON with sorted keys containing exactly `groups` and `grand_total_cents` at the top level. Uses only `json` from stdlib.
+- `detreport/__main__.py` — CLI: reads JSON array from path, prints `build_report` output + one newline, exits 0 on success / 1 on `ReportError`.
+
+**Verification:** Ran a comprehensive test covering E1–E7, R1, R3, R4, and additional error cases (empty id, empty category, float amount, non-dict event). All passed. The CLI was also exercised end-to-end via `python3 -m detreport /tmp/in.json`.

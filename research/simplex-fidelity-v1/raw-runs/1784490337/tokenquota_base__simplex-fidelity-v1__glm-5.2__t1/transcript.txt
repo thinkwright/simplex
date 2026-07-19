@@ -1,0 +1,34 @@
+list_dir() → (empty: '.')
+run_command(python3 --version && python3 -c "import sys; print(sys.execu…) → exit: 0 (+2 lines)
+write_file(tokenquota/__init__.py) → wrote 197 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 3102 bytes to 'tokenquota/public.py'
+write_file(_verify.py) → wrote 4102 bytes to '_verify.py'
+run_command(python3 _verify.py) → exit: 0 (+8 lines)
+run_command(cd /tmp && PYTHONPATH="$OLDPWD" python3 -c "from tokenquota.…) → exit: 0 (+1 lines)
+run_command(rm -f _verify.py && find . -name __pycache__ -type d -prune …) → exit: 0 (+2 lines)
+run_command(cd /tmp && PYTHONPATH="$OLDPWD" python3 -c "
+from tokenquota…) → exit: 1 (+3 lines)
+run_command(cd /tmp && PYTHONPATH="$OLDPWD" python3 -c "
+from tokenquota…) → exit: 0 (+4 lines)
+
+--- final summary ---
+The implementation is complete and verified. 
+
+## Summary
+
+I created the `tokenquota` package from scratch with two files:
+
+- **`tokenquota/__init__.py`** — re-exports `Bucket` from `tokenquota.public` so both `from tokenquota import Bucket` and `from tokenquota.public import Bucket` work.
+- **`tokenquota/public.py`** — defines `Bucket` using only the standard library (`threading`, `time`).
+
+Key implementation details satisfying the contract:
+- **R1/D1**: `Bucket(capacity, refill_per_second, clock=None)` starts full (`_tokens = capacity`); default clock is `time.monotonic`.
+- **R2**: `allow(amount=1)` refills first, then consumes and returns `True` only when enough tokens exist; otherwise returns `False` without consuming.
+- **R3**: refill is `elapsed * refill_per_second` capped at `capacity`; backward clock movement is clamped to zero elapsed time (`if elapsed < 0: elapsed = 0`).
+- **R4**: the balance is never rounded — `min(capacity, tokens + elapsed * rate)` keeps fractional tokens exactly.
+- **R5**: `available()` runs the identical refill calculation and returns the balance without consuming.
+- **R6/X1**: validation rejects non-numbers and booleans; `capacity <= 0`, `refill_per_second < 0`, and a non-positive or boolean `amount` raise `ValueError` before any tokens are touched.
+- **R7**: all access to `_tokens`/`_last` is serialized by a `threading.Lock`, so concurrent successful consumption never exceeds available tokens.
+- **C1**: every elapsed-time decision calls the supplied `clock()`; only `threading` and `time` are imported (verified by AST-scanning the source).
+
+Verification: I ran a temporary script covering E1–E6 plus extra fractional/default-clock checks (all passed), confirmed a clean import from a separate working directory via `PYTHONPATH`, then removed the script and `__pycache__` so only the package remains.

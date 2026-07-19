@@ -1,0 +1,25 @@
+list_dir() → (empty: '.')
+run_command(python3 --version) → exit: 0 (+1 lines)
+write_file(configweave/_merge.py) → wrote 3800 bytes to 'configweave/_merge.py'
+write_file(configweave/public.py) → wrote 118 bytes to 'configweave/public.py'
+write_file(configweave/__init__.py) → wrote 194 bytes to 'configweave/__init__.py'
+write_file(verify_configweave.py) → wrote 4086 bytes to 'verify_configweave.py'
+run_command(python3 verify_configweave.py) → exit: 0 (+24 lines)
+grep(configweave) → verify_configweave.py:1:import copy (+8 lines)
+run_command(python3 -c "import configweave, configweave.public, configwe…) → exit: 0 (+2 lines)
+
+--- final summary ---
+## Summary
+
+Created the `configweave` package (stdlib-only) implementing `merge_layers`:
+
+- **`configweave/_merge.py`** — core implementation: validates `layers` is a list of dicts with string keys at all nesting levels, merges recursively for nested mappings, concatenates+dedupes lists in old-then-new order, treats `None` as deletion, and returns deep copies without mutating inputs.
+- **`configweave/public.py`** — public API exposing `merge_layers` from `configweave.public`.
+- **`configweave/__init__.py`** — package init re-exporting `merge_layers`.
+
+**Verification:** Ran `verify_configweave.py` covering all examples/rules:
+- E1 (nested merge), E2 (list concat+dedup), E3 (null deletion), R2 (empty→`{}`), nested/absent null, list↔scalar/dict replacement, dict-element dedup, deep nesting.
+- E4: deep-mutating the result left both source layers unchanged; mutating a source didn't affect the result.
+- E5: `TypeError` raised for non-list layers, non-dict layers, nested non-string keys, and `None` — without mutating inputs.
+- E6: confirmed only `configweave` internal imports (no third-party deps), satisfying C1.
+- Confirmed `import configweave.public.merge_layers` works and all modules compile.

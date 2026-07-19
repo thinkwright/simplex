@@ -1,0 +1,20 @@
+list_dir() → (empty: '.')
+write_file(idledger/__init__.py) → wrote 133 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 6158 bytes to 'idledger/public.py'
+run_command(cd /root && python3 -c "
+from idledger import Ledger, Insuff…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from idledger import Ledger, InsufficientFunds,…) → exit: 0 (+13 lines)
+
+--- final summary ---
+All tests pass. Here's a summary:
+
+**Files created:**
+- `idledger/__init__.py` — Package init that re-exports `Ledger`, `InsufficientFunds`, and `CommandConflict` from `idledger.public`.
+- `idledger/public.py` — Full implementation with:
+  - `Ledger(initial=None)` — validates initial balances (non-negative ints, string keys), stores in a dict.
+  - `snapshot()` — returns a new dict sorted by account name.
+  - `apply(command)` — validates exactly 4 keys (`id`, `account`, `kind`, `amount`), rejects bools/non-ints/non-positive amounts, handles idempotency (R4), conflict detection (R5), insufficient funds without consuming the id (R6), and all validation atomically under a `threading.Lock` (R8).
+  - `InsufficientFunds` and `CommandConflict` exception classes.
+
+**Verification:** All 7 example scenarios (E1–E7) pass, covering basic operations, idempotency, conflict detection, insufficient funds, input validation, concurrent credits, and stdlib-only imports.

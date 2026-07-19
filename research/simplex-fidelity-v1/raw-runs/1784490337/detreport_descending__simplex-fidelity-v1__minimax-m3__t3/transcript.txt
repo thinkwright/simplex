@@ -1,0 +1,49 @@
+list_dir() → (empty: '.')
+write_file(detreport/core.py) → wrote 2979 bytes to 'detreport/core.py'
+write_file(detreport/public.py) → wrote 212 bytes to 'detreport/public.py'
+write_file(detreport/__init__.py) → wrote 250 bytes to 'detreport/__init__.py'
+write_file(detreport/__main__.py) → wrote 927 bytes to 'detreport/__main__.py'
+run_command(python3 --version && python3 -c "import detreport; print(det…) → exit: 0 (+2 lines)
+run_command(python3 -c "
+import json, detreport as dr
+
+# E1: single cate…) → exit: 0 (+14 lines)
+run_command(python3 -c "
+import sys
+# Fresh import of just detreport
+mod…) → exit: 0 (+1 lines)
+run_command(cd /tmp && cat > input.json <<'EOF'
+[{"id":"b","category":"x…) → exit: 1 (+9 lines)
+run_command(cat > /tmp/input.json <<'EOF'
+[{"id":"b","category":"x","amo…) → exit: 0 (+11 lines)
+run_command(cat > /tmp/input2.json <<'EOF'
+[{"id":"1","category":"beta",…) → exit: 0 (+16 lines)
+run_command(python3 -m detreport /tmp/input.json; echo "exit=$?"
+echo "-…) → exit: 0 (+17 lines)
+write_file(detreport/__main__.py) → wrote 1185 bytes to 'detreport/__main__.py'
+run_command(python3 -m detreport /tmp/input.json; echo "exit=$?"
+echo "-…) → exit: 0 (+11 lines)
+run_command(ls -la detreport/
+echo "---"
+python3 -c "
+from detreport.pub…) → exit: 0 (+10 lines)
+
+--- final summary ---
+Everything works. Summary:
+
+**Files created:**
+- `detreport/__init__.py` — re-exports `build_report` and `ReportError`
+- `detreport/public.py` — public API surface (R1)
+- `detreport/core.py` — validation + report building (R2, R3, R5, R6)
+- `detreport/__main__.py` — CLI entry point (R7)
+
+**Verification:**
+- E1: single-category report produces `count=2, total_cents=1, events=[a,b], grand_total=1` ✓
+- E2: categories `beta`, `alpha` → groups ordered `[beta, alpha]` (descending code-point) ✓
+- E3: `café` preserved as literal UTF-8 (`c3 a9`), not `\u00e9` ✓
+- E4: duplicate ids, boolean amount, missing field, extra field, empty id/category, float amount, non-list, non-dict event all raise `ReportError` ✓
+- E5: repeated `build_report` yields byte-identical output; input list is never mutated ✓
+- E6: `python -m detreport input.json` prints compact JSON + single newline, exits 0 ✓
+- E7: only stdlib imports (`json`, `sys`) plus detreport itself ✓
+- S1: output is byte-for-byte stable for the same ordered input (compact JSON, sorted keys, deterministic group ordering) ✓
+- C1: amounts/totals are integer cents; only stdlib used ✓

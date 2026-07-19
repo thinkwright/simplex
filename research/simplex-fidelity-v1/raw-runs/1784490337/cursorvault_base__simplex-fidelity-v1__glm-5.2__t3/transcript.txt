@@ -1,0 +1,28 @@
+list_dir() → (empty: '.')
+grep(cursorvault) → (no matches for /cursorvault/)
+run_command(python3 --version && which python3) → exit: 0 (+2 lines)
+write_file(cursorvault/public.py) → wrote 4940 bytes to 'cursorvault/public.py'
+write_file(cursorvault/__init__.py) → wrote 281 bytes to 'cursorvault/__init__.py'
+run_command(cat > /tmp/verify_cv.py << 'PYEOF'
+import copy
+import sys
+sy…) → exit: 0 (+12 lines)
+run_command(echo "=== imports in package ===" && grep -rn "import" curso…) → exit: 0 (+7 lines)
+
+--- final summary ---
+Everything is verified. The package imports cleanly (even with `-S` to disable site-packages, confirming no third-party dependencies), and `public.py` contains zero import statements — it uses only builtins, while `__init__.py` imports solely from `cursorvault.public` (cursorvault itself).
+
+## Summary
+
+I created the `cursorvault` package from scratch in an empty project:
+
+**Files changed:**
+- `cursorvault/public.py` — Implements `CursorError` (exception) and `paginate(records, cursor=None, limit=3)`. Uses only Python builtins (no imports). Logic:
+  - `_validate_limit` rejects booleans and non-ints, then enforces the 1–100 inclusive range → `ValueError`.
+  - `_coerce_records` shallow-copies the input into a new list (never mutating the original) and rejects strings/bytes.
+  - `_validate_records` ensures each record is a dict with a unique string `id` field → `ValueError`.
+  - `_resolve_cursor` returns the start index (0 for `None`; index+1 after the matching record), raising `CursorError` for non-string or unknown cursors.
+  - Slices the page, computes `has_more = start + limit < len`, and sets `next_cursor` to the last item's id when `has_more` is true, else `None`. Returns exactly `{items, next_cursor, has_more}`.
+- `cursorvault/__init__.py` — Re-exports `paginate` and `CursorError` from `cursorvault.public` (the only import, which is cursorvault itself).
+
+**Verification:** A comprehensive script confirmed E1–E6 and R1–R6: the two worked examples match exactly, `limit` of `0`/`True`/`101`/floats/strings raise `ValueError`, a missing/non-string cursor raises `CursorError`, records and their dicts are never mutated (deepcopy-equal before/after, including on error paths), repeated calls return equal results, an empty input yields an empty terminal page, a full multi-page walk reconstructs the original order, and an isolated `python -S` import succeeds with no third-party dependencies.

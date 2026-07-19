@@ -1,0 +1,31 @@
+list_dir() → (empty: '.')
+write_file(tokenquota/__init__.py) → wrote 172 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 186 bytes to 'tokenquota/public.py'
+write_file(tokenquota/_clock.py) → wrote 413 bytes to 'tokenquota/_clock.py'
+write_file(tokenquota/_bucket.py) → wrote 3103 bytes to 'tokenquota/_bucket.py'
+run_command(python3 --version && python3 -c "
+import sys
+print('Python:'…) → exit: 0 (+11 lines)
+run_command(python3 -c "
+import ast, pathlib
+for p in pathlib.Path('toke…) → exit: 0 (+5 lines)
+
+--- final summary ---
+Only standard-library imports (`time`, `threading`) and intra-package imports — no third-party deps, satisfying C1.
+
+## Summary
+
+Created the `tokenquota` package:
+
+- **`tokenquota/__init__.py`** — re-exports `Bucket` so `from tokenquota import Bucket` works.
+- **`tokenquota/public.py`** — public API surface, imports `Bucket` from `_bucket`.
+- **`tokenquota/_clock.py`** — `SystemClock` wrapping `time.monotonic` (stdlib only).
+- **`tokenquota/_bucket.py`** — `Bucket` implementation:
+  - Constructor validates `capacity > 0`, `refill_per_second >= 0`, raises `ValueError` on invalid input (R6).
+  - Starts full; tracks `_last_time` from the supplied clock (R1).
+  - `_refill_locked` computes elapsed time, treats negative elapsed as 0 (R3), adds `elapsed * refill_per_second`, clamps to capacity, then rounds down to integer (R4).
+  - `available()` returns the balance after refill without consuming (R5).
+  - `allow(amount=1)` validates `amount` (positive, non-bool), refills, consumes only if enough tokens exist, otherwise returns `False` without consuming (R2, X1).
+  - All public methods guarded by a `threading.Lock` so concurrent successful consumption never exceeds available tokens (R7).
+
+Verified all six examples (E1–E6) pass in a clean Python environment, and confirmed only stdlib (`time`, `threading`) is used.

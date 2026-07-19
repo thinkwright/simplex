@@ -1,0 +1,42 @@
+{
+  "models": [
+    {
+      "name": "glm-5.2",
+      "provider": "together",
+      "base_url": "https://api.together.xyz/v1",
+      "model": "zai-org/GLM-5.2",
+      "api_key_env": "TOGETHER_API_KEY",
+      "input_usd_per_mtok": 1.4,
+      "cached_input_usd_per_mtok": 0.26,
+      "output_usd_per_mtok": 4.4,
+      "role": "coding",
+      "max_tokens": 65536
+    },
+    {
+      "name": "minimax-m3",
+      "provider": "together",
+      "base_url": "https://api.together.xyz/v1",
+      "model": "MiniMaxAI/MiniMax-M3",
+      "api_key_env": "TOGETHER_API_KEY",
+      "input_usd_per_mtok": 0.3,
+      "cached_input_usd_per_mtok": 0.06,
+      "output_usd_per_mtok": 1.2,
+      "role": "coding",
+      "max_tokens": 65536,
+      "reasoning_enabled": false
+    },
+    {
+      "name": "qwen3.7-max",
+      "provider": "together",
+      "base_url": "https://api.together.xyz/v1",
+      "model": "Qwen/Qwen3.7-Max",
+      "api_key_env": "TOGETHER_API_KEY",
+      "input_usd_per_mtok": 1.25,
+      "cached_input_usd_per_mtok": 0.125,
+      "output_usd_per_mtok": 3.75,
+      "role": "coding",
+      "max_tokens": 65536,
+      "stream": true
+    }
+  ]
+}

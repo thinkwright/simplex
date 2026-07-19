@@ -1,0 +1,22 @@
+list_dir() → (empty: '.')
+write_file(wirecodec/__init__.py) → wrote 289 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 5603 bytes to 'wirecodec/public.py'
+run_command(python3 --version && python3 - <<'PY'
+import json, hashlib, …) → exit: 0 (+16 lines)
+grep(^\s*(import|from)\s+\S+) → wirecodec/__init__.py:7:from .public import CodecError, decode, encode (+3 lines)
+
+--- final summary ---
+The implementation is complete and verified. The only real imports are `hashlib` and `json` (both standard library); the `from :mod:` line is inside a docstring (reStructuredText markup), not an import.
+
+## Summary
+
+Created the `wirecodec` package from scratch in an empty project:
+
+- **`wirecodec/__init__.py`** — re-exports `encode`, `decode`, `CodecError` from `.public` (keeps `import wirecodec` and `from wirecodec.public import ...` both stable, satisfying P2/R1).
+- **`wirecodec/public.py`** — the implementation:
+  - `CodecError` exception class.
+  - `encode(record)`: validates the record is a dict with **exactly** `id` (non-empty `str`) and `value` (`int`, not `bool`), raises `ValueError` otherwise, never mutates the input, and returns compact sorted-keys JSON with `version=2`, `id`, `value`, and `checksum` (lowercase SHA-256 hex over the compact sorted-keys JSON of only `id`/`value`/`version`). Deterministic across calls (R2/R3/R7/V1).
+  - `decode(text)`: parses a JSON object string (absent `version` → 1), validates known fields, verifies the v2 checksum, discards unknown top-level fields, and returns a fresh `{id, value, version}` dict. Raises `CodecError` for malformed/non-object JSON, unsupported versions, invalid fields, or checksum mismatch (R4/R5/R6/V2/P1).
+  - Only `hashlib` (SHA-256) and `json` are imported (C1).
+
+**Verification:** Ran a comprehensive script covering E1–E8 plus extra error/edge cases (non-object JSON, unsupported versions, bool/float values, empty id, missing fields, v2 missing/bad checksum, version as string/bool, non-string input, non-ASCII id, negative values, v1 with stray checksum/unknown fields, round-trip, determinism, and import stability). All assertions passed; the produced digest was confirmed to be SHA-256.

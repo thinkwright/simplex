@@ -1,0 +1,26 @@
+list_dir() → (empty: '.')
+run_command(mkdir -p cursorvault) → exit: 0
+write_file(cursorvault/__init__.py) → wrote 154 bytes to 'cursorvault/__init__.py'
+write_file(cursorvault/public.py) → wrote 2841 bytes to 'cursorvault/public.py'
+run_command(cd /root && python3 -c "
+from cursorvault.public import pagi…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from cursorvault.public import paginate, Cursor…) → exit: 0 (+14 lines)
+run_command(python3 -c "
+from cursorvault.public import paginate, Cursor…) → exit: 0 (+8 lines)
+
+--- final summary ---
+All tests pass. Here's what was created:
+
+**Files created:**
+- `cursorvault/__init__.py` — Package init that re-exports `paginate` and `CursorError` from `cursorvault.public`.
+- `cursorvault/public.py` — Implements `paginate(records, cursor=None, limit=3)` and `CursorError`.
+
+**Key behaviors verified:**
+- **E1/E2**: Correct pagination with and without cursor, proper `next_cursor` and `has_more` values.
+- **E3**: `ValueError` raised for `limit=0`, `limit=True`, `limit=False`, `limit=2.5`, `limit=101`.
+- **E4**: Records are never mutated (deepcopy comparison passes).
+- **E5**: `CursorError` raised for unknown cursor, non-string cursor, and cursor on empty list.
+- **E6**: Only stdlib imports (`__future__`, `typing`) — no external dependencies.
+- **R6**: Repeated calls with equal inputs produce equal results.
+- Edge cases: single record, exact page size, empty input all work correctly.

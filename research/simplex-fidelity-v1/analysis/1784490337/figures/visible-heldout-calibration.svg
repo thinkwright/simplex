@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="470" viewBox="0 0 900 470" role="img" aria-label="Visible versus held-out calibration chart">
+<rect width="100%" height="100%" fill="white"/>
+<text x="24.0" y="34.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="20" text-anchor="start" font-weight="600" fill="#111827">Declared-example and held-out calibration</text>
+<text x="24.0" y="58.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12" text-anchor="start" font-weight="normal" fill="#4b5563">Rates are computed over declared example–requirement pairs.</text>
+<line x1="85" y1="390.0" x2="865" y2="390.0" stroke="#e5e7eb"/>
+<text x="75.0" y="394.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="end" font-weight="normal" fill="#4b5563">0.0</text>
+<line x1="85" y1="330.0" x2="865" y2="330.0" stroke="#e5e7eb"/>
+<text x="75.0" y="334.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="end" font-weight="normal" fill="#4b5563">0.2</text>
+<line x1="85" y1="270.0" x2="865" y2="270.0" stroke="#e5e7eb"/>
+<text x="75.0" y="274.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="end" font-weight="normal" fill="#4b5563">0.4</text>
+<line x1="85" y1="210.0" x2="865" y2="210.0" stroke="#e5e7eb"/>
+<text x="75.0" y="214.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="end" font-weight="normal" fill="#4b5563">0.6</text>
+<line x1="85" y1="150.0" x2="865" y2="150.0" stroke="#e5e7eb"/>
+<text x="75.0" y="154.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="end" font-weight="normal" fill="#4b5563">0.8</text>
+<line x1="85" y1="90.0" x2="865" y2="90.0" stroke="#e5e7eb"/>
+<text x="75.0" y="94.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="end" font-weight="normal" fill="#4b5563">1.0</text>
+<rect x="152.5" y="130.2" width="52" height="259.8" fill="#60a5fa"/>
+<text x="178.5" y="123.2" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="middle" font-weight="600" fill="#111827">86.6%</text>
+<rect x="220.5" y="140.0" width="52" height="250.0" fill="#1d4ed8"/>
+<text x="246.5" y="133.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="middle" font-weight="600" fill="#111827">83.3%</text>
+<text x="212.5" y="415.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12" text-anchor="middle" font-weight="600" fill="#111827">glm-5.2</text>
+<rect x="407.5" y="120.5" width="52" height="269.5" fill="#60a5fa"/>
+<text x="433.5" y="113.5" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="middle" font-weight="600" fill="#111827">89.8%</text>
+<rect x="475.5" y="135.1" width="52" height="254.9" fill="#1d4ed8"/>
+<text x="501.5" y="128.1" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="middle" font-weight="600" fill="#111827">85.0%</text>
+<text x="467.5" y="415.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12" text-anchor="middle" font-weight="600" fill="#111827">minimax-m3</text>
+<rect x="662.5" y="112.8" width="52" height="277.2" fill="#60a5fa"/>
+<text x="688.5" y="105.8" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="middle" font-weight="600" fill="#111827">92.4%</text>
+<rect x="730.5" y="130.7" width="52" height="259.3" fill="#1d4ed8"/>
+<text x="756.5" y="123.7" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="middle" font-weight="600" fill="#111827">86.4%</text>
+<text x="722.5" y="415.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12" text-anchor="middle" font-weight="600" fill="#111827">qwen3.7-max</text>
+<rect x="640" y="52" width="13" height="13" fill="#60a5fa"/>
+<text x="659.0" y="63.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111827">visible pair pass</text>
+<rect x="760" y="52" width="13" height="13" fill="#1d4ed8"/>
+<text x="779.0" y="63.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111827">held-out pair pass</text>
+</svg>

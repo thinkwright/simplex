@@ -1,0 +1,44 @@
+list_dir(.) → (empty: '.')
+write_file(wirecodec/__init__.py) → wrote 97 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 487 bytes to 'wirecodec/public.py'
+write_file(wirecodec/codec.py) → wrote 6568 bytes to 'wirecodec/codec.py'
+run_command(python3 --version && python3 -c "
+import sys, hashlib
+# Conf…) → exit: 0 (+6 lines)
+run_command(python3 -c "
+import wirecodec.codec as c
+import inspect
+src …) → exit: 0 (+3 lines)
+run_command(python3 -c "
+from wirecodec.public import encode, decode, Co…) → exit: 0 (+15 lines)
+run_command(python3 -c "
+from wirecodec.public import encode, decode, Co…) → exit: 0 (+15 lines)
+run_command(ls -la wirecodec/ && python3 -c "
+# Clean import test
+from w…) → exit: 0 (+11 lines)
+
+--- final summary ---
+Everything works. Let me do a final summary check against the spec:
+
+**Files created:**
+- `wirecodec/__init__.py` — package marker
+- `wirecodec/public.py` — exposes `encode`, `decode`, `CodecError`
+- `wirecodec/codec.py` — implementation using only `json`, `hashlib` (SHA-256), and `copy` from stdlib
+
+**Verification against spec:**
+- **C1**: Only stdlib (`json`, `hashlib`, `copy`) — ✓
+- **R1**: `from wirecodec.public import encode, decode, CodecError` works — ✓
+- **R2**: `encode` validates non-empty string `id`, integer non-boolean `value`, doesn't mutate input, raises `ValueError` — ✓
+- **R3**: Returns compact JSON with sorted keys, fields `version=2`, `id`, `value`, `checksum` (lowercase SHA-256 hex over canonical `{id, value, version}`) — ✓
+- **R4**: `decode` accepts JSON object, treats absent version as 1, returns dict with `id`, `value`, `version` — ✓
+- **R5**: Validates v2 checksum, raises `CodecError` for malformed/unsupported/invalid/checksum-mismatch — ✓
+- **R6**: Unknown top-level fields raise `CodecError` for both v1 and v2 — ✓
+- **R7**: Deterministic output (verified with repeated calls) — ✓
+- **P1**: v1 records (absent or explicit version=1) decode correctly — ✓
+- **P2**: Public API stable — ✓
+- **V1/V2**: v2 encode with checksum, v2 decode validates checksum — ✓
+- **D1**: Package imports cleanly and encodes a valid record — ✓
+
+All examples E1–E8 pass, plus additional edge cases (malformed JSON, unsupported versions, non-dict input, empty id, non-string id, non-int/float value, non-string decode input, non-object JSON, roundtrip, determinism).
+
+**Summary**: Created `wirecodec/__init__.py`, `wirecodec/public.py`, and `wirecodec/codec.py`. The codec uses only `json`, `hashlib.sha256`, and `copy` from the standard library. Verified all 8 spec examples plus edge cases pass in Python 3.

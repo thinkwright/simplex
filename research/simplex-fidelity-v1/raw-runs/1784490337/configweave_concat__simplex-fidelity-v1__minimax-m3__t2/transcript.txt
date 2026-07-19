@@ -1,0 +1,37 @@
+list_dir() → (empty: '.')
+write_file(configweave/__init__.py) → wrote 133 bytes to 'configweave/__init__.py'
+write_file(configweave/public.py) → wrote 104 bytes to 'configweave/public.py'
+write_file(configweave/core.py) → wrote 2871 bytes to 'configweave/core.py'
+run_command(python3 -c "
+import sys
+print('Python:', sys.version)
+
+# E6:…) → exit: 0 (+21 lines)
+run_command(python3 -c "
+# Verify the public API contract: merge_layers …) → exit: 0 (+1 lines)
+
+--- final summary ---
+All requirements satisfied.
+
+**Summary**
+
+Created an importable `configweave` package with three files:
+
+- `configweave/__init__.py` — re-exports `merge_layers` from `configweave.public`.
+- `configweave/public.py` — public API surface exposing `merge_layers`.
+- `configweave/core.py` — implementation using only `copy` from the standard library.
+
+**How it satisfies the contract**
+
+- **R1**: `merge_layers` is importable from `configweave.public` (and from the top-level `configweave`).
+- **R2**: Empty layer list returns `{}`; layers are applied first-to-last.
+- **R3**: When both sides are mappings, `_merge_into` recurses; otherwise the later non-list value replaces the earlier one.
+- **R4**: When both sides are lists, the result is `deepcopy(old) + deepcopy(new)`; a list still replaces a non-list (and vice versa) via the `else` branch.
+- **R5**: A `None` value triggers `del result[key]` if present, otherwise no-op; works at any nesting level.
+- **R6**: Every value placed into the result is `copy.deepcopy`'d, so no mutable container is shared with inputs and inputs are never mutated.
+- **R7 / X1**: `layers` must be a `list`; each layer must be a `dict`; every key at every nesting level (including list indices) is validated as a `str`. Validation runs before any mutation, so invalid input raises `TypeError` without touching inputs.
+- **C1 / E6**: Only `copy` (stdlib) is imported; verified by AST-walking the package and asserting every import root is either `configweave` or in `sys.stdlib_module_names`.
+
+**Verification**
+
+Ran a comprehensive script covering E1–E6, R2–R5, X1, and the stdlib-only dependency check — all passed. Also confirmed `configweave.public.merge_layers` is the same callable as `configweave.merge_layers`.

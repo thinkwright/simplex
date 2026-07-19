@@ -1,0 +1,31 @@
+list_dir() → (empty: '.')
+write_file(configweave/__init__.py) → wrote 106 bytes to 'configweave/__init__.py'
+write_file(configweave/public.py) → wrote 3749 bytes to 'configweave/public.py'
+write_file(test_configweave.py) → wrote 4232 bytes to 'test_configweave.py'
+run_command(python3 --version && python3 test_configweave.py) → exit: 1 (+15 lines)
+read_file(test_configweave.py) → (no lines in range for 'test_configweave.py')
+grep(test_configweave.py) → test_configweave.py:113:def test_e6_only_stdlib_imports():
+read_file(test_configweave.py) → 113: def test_e6_only_stdlib_imports(): (+17 lines)
+write_file(test_configweave.py) → wrote 4877 bytes to 'test_configweave.py'
+run_command(python3 test_configweave.py) → exit: 0 (+14 lines)
+run_command(cd /tmp && PYTHONPATH=/dev/null python3 -c "
+import sys
+sys.…) → exit: 0 (+5 lines)
+
+--- final summary ---
+All examples produce the exact expected output and the public API imports cleanly.
+
+## Summary
+
+Created the `configweave` package (stdlib-only, per C1):
+
+- **`configweave/__init__.py`** — package marker with a short docstring.
+- **`configweave/public.py`** — exposes `merge_layers` (the public API per R1). Implementation:
+  - Validates up front that `layers` is a list of dicts and that every dict key at every nesting level (including dicts nested inside lists) is a string, raising `TypeError` before any merging (R7, X1, E5).
+  - Applies layers first-to-last; returns a fresh `{}` for an empty list (R2).
+  - Recursive merge when both old and new are dicts (R3); list concatenation of deep copies in old-then-new order when both are lists; otherwise the later value replaces the earlier one, with a list replacing a non-list (R3/R4).
+  - A `None` value deletes the key at its nesting level, no-op if absent (R5).
+  - Every value placed into the result is `copy.deepcopy`'d, so no mutable container is shared with any input and inputs are never mutated (R6, E4).
+- **`test_configweave.py`** — verification suite covering E1–E6 (including an `ast`-based check that every imported module is stdlib or `configweave` itself).
+
+Verified with `python3 test_configweave.py` (all 12 tests pass) and a clean-environment run of the exact spec examples (E1/E2/E3/empty all match).

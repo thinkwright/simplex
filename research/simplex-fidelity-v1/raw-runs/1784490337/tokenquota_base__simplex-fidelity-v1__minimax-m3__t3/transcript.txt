@@ -1,0 +1,29 @@
+list_dir(.) → (empty: '.')
+write_file(tokenquota/__init__.py) → wrote 160 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 158 bytes to 'tokenquota/public.py'
+write_file(tokenquota/_clock.py) → wrote 320 bytes to 'tokenquota/_clock.py'
+write_file(tokenquota/_bucket.py) → wrote 4047 bytes to 'tokenquota/_bucket.py'
+write_file(tests/test_tokenquota.py) → wrote 5976 bytes to 'tests/test_tokenquota.py'
+run_command(python3.11 --version && python3.11 -m unittest tests.test_to…) → exit: 0 (+21 lines)
+
+--- final summary ---
+## Summary
+
+Implemented the `tokenquota` package as a thread-safe token-bucket rate limiter using only the Python standard library.
+
+**Files created:**
+- `tokenquota/__init__.py` — package entry, re-exports `Bucket`
+- `tokenquota/public.py` — public API surface exposing `Bucket`
+- `tokenquota/_clock.py` — default clock using `time.monotonic` (stdlib only)
+- `tokenquota/_bucket.py` — `Bucket` implementation with refill, `allow`, `available`, and a `threading.Lock` for thread safety
+- `tests/test_tokenquota.py` — unittest suite covering E1–E6 plus extra rule checks
+
+**Key design points:**
+- Constructor validates `capacity > 0` and `refill_per_second >= 0`, rejecting booleans and non-numerics with `ValueError` (R6).
+- Bucket starts full (R1); refill uses `elapsed = now - last_time`, treats negative elapsed as 0 (R3), caps at capacity, and preserves fractional tokens exactly (R4).
+- `allow(amount)` validates `amount` first (raising `ValueError` without consuming, X1), then refills under the lock and only subtracts on success (R2).
+- `available()` performs the same refill and returns the balance without consuming (R5).
+- All refill/consume paths are guarded by a single `threading.Lock`, so concurrent successful `allow` calls never exceed available tokens (R7).
+- Time source is exclusively the supplied `clock` callable (or `time.monotonic`), satisfying C1.
+
+**Verification:** Ran `python3.11 -m unittest tests.test_tokenquota -v` — all 15 tests passed (E1, E2, E3, E4, E5, E6, plus extra R1/R4/R5/R6/R7 checks).

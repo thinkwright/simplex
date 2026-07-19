@@ -1,0 +1,5 @@
+# Interpreter and package-manager caches are execution by-products, not study data.
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+raw-runs/**/workspace/.cache/

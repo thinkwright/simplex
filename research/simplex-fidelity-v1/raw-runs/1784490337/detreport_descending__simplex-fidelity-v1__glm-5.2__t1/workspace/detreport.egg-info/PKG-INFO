@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: detreport
+Version: 0.1.0
+Summary: Deterministic event report builder using only the standard library.
+Requires-Python: >=3.11

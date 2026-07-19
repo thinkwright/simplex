@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/thinkwright/thinkbench/main/prompt-packs/schema.json",
+  "description": "Simplex-only controlled execution-fidelity pilot",
+  "format": "simplex-v0.6",
+  "name": "simplex-fidelity-v1",
+  "prompts": {
+    "configweave_base": "prompts/configweave_base.simplex",
+    "configweave_concat": "prompts/configweave_concat.simplex",
+    "configweave_union": "prompts/configweave_union.simplex",
+    "cursorvault_base": "prompts/cursorvault_base.simplex",
+    "cursorvault_inclusive": "prompts/cursorvault_inclusive.simplex",
+    "cursorvault_offset": "prompts/cursorvault_offset.simplex",
+    "detreport_base": "prompts/detreport_base.simplex",
+    "detreport_descending": "prompts/detreport_descending.simplex",
+    "detreport_firstseen": "prompts/detreport_firstseen.simplex",
+    "idledger_base": "prompts/idledger_base.simplex",
+    "idledger_firstwins": "prompts/idledger_firstwins.simplex",
+    "idledger_lastwins": "prompts/idledger_lastwins.simplex",
+    "tokenquota_base": "prompts/tokenquota_base.simplex",
+    "tokenquota_ceiling": "prompts/tokenquota_ceiling.simplex",
+    "tokenquota_floor": "prompts/tokenquota_floor.simplex",
+    "wirecodec_base": "prompts/wirecodec_base.simplex",
+    "wirecodec_preserve": "prompts/wirecodec_preserve.simplex",
+    "wirecodec_reject": "prompts/wirecodec_reject.simplex"
+  },
+  "schema_version": 1
+}

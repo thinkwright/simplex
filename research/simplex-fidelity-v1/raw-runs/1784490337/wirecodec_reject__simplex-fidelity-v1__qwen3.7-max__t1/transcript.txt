@@ -1,0 +1,29 @@
+list_dir() → (empty: '.')
+run_command(mkdir -p wirecodec) → exit: 0
+write_file(wirecodec/__init__.py) → wrote 102 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 5039 bytes to 'wirecodec/public.py'
+run_command(cd /home/user && python3 -c "
+from wirecodec import encode, …) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from wirecodec import encode, decode, CodecErro…) → exit: 0 (+15 lines)
+run_command(python3 -c "
+import hashlib, json
+
+# Verify checksum manuall…) → exit: 0 (+15 lines)
+
+--- final summary ---
+All tests pass. The implementation is complete and correct:
+
+**Files created:**
+- `wirecodec/__init__.py` - Package entry point exposing encode, decode, and CodecError
+- `wirecodec/public.py` - Core implementation
+
+**Verified functionality:**
+- E1-E8: All example scenarios pass
+- P1: Version 1 backward compatibility works
+- Checksum: SHA-256 hash computed correctly over canonical JSON
+- Edge cases: All invalid inputs properly rejected with appropriate errors
+- Determinism: Repeated encoding produces identical output
+- No mutation: Input records remain unchanged
+
+The codec correctly handles version 1 (legacy) and version 2 (with checksum) records, validates all inputs, and uses only Python standard library modules (json, hashlib).

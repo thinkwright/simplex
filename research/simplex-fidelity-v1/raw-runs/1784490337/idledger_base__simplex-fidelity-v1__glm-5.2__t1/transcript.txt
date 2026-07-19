@@ -1,0 +1,36 @@
+list_dir() → (empty: '.')
+write_file(idledger/__init__.py) → wrote 262 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 311 bytes to 'idledger/public.py'
+write_file(idledger/ledger.py) → wrote 5739 bytes to 'idledger/ledger.py'
+write_file(verify.py) → wrote 6540 bytes to 'verify.py'
+run_command(python --version && python verify.py) → exit: 127 (+1 lines)
+run_command(python3 --version && python3 verify.py) → exit: 1 (+7 lines)
+read_file(verify.py) → 26: # E2 -> R4 -------------------------------------------------------… (+7 lines)
+write_file(verify.py) → wrote 6614 bytes to 'verify.py'
+run_command(python3 verify.py) → exit: 0 (+9 lines)
+run_command(python3 -m compileall -q idledger && python3 -c "
+from idled…) → exit: 0 (+2 lines)
+
+--- final summary ---
+## Summary
+
+Created the `idledger` package from scratch with three files:
+
+- **`idledger/__init__.py`** — package init re-exporting `Ledger`, `InsufficientFunds`, `CommandConflict`.
+- **`idledger/public.py`** — canonical public API surface re-exporting the three names from `idledger.ledger` (satisfies R1).
+- **`idledger/ledger.py`** — core implementation:
+  - `Ledger(initial=None)` validates a mapping of non-negative integer balances (R2, C1).
+  - `snapshot()` returns a new account-name-sorted dict under a lock (R2, R8).
+  - `apply(command)` validates exactly `id`/`account`/`kind`/`amount` with `kind` ∈ {credit, debit} and positive integer `amount` (rejecting `bool`/float/zero/negative/extra fields → `ValueError`); returns exactly `{id, account, balance}` (R3, R7, X2).
+  - Identical successful command id replays return the original result without re-applying (R4); reused id with different content raises `CommandConflict` and leaves state unchanged (R5).
+  - Debit that would go negative raises `InsufficientFunds` atomically without consuming the id (R6, X1).
+  - All state guarded by an `RLock` for thread-safe concurrent apply/snapshot (R8).
+  - Uses only `threading` and `collections.abc` from the standard library (C2).
+
+Also added **`verify.py`** covering E1–E7 plus extra sanity checks.
+
+## Verification
+- `python3 verify.py` → all examples E1–E7 pass (`ALL OK`), including 200 concurrent distinct credits landing at exactly 200 and 100 concurrent same-id credits applying exactly once.
+- `python3 -m compileall -q idledger` → clean compile.
+- Confirmed both `from idledger.public import ...` and `from idledger import ...` work, and a clean `apply` returns `{'id': 'c1', 'account': 'a', 'balance': 60}` (D1).
+- E7 dependency scan via AST confirmed every import is from the stdlib or `idledger` itself.

@@ -1,0 +1,31 @@
+list_dir() → (empty: '.')
+write_file(idledger/__init__.py) → wrote 186 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 273 bytes to 'idledger/public.py'
+write_file(idledger/errors.py) → wrote 247 bytes to 'idledger/errors.py'
+write_file(idledger/ledger.py) → wrote 3954 bytes to 'idledger/ledger.py'
+run_command(python3 --version && python3 -c "
+from idledger import Ledge…) → exit: 0 (+14 lines)
+run_command(python3 -c "
+# E7: verify only stdlib + idledger are importe…) → exit: 0 (+2 lines)
+list_dir() → idledger/
+run_command(ls -la idledger/) → exit: 0 (+8 lines)
+
+--- final summary ---
+Done. The `idledger` package is implemented and verified.
+
+**Files created:**
+- `idledger/__init__.py` — re-exports the public API
+- `idledger/public.py` — exposes `Ledger`, `InsufficientFunds`, `CommandConflict`
+- `idledger/errors.py` — defines `InsufficientFunds` and `CommandConflict`
+- `idledger/ledger.py` — `Ledger` class with `snapshot` and `apply`
+
+**Verification (all passed):**
+- **E1**: `Ledger({'a': 100}).apply({...debit 40})` → `{'id': 'c1', 'account': 'a', 'balance': 60}` ✓
+- **E2**: Re-applying the same command returns the same result; balance changes once ✓
+- **E3**: Reusing `c1` with different content raises `CommandConflict`; state unchanged ✓
+- **E4**: Debit 101 from 100 raises `InsufficientFunds`; id remains reusable ✓
+- **E5**: Invalid amounts (bool, zero, negative), extra fields, bad kind, non-dict commands, and invalid initial state all raise `ValueError` with no state change ✓
+- **E6**: 100 concurrent distinct credits → final balance = 100 exactly once ✓
+- **E7**: Only `threading` (stdlib) and `idledger` modules are imported ✓
+- **R2**: `snapshot()` returns account-name-sorted dict ✓
+- **R8**: `RLock` guards all state mutation; concurrent successful commands each apply exactly once ✓

@@ -1,0 +1,29 @@
+list_dir() → (empty: '.')
+write_file(configweave/__init__.py) → wrote 225 bytes to 'configweave/__init__.py'
+write_file(configweave/public.py) → wrote 2879 bytes to 'configweave/public.py'
+run_command(python3 --version && python3 - <<'PY'
+import copy
+from confi…) → exit: 0 (+3 lines)
+grep(^\s*(import|from)\s) → configweave/public.py:8:import copy (+1 lines)
+run_command(python3 - <<'PY'
+import ast, os, sys
+# E6: statically verify…) → exit: 0 (+2 lines)
+
+--- final summary ---
+Done. The `configweave` package is implemented and verified.
+
+## Files changed
+- **`configweave/__init__.py`** — package init; re-exports `merge_layers` from `configweave.public` (a configweave-internal import).
+- **`configweave/public.py`** — public API. `merge_layers(layers)` uses only `copy` from the standard library.
+
+## How it satisfies the contract
+- **R1/R2**: `from configweave.public import merge_layers` works; empty list → `{}`.
+- **R3**: when both existing and incoming values are dicts, `_apply` recurses; otherwise the later non-list value replaces (via `copy.deepcopy`).
+- **R4**: lists fall through to `copy.deepcopy`, replacing the earlier value with an independent copy.
+- **R5**: an incoming `None` does `result.pop(key, None)` (no-op if absent), at its nesting level.
+- **R6**: result is built from fresh dicts and deep-copied lists/scalars — no mutable container is shared with inputs; inputs are only ever read.
+- **R7/X1**: `_validate` rejects non-list `layers`, non-dict layers, and any non-string dict key at any nesting level (walking dicts, lists, and tuples), raising `TypeError` before any merging so inputs are never mutated.
+- **C1/E6**: statically verified every import is stdlib (`copy`) or configweave itself.
+
+## Verification
+Ran a Python script covering E1–E6 plus extra cases (nested deletes, dict↔scalar↔list replacements, deep-independence of nested lists, and all TypeError paths with input-immutability checks on error) — all assertions passed. A separate AST-based check confirmed only stdlib/configweave imports, and a clean import confirmed `configweave.public.merge_layers` is importable.

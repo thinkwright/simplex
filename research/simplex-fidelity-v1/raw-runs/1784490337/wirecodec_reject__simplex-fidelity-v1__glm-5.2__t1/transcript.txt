@@ -1,0 +1,27 @@
+list_dir() → (empty: '.')
+write_file(wirecodec/__init__.py) → wrote 396 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 5323 bytes to 'wirecodec/public.py'
+run_command(cd /tmp && python3 -c "
+import sys, json, hashlib, inspect
+s…) → exit: 1 (+3 lines)
+run_command(pwd && ls) → exit: 0 (+2 lines)
+run_command(python3 -c "
+import sys, json, hashlib, inspect
+sys.path.ins…) → exit: 0 (+12 lines)
+run_command(python3 --version && python3 -m compileall -q wirecodec && e…) → exit: 0 (+4 lines)
+
+--- final summary ---
+## Summary
+
+**Files created:**
+- `wirecodec/__init__.py` — re-exports `encode`, `decode`, `CodecError` from `wirecodec.public`.
+- `wirecodec/public.py` — the implementation.
+
+**Implementation highlights:**
+- `encode(record)` validates the input is a dict with exactly `id` (non-empty str) and `value` (int, not bool), raises `ValueError` without mutating input, and returns compact sorted-keys JSON with `version=2`, `id`, `value`, and a lowercase SHA-256 `checksum` over the canonical sorted JSON of only `id`/`value`/`version`.
+- `decode(text)` parses a JSON object string, treats absent `version` as 1, rejects unknown top-level fields for both versions, validates the v2 checksum, and returns a fresh `{id, value, version}` dict; raises `CodecError` for malformed JSON, non-objects, unsupported/invalid versions, invalid fields, unknown fields, or checksum mismatch.
+- Only stdlib imports used: `json` and `hashlib` (SHA-256).
+
+**Verification:**
+- Ran an inline test covering E1–E8 plus extra edge cases (malformed JSON, non-object, unsupported version, v1 with checksum, v2 missing checksum, non-int/bool/float values, missing fields, unknown fields, cross-process determinism) — all passed.
+- `python3 -m compileall` succeeded; clean import of `wirecodec.public` confirmed; repeated `encode` across separate processes produced byte-for-byte identical output.

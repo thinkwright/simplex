@@ -1,0 +1,33 @@
+list_dir() → (empty: '.')
+write_file(detreport/public.py) → wrote 2741 bytes to 'detreport/public.py'
+write_file(detreport/__init__.py) → wrote 159 bytes to 'detreport/__init__.py'
+write_file(detreport/__main__.py) → wrote 816 bytes to 'detreport/__main__.py'
+run_command(python3 --version && python3 -c "
+from detreport import buil…) → exit: 0 (+6 lines)
+run_command(cd /tmp && cat > input.json <<'EOF'
+[{"id":"b","category":"x…) → exit: 1 (+7 lines)
+run_command(python3 -c "
+import ast, os
+for root,_,files in os.walk('det…) → exit: 0 (+6 lines)
+run_command(cat > /tmp/input.json <<'EOF'
+[{"id":"b","category":"x","amo…) → exit: 0 (+8 lines)
+run_command(echo "=== D1: clean import + single-category build ==="
+pyth…) → exit: 0 (+8 lines)
+
+--- final summary ---
+All requirements verified. The implementation is complete and working.
+
+## Summary
+
+Created the `detreport` package (project was empty) with three files:
+
+- **`detreport/public.py`** — defines `ReportError` and `build_report(events)`. Validates that input is a list of event dicts each having *exactly* `id` (non-empty unique string), `category` (non-empty string), and `amount_cents` (integer, excluding `bool`). Groups by category, sums per-category totals and a grand total, sorts event ids ascending within each group, orders groups by category in descending code-point order, and returns compact JSON (`sort_keys=True`, `ensure_ascii=False`, `separators=(",", ":")`) with exactly `groups` and `grand_total_cents` at top level. Input is never mutated (only read).
+- **`detreport/__init__.py`** — re-exports `build_report` and `ReportError` from `detreport.public`.
+- **`detreport/__main__.py`** — CLI: reads a JSON array from the supplied path, writes `build_report` output plus one newline to stdout, exits 0 on success; prints a descriptive message to stderr and exits non-zero on read/ReportError/usage errors.
+
+**Verification performed:**
+- E1–E5: single-category totals/sorted ids/grand total, descending category order (`beta` before `alpha`), literal `café` (no ASCII escape), all error cases (duplicate id, boolean amount, missing field, extra field, non-list, non-string id, empty strings, float/string amount) raise `ReportError`, and repeated calls produce byte-identical output with unchanged input.
+- E6: `python -m detreport /tmp/input.json` → exit 0, stdout equals the library result followed by exactly one `0a` newline.
+- E7: AST scan of all package modules confirms every import is from the standard library (`json`, `sys`) or `detreport` itself.
+- D1: clean import and single-category build succeed.
+- CLI error paths (bad JSON, duplicate ids, wrong arg count) exit non-zero with stderr messages and no stdout.

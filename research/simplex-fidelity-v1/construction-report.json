@@ -1,0 +1,356 @@
+{
+  "cross_variant": [
+    {
+      "direction": "base_reference_to_variant_grader",
+      "failed_requirements": [
+        "R4"
+      ],
+      "family": "configweave",
+      "mutation_target": "R4",
+      "variant": "concat"
+    },
+    {
+      "direction": "variant_reference_to_base_grader",
+      "failed_requirements": [
+        "R4"
+      ],
+      "family": "configweave",
+      "mutation_target": "R4",
+      "variant": "concat"
+    },
+    {
+      "direction": "base_reference_to_variant_grader",
+      "failed_requirements": [
+        "R4"
+      ],
+      "family": "configweave",
+      "mutation_target": "R4",
+      "variant": "union"
+    },
+    {
+      "direction": "variant_reference_to_base_grader",
+      "failed_requirements": [
+        "R4"
+      ],
+      "family": "configweave",
+      "mutation_target": "R4",
+      "variant": "union"
+    },
+    {
+      "direction": "base_reference_to_variant_grader",
+      "failed_requirements": [
+        "R4"
+      ],
+      "family": "cursorvault",
+      "mutation_target": "R4",
+      "variant": "inclusive"
+    },
+    {
+      "direction": "variant_reference_to_base_grader",
+      "failed_requirements": [
+        "R4"
+      ],
+      "family": "cursorvault",
+      "mutation_target": "R4",
+      "variant": "inclusive"
+    },
+    {
+      "direction": "base_reference_to_variant_grader",
+      "failed_requirements": [
+        "R4"
+      ],
+      "family": "cursorvault",
+      "mutation_target": "R4",
+      "variant": "offset"
+    },
+    {
+      "direction": "variant_reference_to_base_grader",
+      "failed_requirements": [
+        "R4"
+      ],
+      "family": "cursorvault",
+      "mutation_target": "R4",
+      "variant": "offset"
+    },
+    {
+      "direction": "base_reference_to_variant_grader",
+      "failed_requirements": [
+        "R5"
+      ],
+      "family": "detreport",
+      "mutation_target": "R5",
+      "variant": "descending"
+    },
+    {
+      "direction": "variant_reference_to_base_grader",
+      "failed_requirements": [
+        "R5"
+      ],
+      "family": "detreport",
+      "mutation_target": "R5",
+      "variant": "descending"
+    },
+    {
+      "direction": "base_reference_to_variant_grader",
+      "failed_requirements": [
+        "R5"
+      ],
+      "family": "detreport",
+      "mutation_target": "R5",
+      "variant": "firstseen"
+    },
+    {
+      "direction": "variant_reference_to_base_grader",
+      "failed_requirements": [
+        "R5"
+      ],
+      "family": "detreport",
+      "mutation_target": "R5",
+      "variant": "firstseen"
+    },
+    {
+      "direction": "base_reference_to_variant_grader",
+      "failed_requirements": [
+        "R5"
+      ],
+      "family": "idledger",
+      "mutation_target": "R5",
+      "variant": "firstwins"
+    },
+    {
+      "direction": "variant_reference_to_base_grader",
+      "failed_requirements": [
+        "R5"
+      ],
+      "family": "idledger",
+      "mutation_target": "R5",
+      "variant": "firstwins"
+    },
+    {
+      "direction": "base_reference_to_variant_grader",
+      "failed_requirements": [
+        "R5"
+      ],
+      "family": "idledger",
+      "mutation_target": "R5",
+      "variant": "lastwins"
+    },
+    {
+      "direction": "variant_reference_to_base_grader",
+      "failed_requirements": [
+        "R5"
+      ],
+      "family": "idledger",
+      "mutation_target": "R5",
+      "variant": "lastwins"
+    },
+    {
+      "direction": "base_reference_to_variant_grader",
+      "failed_requirements": [
+        "R4"
+      ],
+      "family": "tokenquota",
+      "mutation_target": "R4",
+      "variant": "ceiling"
+    },
+    {
+      "direction": "variant_reference_to_base_grader",
+      "failed_requirements": [
+        "R4"
+      ],
+      "family": "tokenquota",
+      "mutation_target": "R4",
+      "variant": "ceiling"
+    },
+    {
+      "direction": "base_reference_to_variant_grader",
+      "failed_requirements": [
+        "R4"
+      ],
+      "family": "tokenquota",
+      "mutation_target": "R4",
+      "variant": "floor"
+    },
+    {
+      "direction": "variant_reference_to_base_grader",
+      "failed_requirements": [
+        "R4"
+      ],
+      "family": "tokenquota",
+      "mutation_target": "R4",
+      "variant": "floor"
+    },
+    {
+      "direction": "base_reference_to_variant_grader",
+      "failed_requirements": [
+        "R6"
+      ],
+      "family": "wirecodec",
+      "mutation_target": "R6",
+      "variant": "preserve"
+    },
+    {
+      "direction": "variant_reference_to_base_grader",
+      "failed_requirements": [
+        "R6"
+      ],
+      "family": "wirecodec",
+      "mutation_target": "R6",
+      "variant": "preserve"
+    },
+    {
+      "direction": "base_reference_to_variant_grader",
+      "failed_requirements": [
+        "R6"
+      ],
+      "family": "wirecodec",
+      "mutation_target": "R6",
+      "variant": "reject"
+    },
+    {
+      "direction": "variant_reference_to_base_grader",
+      "failed_requirements": [
+        "R6"
+      ],
+      "family": "wirecodec",
+      "mutation_target": "R6",
+      "variant": "reject"
+    }
+  ],
+  "matching": [
+    {
+      "checks": 23,
+      "examples": 6,
+      "requirements": 10,
+      "score": 1.0,
+      "task": "cursorvault_base"
+    },
+    {
+      "checks": 23,
+      "examples": 6,
+      "requirements": 10,
+      "score": 1.0,
+      "task": "cursorvault_inclusive"
+    },
+    {
+      "checks": 23,
+      "examples": 6,
+      "requirements": 10,
+      "score": 1.0,
+      "task": "cursorvault_offset"
+    },
+    {
+      "checks": 20,
+      "examples": 6,
+      "requirements": 10,
+      "score": 1.0,
+      "task": "configweave_base"
+    },
+    {
+      "checks": 20,
+      "examples": 6,
+      "requirements": 10,
+      "score": 1.0,
+      "task": "configweave_concat"
+    },
+    {
+      "checks": 20,
+      "examples": 6,
+      "requirements": 10,
+      "score": 1.0,
+      "task": "configweave_union"
+    },
+    {
+      "checks": 27,
+      "examples": 7,
+      "requirements": 13,
+      "score": 1.0,
+      "task": "idledger_base"
+    },
+    {
+      "checks": 27,
+      "examples": 7,
+      "requirements": 13,
+      "score": 1.0,
+      "task": "idledger_firstwins"
+    },
+    {
+      "checks": 27,
+      "examples": 7,
+      "requirements": 13,
+      "score": 1.0,
+      "task": "idledger_lastwins"
+    },
+    {
+      "checks": 22,
+      "examples": 6,
+      "requirements": 10,
+      "score": 1.0,
+      "task": "tokenquota_base"
+    },
+    {
+      "checks": 22,
+      "examples": 6,
+      "requirements": 10,
+      "score": 1.0,
+      "task": "tokenquota_floor"
+    },
+    {
+      "checks": 22,
+      "examples": 6,
+      "requirements": 10,
+      "score": 1.0,
+      "task": "tokenquota_ceiling"
+    },
+    {
+      "checks": 37,
+      "examples": 8,
+      "requirements": 15,
+      "score": 1.0,
+      "task": "wirecodec_base"
+    },
+    {
+      "checks": 37,
+      "examples": 8,
+      "requirements": 15,
+      "score": 1.0,
+      "task": "wirecodec_reject"
+    },
+    {
+      "checks": 37,
+      "examples": 8,
+      "requirements": 15,
+      "score": 1.0,
+      "task": "wirecodec_preserve"
+    },
+    {
+      "checks": 25,
+      "examples": 7,
+      "requirements": 11,
+      "score": 1.0,
+      "task": "detreport_base"
+    },
+    {
+      "checks": 25,
+      "examples": 7,
+      "requirements": 11,
+      "score": 1.0,
+      "task": "detreport_descending"
+    },
+    {
+      "checks": 25,
+      "examples": 7,
+      "requirements": 11,
+      "score": 1.0,
+      "task": "detreport_firstseen"
+    }
+  ],
+  "schema_version": 1,
+  "study": "simplex-fidelity-v1",
+  "summary": {
+    "all_cross_variant_failures_localized": true,
+    "all_matching_full_pass": true,
+    "cross_variant_checks": 24,
+    "matching_references": 18
+  }
+}

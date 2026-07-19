@@ -1,0 +1,30 @@
+list_dir(.) → (empty: '.')
+write_file(detreport/__init__.py) → wrote 75 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 119 bytes to 'detreport/public.py'
+write_file(detreport/core.py) → wrote 2760 bytes to 'detreport/core.py'
+write_file(detreport/__main__.py) → wrote 530 bytes to 'detreport/__main__.py'
+run_command(python3 --version && python3 -c "
+import json
+from detreport…) → exit: 0 (+14 lines)
+run_command(cd /tmp && cat > dr_in.json <<'EOF'
+[{"id":"b","category":"x…) → exit: 0 (+4 lines)
+run_command(cat > /tmp/dr_in.json <<'EOF'
+[{"id":"b","category":"x","amo…) → exit: 0 (+21 lines)
+write_file(detreport/__main__.py) → wrote 542 bytes to 'detreport/__main__.py'
+run_command(python3 -m detreport /tmp/dr_in.json
+echo "---exit=$?---"
+py…) → exit: 0 (+7 lines)
+
+--- final summary ---
+Everything works. The CLI output ends with `}\n` (single newline), unicode `café` is preserved literally, and exit code is 0.
+
+**Summary**
+
+Created the `detreport` package with four files:
+
+- `detreport/__init__.py` — package marker.
+- `detreport/public.py` — exposes `build_report` and `ReportError`.
+- `detreport/core.py` — validates events (exact keys, non-empty string id/category, integer non-bool `amount_cents`, unique ids), groups by category in first-appearance order, sorts event ids ascending per group, and emits compact `ensure_ascii=False` JSON with sorted keys containing exactly `groups` and `grand_total_cents`. Input list is never mutated.
+- `detreport/__main__.py` — CLI: reads JSON array from path, prints `build_report` output plus one newline, exits 0.
+
+Verified against all examples: E1 (single-category aggregation), E2 (first-appearance ordering), E3 (literal `café`), E4 (ReportError for duplicate ids / bool / missing / extra field / empty id / empty category / float), E5 (byte-identical repeat, input unchanged), E6 (CLI stdout + newline, exit 0), E7 (only `json`/`sys` stdlib imports plus intra-package).

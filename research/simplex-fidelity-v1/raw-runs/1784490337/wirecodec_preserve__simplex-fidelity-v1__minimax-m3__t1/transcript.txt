@@ -1,0 +1,31 @@
+list_dir() → (empty: '.')
+write_file(wirecodec/__init__.py) → wrote 97 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 372 bytes to 'wirecodec/public.py'
+write_file(wirecodec/codec.py) → wrote 4494 bytes to 'wirecodec/codec.py'
+run_command(python3 -c "
+import sys
+# Verify only stdlib + hashlib used
+…) → exit: 0 (+11 lines)
+run_command(python3 --version && python3 -c "
+# D1: public API imports a…) → exit: 0 (+8 lines)
+
+--- final summary ---
+All checks pass. The implementation satisfies every rule in the contract.
+
+**Summary**
+
+Created the `wirecodec` package with three files:
+
+- `wirecodec/__init__.py` — package marker.
+- `wirecodec/public.py` — exposes `encode`, `decode`, and `CodecError` (R1, P2).
+- `wirecodec/codec.py` — implementation using only `json` (stdlib) and `hashlib.sha256` (C1).
+
+**Verification (all examples E1–E8 pass):**
+- E1: `encode({'id':'a','value':2})` produces compact sorted-key JSON with `version=2` and a SHA-256 checksum matching the canonical `{id,value,version}` payload.
+- E2: `decode('{"id":"a","value":2}')` returns `{id, value, version:1}` (absent version → 1).
+- E3: round-trip decode of a valid v2 record returns `{id, value, version:2}`.
+- E4: unknown top-level fields preserved in `extras`; `extras` omitted when empty.
+- E5: tampered v2 value with original checksum raises `CodecError`.
+- E6: repeated `encode` of the same record yields byte-identical output and does not mutate the input.
+- E7: missing id, empty id, boolean value, float value, or non-dict input raise `ValueError`.
+- E8: only `json` and `hashlib` are imported; checksum is lowercase 64-char SHA-256 hex.

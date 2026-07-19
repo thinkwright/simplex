@@ -1,0 +1,15 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/__init__.py) → wrote 135 bytes to 'cursorvault/__init__.py'
+write_file(cursorvault/public.py) → wrote 2047 bytes to 'cursorvault/public.py'
+write_file(test_cursorvault.py) → wrote 4723 bytes to 'test_cursorvault.py'
+write_file(test_cursorvault.py) → wrote 4645 bytes to 'test_cursorvault.py'
+run_command(python3 test_cursorvault.py) → exit: 0 (+11 lines)
+run_command(python3 -c "from cursorvault import paginate, CursorError; p…) → exit: 0 (+2 lines)
+
+--- final summary ---
+Done. Created the `cursorvault` package with two files:
+
+- **cursorvault/__init__.py** - Exposes `paginate` and `CursorError` from the public module
+- **cursorvault/public.py** - Implements the pagination logic with full validation
+
+The implementation handles all requirements: limit validation (1-100, rejects booleans), cursor parsing (decimal string index), proper next_cursor/has_more logic, no mutation of inputs, and only uses Python standard library. All test cases pass.

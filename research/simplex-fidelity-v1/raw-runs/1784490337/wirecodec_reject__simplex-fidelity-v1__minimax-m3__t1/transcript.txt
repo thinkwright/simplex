@@ -1,0 +1,41 @@
+list_dir() → (empty: '.')
+write_file(wirecodec/__init__.py) → wrote 97 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 166 bytes to 'wirecodec/public.py'
+write_file(wirecodec/codec.py) → wrote 4835 bytes to 'wirecodec/codec.py'
+run_command(python3 -c "
+import hashlib, json, sys
+sys.path.insert(0, '.…) → exit: 1 (+12 lines)
+run_command(python3 -c "
+src = open('wirecodec/codec.py').read()
+print('…) → exit: 0 (+7 lines)
+run_command(python3 -c "
+import hashlib, json, sys
+sys.path.insert(0, '.…) → exit: 1 (+18 lines)
+read_file(wirecodec/codec.py) → 1: """Core encode/decode logic for wirecodec. (+49 lines)
+write_file(wirecodec/codec.py) → wrote 4984 bytes to 'wirecodec/codec.py'
+run_command(python3 -c "
+import hashlib, json, sys
+sys.path.insert(0, '.…) → exit: 0 (+22 lines)
+run_command(cd /tmp && rm -rf clean_test && mkdir clean_test && cd clean…) → exit: 0 (+3 lines)
+list_dir() → wirecodec/
+run_command(ls -la wirecodec/ && echo "---" && python3 -c "import wireco…) → exit: 0 (+9 lines)
+
+--- final summary ---
+All done. Summary:
+
+**Files created:**
+- `wirecodec/__init__.py` — package marker with version
+- `wirecodec/public.py` — exposes `encode`, `decode`, `CodecError` (satisfies R1, P2)
+- `wirecodec/codec.py` — core implementation using only `hashlib` and `json` from stdlib (satisfies C1)
+
+**Verification (all examples E1–E8 pass):**
+- E1: `encode({'id':'a','value':2})` → compact version 2 JSON with SHA-256 checksum over canonical `{id, value, version}` payload
+- E2: `decode('{"id":"a","value":2}')` → `{id, value, version:1}` (P1 preserved)
+- E3: round-trip decode of a valid v2 record returns `{id, value, version:2}`
+- E4: unknown top-level field raises `CodecError` (R6)
+- E5: tampered value with original checksum raises `CodecError` (R5, V2)
+- E6: repeated encode produces byte-identical output and never mutates input (R2, R7)
+- E7: missing id or boolean value raises `ValueError` (R2, X1)
+- E8: only `hashlib` + `json` imports; digest is lowercase SHA-256 hex (C1)
+
+Additional checks confirmed: malformed JSON, unsupported versions, missing/bad-typed checksum, empty id, non-string id, float value, and explicit `version:1` all behave correctly.

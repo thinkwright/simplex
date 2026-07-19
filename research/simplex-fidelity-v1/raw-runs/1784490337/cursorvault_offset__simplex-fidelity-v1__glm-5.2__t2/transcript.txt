@@ -1,0 +1,24 @@
+list_dir() → (empty: '.')
+run_command(python3 --version) → exit: 0 (+1 lines)
+write_file(cursorvault/public.py) → wrote 2953 bytes to 'cursorvault/public.py'
+write_file(cursorvault/__init__.py) → wrote 253 bytes to 'cursorvault/__init__.py'
+run_command(cat > /tmp/verify_cursorvault.py << 'PYEOF'
+import sys, copy…) → exit: 0 (+1 lines)
+run_command(cd /tmp && python3 -c "
+import sys
+# Simulate a clean enviro…) → exit: 0 (+4 lines)
+run_command(rm -f /tmp/verify_cursorvault.py && find . -type f | sort) → exit: 0 (+4 lines)
+
+--- final summary ---
+The task is complete. I created the `cursorvault` package with two files:
+
+**`cursorvault/public.py`** — defines `CursorError` (an `Exception` subclass) and `paginate(records, cursor=None, limit=3)`:
+- **R3/X1**: validates `limit` first — rejects `bool` explicitly (before the `int` check, since `bool` subclasses `int`), rejects non-ints, and requires `1 <= limit <= 100`, raising `ValueError` without touching records.
+- **R4/X2**: `cursor=None` → start at index 0; a non-null cursor must be a string of ASCII decimal digits (`re.fullmatch(r"[0-9]+")`), parsed to a non-negative index that must point to an existing record (`index < len(records)`), else `CursorError` (covers malformed like `"missing"` and unknown/out-of-range).
+- **R2/R4/R5**: selects `records[start:start+limit]` (capped at `total`), returns a new dict with exactly `items`, `next_cursor`, `has_more`; `has_more = end < total`; `next_cursor = str(end)` when records remain, else `None`; empty input returns an empty terminal page.
+- **R6**: uses `list(records[start:end])` (a new list of the same record mappings) — no mutation of the input list or any record dict; the function is deterministic so equal inputs yield equal results.
+- **C1/E6**: only `re` (stdlib) is imported.
+
+**`cursorvault/__init__.py`** — re-exports `paginate` and `CursorError` from `cursorvault.public` (a cursorvault-internal import), so both `from cursorvault.public import …` (R1) and `from cursorvault import …` work.
+
+**Verification**: A comprehensive script checked E1–E6 (correct page output for E1/E2, `ValueError` for limit `0`/`True`/`1.5`/`"3"`/etc., `CursorError` for `"missing"`/`"3"`/`"999"`/`""`/`"-1"`, records unchanged after pagination, equal results on repeat, empty-input terminal page, limit boundaries 1 and 100) — all passed. A clean-environment import from a separate CWD confirmed `from cursorvault.public import paginate, CursorError` works and that the only modules loaded are `re` plus `cursorvault`/`cursorvault.public` (E6).

@@ -1,0 +1,38 @@
+SIMPLEX: 0.6
+
+CONSTRAINT: configweave_contract
+  - [C1] use only the Python standard library
+
+FUNCTION: implement_configweave() → output
+
+RULES:
+  - [R1] create an importable configweave package exposing merge_layers from configweave.public
+  - [R2] merge_layers(layers) applies layer dicts from first to last and returns an empty dict for an empty layer list
+  - [R3] when both old and new values are mappings, merge recursively; otherwise the later non-list value replaces the earlier value
+  - [R4] when both old and new values are lists, concatenate in old-then-new order while keeping only the first occurrence of each equality-distinct value; a list still replaces a non-list
+  - [R5] a later null value deletes that key from the result at its current nesting level; deleting an absent key is a no-op
+  - [R6] return a deep copy with no mutable container shared with any input, and never mutate an input layer
+  - [R7] layers must be a list of dicts and every key at every nesting level must be a string
+
+DONE_WHEN:
+  - [D1] the public API imports and can merge valid nested layers in a clean Python 3.11 environment
+
+EXAMPLES:
+  - [E1] value: merge_layers([{db: {host: a, port: 1}}, {db: {port: 2}}]) → {db: {host: a, port: 2}}
+  - [E2] value: merge_layers([{plugins: [a, b]}, {plugins: [b, c]}]) → {plugins: [a, b, c]}
+  - [E3] value: merge_layers([{a: 1, b: 2}, {a: null}]) → {b: 2}
+  - [E4] property: any valid layers → mutating the result cannot mutate a source layer and source layers remain unchanged
+  - [E5] error: a non-dict layer or nested non-string key → TypeError
+  - [E6] outcome: inspect the configweave package dependencies → every imported dependency is from the Python standard library or configweave itself
+
+ERRORS:
+  - [X1] invalid layer structure or any non-string key → raise TypeError without mutating inputs
+  - any unhandled condition → fail with descriptive message
+
+COVERS:
+  - E1 → R1, R2, R3, D1
+  - E2 → R4
+  - E3 → R5
+  - E4 → R6
+  - E5 → R7, X1
+  - E6 → C1

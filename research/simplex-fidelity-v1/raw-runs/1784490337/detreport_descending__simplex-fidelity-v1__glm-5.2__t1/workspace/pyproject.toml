@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "detreport"
+version = "0.1.0"
+description = "Deterministic event report builder using only the standard library."
+requires-python = ">=3.11"
+
+[tool.setuptools]
+packages = ["detreport"]

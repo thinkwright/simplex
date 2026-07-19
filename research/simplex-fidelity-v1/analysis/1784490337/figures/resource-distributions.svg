@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="560" viewBox="0 0 1080 560" role="img" aria-label="Resource distributions">
+<rect width="100%" height="100%" fill="white"/>
+<text x="24.0" y="34.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="20" text-anchor="start" font-weight="600" fill="#111827">Resource distributions for clean completed cells</text>
+<text x="24.0" y="58.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12" text-anchor="start" font-weight="normal" fill="#4b5563">Box spans Q1–Q3; whiskers span observed min–max. Retried or incomplete telemetry is excluded.</text>
+<text x="350.0" y="75.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="14" text-anchor="middle" font-weight="600" fill="#111827">Total tokens</text>
+<line x1="145.0" y1="95" x2="145.0" y2="460" stroke="#e5e7eb"/>
+<text x="145.0" y="482.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#4b5563">0</text>
+<line x1="247.5" y1="95" x2="247.5" y2="460" stroke="#e5e7eb"/>
+<text x="247.5" y="482.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#4b5563">177,883</text>
+<line x1="350.0" y1="95" x2="350.0" y2="460" stroke="#e5e7eb"/>
+<text x="350.0" y="482.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#4b5563">355,766</text>
+<line x1="452.5" y1="95" x2="452.5" y2="460" stroke="#e5e7eb"/>
+<text x="452.5" y="482.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#4b5563">533,650</text>
+<line x1="555.0" y1="95" x2="555.0" y2="460" stroke="#e5e7eb"/>
+<text x="555.0" y="482.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#4b5563">711,533</text>
+<text x="133.0" y="127.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="end" font-weight="normal" fill="#111827">glm-5.2 · pass</text>
+<line x1="183.3" y1="123" x2="291.3" y2="123" stroke="#059669" stroke-width="2"/>
+<rect x="211.0" y="114" width="21.7" height="18" fill="#059669" fill-opacity="0.28" stroke="#059669"/>
+<line x1="221.7" y1="113" x2="221.7" y2="133" stroke="#059669" stroke-width="2"/>
+<text x="296.3" y="127.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="9" text-anchor="start" font-weight="normal" fill="#4b5563">n=11</text>
+<text x="133.0" y="181.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="end" font-weight="normal" fill="#111827">glm-5.2 · not full-pass</text>
+<line x1="167.4" y1="177" x2="555.0" y2="177" stroke="#dc2626" stroke-width="2"/>
+<rect x="188.7" y="168" width="40.6" height="18" fill="#dc2626" fill-opacity="0.28" stroke="#dc2626"/>
+<line x1="208.5" y1="167" x2="208.5" y2="187" stroke="#dc2626" stroke-width="2"/>
+<text x="560.0" y="181.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="9" text-anchor="start" font-weight="normal" fill="#4b5563">n=39</text>
+<text x="133.0" y="235.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="end" font-weight="normal" fill="#111827">minimax-m3 · pass</text>
+<line x1="154.2" y1="231" x2="515.4" y2="231" stroke="#059669" stroke-width="2"/>
+<rect x="156.4" y="222" width="7.2" height="18" fill="#059669" fill-opacity="0.28" stroke="#059669"/>
+<line x1="157.9" y1="221" x2="157.9" y2="241" stroke="#059669" stroke-width="2"/>
+<text x="520.4" y="235.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="9" text-anchor="start" font-weight="normal" fill="#4b5563">n=17</text>
+<text x="133.0" y="289.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="end" font-weight="normal" fill="#111827">minimax-m3 · not full-pass</text>
+<line x1="153.3" y1="285" x2="205.0" y2="285" stroke="#dc2626" stroke-width="2"/>
+<rect x="156.2" y="276" width="15.6" height="18" fill="#dc2626" fill-opacity="0.28" stroke="#dc2626"/>
+<line x1="162.4" y1="275" x2="162.4" y2="295" stroke="#dc2626" stroke-width="2"/>
+<text x="210.0" y="289.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="9" text-anchor="start" font-weight="normal" fill="#4b5563">n=37</text>
+<text x="133.0" y="343.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="end" font-weight="normal" fill="#111827">qwen3.7-max · pass</text>
+<line x1="154.3" y1="339" x2="178.2" y2="339" stroke="#059669" stroke-width="2"/>
+<rect x="157.3" y="330" width="1.7" height="18" fill="#059669" fill-opacity="0.28" stroke="#059669"/>
+<line x1="157.8" y1="329" x2="157.8" y2="349" stroke="#059669" stroke-width="2"/>
+<text x="183.2" y="343.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="9" text-anchor="start" font-weight="normal" fill="#4b5563">n=9</text>
+<text x="133.0" y="397.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="end" font-weight="normal" fill="#111827">qwen3.7-max · not full-pass</text>
+<line x1="153.6" y1="393" x2="184.1" y2="393" stroke="#dc2626" stroke-width="2"/>
+<rect x="156.3" y="384" width="8.1" height="18" fill="#dc2626" fill-opacity="0.28" stroke="#dc2626"/>
+<line x1="161.0" y1="383" x2="161.0" y2="403" stroke="#dc2626" stroke-width="2"/>
+<text x="189.1" y="397.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="9" text-anchor="start" font-weight="normal" fill="#4b5563">n=29</text>
+<text x="860.0" y="75.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="14" text-anchor="middle" font-weight="600" fill="#111827">Wall-clock seconds</text>
+<line x1="655.0" y1="95" x2="655.0" y2="460" stroke="#e5e7eb"/>
+<text x="655.0" y="482.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#4b5563">0</text>
+<line x1="757.5" y1="95" x2="757.5" y2="460" stroke="#e5e7eb"/>
+<text x="757.5" y="482.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#4b5563">141</text>
+<line x1="860.0" y1="95" x2="860.0" y2="460" stroke="#e5e7eb"/>
+<text x="860.0" y="482.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#4b5563">283</text>
+<line x1="962.5" y1="95" x2="962.5" y2="460" stroke="#e5e7eb"/>
+<text x="962.5" y="482.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#4b5563">424</text>
+<line x1="1065.0" y1="95" x2="1065.0" y2="460" stroke="#e5e7eb"/>
+<text x="1065.0" y="482.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#4b5563">566</text>
+<line x1="718.3" y1="123" x2="964.4" y2="123" stroke="#059669" stroke-width="2"/>
+<rect x="742.7" y="114" width="100.6" height="18" fill="#059669" fill-opacity="0.28" stroke="#059669"/>
+<line x1="760.9" y1="113" x2="760.9" y2="133" stroke="#059669" stroke-width="2"/>
+<text x="969.4" y="127.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="9" text-anchor="start" font-weight="normal" fill="#4b5563">n=11</text>
+<line x1="691.6" y1="177" x2="1052.4" y2="177" stroke="#dc2626" stroke-width="2"/>
+<rect x="734.2" y="168" width="71.7" height="18" fill="#dc2626" fill-opacity="0.28" stroke="#dc2626"/>
+<line x1="758.5" y1="167" x2="758.5" y2="187" stroke="#dc2626" stroke-width="2"/>
+<text x="1057.4" y="181.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="9" text-anchor="start" font-weight="normal" fill="#4b5563">n=39</text>
+<line x1="675.1" y1="231" x2="1065.0" y2="231" stroke="#059669" stroke-width="2"/>
+<rect x="680.4" y="222" width="12.8" height="18" fill="#059669" fill-opacity="0.28" stroke="#059669"/>
+<line x1="688.3" y1="221" x2="688.3" y2="241" stroke="#059669" stroke-width="2"/>
+<text x="1070.0" y="235.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="9" text-anchor="start" font-weight="normal" fill="#4b5563">n=17</text>
+<line x1="667.7" y1="285" x2="721.5" y2="285" stroke="#dc2626" stroke-width="2"/>
+<rect x="678.4" y="276" width="18.3" height="18" fill="#dc2626" fill-opacity="0.28" stroke="#dc2626"/>
+<line x1="689.8" y1="275" x2="689.8" y2="295" stroke="#dc2626" stroke-width="2"/>
+<text x="726.5" y="289.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="9" text-anchor="start" font-weight="normal" fill="#4b5563">n=37</text>
+<line x1="699.7" y1="339" x2="845.5" y2="339" stroke="#059669" stroke-width="2"/>
+<rect x="729.6" y="330" width="33.9" height="18" fill="#059669" fill-opacity="0.28" stroke="#059669"/>
+<line x1="749.1" y1="329" x2="749.1" y2="349" stroke="#059669" stroke-width="2"/>
+<text x="850.5" y="343.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="9" text-anchor="start" font-weight="normal" fill="#4b5563">n=9</text>
+<line x1="694.2" y1="393" x2="1040.5" y2="393" stroke="#dc2626" stroke-width="2"/>
+<rect x="718.3" y="384" width="69.5" height="18" fill="#dc2626" fill-opacity="0.28" stroke="#dc2626"/>
+<line x1="741.4" y1="383" x2="741.4" y2="403" stroke="#dc2626" stroke-width="2"/>
+<text x="1045.5" y="397.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="9" text-anchor="start" font-weight="normal" fill="#4b5563">n=29</text>
+</svg>

@@ -1,0 +1,33 @@
+list_dir() → (empty: '.')
+run_command(mkdir -p tokenquota) → exit: 0
+write_file(tokenquota/__init__.py) → wrote 57 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 3491 bytes to 'tokenquota/public.py'
+run_command(cd /home/user && python3 -c "
+from tokenquota.public import …) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from tokenquota.public import Bucket
+
+# E1: cap…) → exit: 0 (+7 lines)
+run_command(python3 -c "
+from tokenquota.public import Bucket
+
+# R4: rou…) → exit: 0 (+8 lines)
+
+--- final summary ---
+Done. Created the `tokenquota` package with thread-safe token bucket implementation.
+
+**Files created:**
+- `tokenquota/__init__.py` - package marker
+- `tokenquota/public.py` - Bucket class implementation
+
+**Implementation details:**
+- Uses `threading.Lock` for thread safety (R7)
+- Accepts custom clock callable, defaults to `time.monotonic` (C1)
+- Validates all inputs and raises `ValueError` for invalid values (R6, X1)
+- Refill logic handles backward clock movement as zero elapsed time (R3)
+- Rounds balance down to nearest integer after positive-time refill (R4)
+- Clamps balance to capacity (R3)
+- `allow()` refills first, then consumes if sufficient tokens exist (R2)
+- `available()` performs refill and returns current balance (R5)
+
+**Verified:** All examples E1-E6 pass, plus edge cases for rounding, validation, and thread safety.

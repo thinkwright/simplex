@@ -1,0 +1,27 @@
+list_dir() → (empty: '.')
+write_file(tokenquota/__init__.py) → wrote 130 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 3918 bytes to 'tokenquota/public.py'
+write_file(verify_tokenquota.py) → wrote 3832 bytes to 'verify_tokenquota.py'
+run_command(python3 --version && python3 verify_tokenquota.py) → exit: 0 (+11 lines)
+run_command(python3 -c "
+from tokenquota.public import Bucket
+
+# Roundin…) → exit: 0 (+3 lines)
+run_command(rm verify_tokenquota.py && python3 -c "from tokenquota.publi…) → exit: 0 (+9 lines)
+
+--- final summary ---
+Done. The `tokenquota` package is implemented and verified.
+
+**Files created:**
+- `tokenquota/__init__.py` — re-exports `Bucket` from `tokenquota.public`.
+- `tokenquota/public.py` — the `Bucket` implementation.
+
+**How it satisfies the rules:**
+- **R1/R2/D1**: `from tokenquota.public import Bucket` works; `Bucket(capacity, refill_per_second, clock=None)` starts full; `allow(amount=1)` refills first, consumes and returns `True` when enough tokens exist, else `False` without consuming.
+- **R3**: refill adds `elapsed * refill_per_second`, clamps to capacity, and treats backward clock movement as zero elapsed time.
+- **R4**: after a positive-time refill and capacity clamp, the balance is rounded up (`math.ceil`) and clamped to capacity; this rounded value persists so `available()` and `allow()` stay consistent.
+- **R5**: `available()` runs the same refill calculation and returns the balance without consuming.
+- **R6/X1**: capacity must be positive, `refill_per_second` non-negative, and `allow` amount a positive non-boolean; invalid values raise `ValueError` without consuming tokens.
+- **R7/C1**: `allow`/`available` are serialized with a `threading.Lock`; only `math`, `threading`, and `time` from the standard library are used; the supplied clock is the sole source of elapsed time (default `time.monotonic`).
+
+**Verification**: Ran a script covering E1–E6 (capacity-2 double consume then fail; capacity-3/0.5 refill → `available()==2`; far-future clamp and backward-clock no-gain; `ValueError` for capacity 0, negative refill, and `allow(True)`; 20 threads × 50 calls against capacity-1000 → exactly 1000 successes; fake-clock control and standard-library-only deps) plus extra edge cases (rounding persistence, non-integer capacity clamp, float amounts, default clock). All passed on Python 3.12 (standard-library features only, compatible with 3.11). The temporary script was removed, leaving only the package.

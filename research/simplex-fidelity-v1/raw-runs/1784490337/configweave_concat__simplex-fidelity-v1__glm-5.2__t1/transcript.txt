@@ -1,0 +1,27 @@
+list_dir() → (empty: '.')
+write_file(configweave/__init__.py) → wrote 145 bytes to 'configweave/__init__.py'
+write_file(configweave/_core.py) → wrote 3276 bytes to 'configweave/_core.py'
+write_file(configweave/public.py) → wrote 177 bytes to 'configweave/public.py'
+write_file(verify_configweave.py) → wrote 4963 bytes to 'verify_configweave.py'
+run_command(python3 --version && python3 verify_configweave.py) → exit: 0 (+20 lines)
+run_command(python3 -c "
+import sys, importlib.util
+# Snapshot modules b…) → exit: 1 (+7 lines)
+run_command(python3 -c "
+import sys, os
+before = set(sys.modules)
+import…) → exit: 0 (+5 lines)
+run_command(python3 -m py_compile configweave/__init__.py configweave/_c…) → exit: 0 (+2 lines)
+
+--- final summary ---
+## Summary
+
+Created the `configweave` package with three files:
+
+- **`configweave/__init__.py`** — package marker.
+- **`configweave/_core.py`** — core implementation using only stdlib `copy`. `merge_layers(layers)` validates that `layers` is a list of dicts with string keys at every nesting level (raising `TypeError` without mutating inputs), then merges from first to last: recursive dict merge for two mappings, deep-copy concatenation (old-then-new) for two lists, later-value-replaces for other cases, and `None` as a delete (no-op if absent). Returns a fresh deep copy with no shared mutable containers.
+- **`configweave/public.py`** — public API re-exporting `merge_layers` from `configweave._core`.
+
+Also added **`verify_configweave.py`** covering E1–E6 plus edge cases (empty list, nested deletes, list/scalar replacement, deep no-share).
+
+Verified by running the script: all examples passed (E1 recursive merge, E2 list concat, E3 null delete, E4 inputs unchanged/no shared containers, E5 `TypeError` for non-dict layers and non-string keys with inputs unchanged, E6 only stdlib imports). Confirmed via module introspection that the only pulled-in non-configweave modules (`copy`, `copyreg`, `weakref`) all live in the stdlib root, and `py_compile` succeeded.

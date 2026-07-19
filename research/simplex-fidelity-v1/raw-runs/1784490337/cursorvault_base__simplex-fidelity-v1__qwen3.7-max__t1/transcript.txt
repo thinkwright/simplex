@@ -1,0 +1,25 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/__init__.py) → wrote 179 bytes to 'cursorvault/__init__.py'
+write_file(cursorvault/public.py) → wrote 2615 bytes to 'cursorvault/public.py'
+run_command(cd /home/user && python3 -c "
+from cursorvault import pagina…) → exit: 2 (+1 lines)
+run_command(pwd) → exit: 0 (+1 lines)
+run_command(python3 -c "
+from cursorvault import paginate, CursorError
+f…) → exit: 0 (+12 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+- `cursorvault/__init__.py` — package init that re-exports `paginate` and `CursorError` from `cursorvault.public`
+- `cursorvault/public.py` — implements `CursorError` (exception class) and `paginate(records, cursor=None, limit=3)`
+
+**How it satisfies the contract:**
+- **R1**: `cursorvault` package exposes `paginate` and `CursorError` from `cursorvault.public`
+- **R2**: Returns `{"items", "next_cursor", "has_more"}` with items in input order
+- **R3**: Rejects booleans, floats, and out-of-range integers with `ValueError`
+- **R4/R5**: Cursor identifies last-seen record; `next_cursor` is last item's id when `has_more` is true, else `None`
+- **R6**: Uses `copy.deepcopy` on returned items and never mutates input records
+- **C1**: Only imports `copy` from the Python standard library
+- **X1/X2**: `ValueError` for invalid limit, `CursorError` for unknown cursor

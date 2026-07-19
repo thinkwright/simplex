@@ -1,0 +1,33 @@
+list_dir() → (empty: '.')
+run_command(python3 --version && which python3) → exit: 0 (+2 lines)
+write_file(idledger/public.py) → wrote 5655 bytes to 'idledger/public.py'
+write_file(idledger/__init__.py) → wrote 336 bytes to 'idledger/__init__.py'
+write_file(verify.py) → wrote 4851 bytes to 'verify.py'
+run_command(python3 verify.py) → exit: 1 (+34 lines)
+read_file(verify.py) → 128:     if modname.startswith("idledger"): (+15 lines)
+read_file(verify.py) → 118: mod = importlib.import_module("idledger.public") (+9 lines)
+write_file(verify.py) → wrote 4854 bytes to 'verify.py'
+run_command(python3 verify.py) → exit: 0 (+34 lines)
+run_command(python3 -c "
+from idledger.public import Ledger, Insufficien…) → exit: 0 (+6 lines)
+run_command(rm -f verify.py && ls -R idledger) → exit: 0 (+8 lines)
+
+--- final summary ---
+Done. The `idledger` package is implemented and verified.
+
+## Files changed
+- **`idledger/__init__.py`** — package init that re-exports `Ledger`, `InsufficientFunds`, `CommandConflict` from `idledger.public`.
+- **`idledger/public.py`** — the implementation, importing only `threading` and `collections.abc.Mapping` (both standard library).
+
+## How it satisfies the rules
+- **R1**: `from idledger.public import Ledger, InsufficientFunds, CommandConflict` works (also re-exported at package level).
+- **R2**: `Ledger(initial=None)` validates a mapping of string account names → non-negative integer balances; `snapshot()` returns a fresh account-name-sorted dict copy.
+- **R3**: `apply` requires exactly `id, account, kind, amount` (kind ∈ {credit, debit}, amount a positive int, bools rejected) and returns exactly `id, account, balance`.
+- **R4/R5**: first successful command id wins — a replayed or differently-contented id returns the original result without re-applying.
+- **R6**: a debit that would go negative raises `InsufficientFunds` before any mutation, leaving state and command history untouched (id not consumed).
+- **R7**: invalid initial state or command structure raises `ValueError` atomically with no state change (validation precedes the idempotency check, so extra/missing fields always raise).
+- **R8**: `apply` and `snapshot` serialize on an `RLock`; concurrent distinct credits each apply exactly once.
+- **C1/C2**: integer-cent balances, no negative balance after success; only stdlib + idledger imports.
+
+## Verification
+Ran a temporary script covering E1–E7 plus extra edge cases (bool/zero/float amounts, extra/missing fields, bad kind, non-mapping, invalid initial states, debit-to-zero, credit-creates-account, 200 concurrent credits, dependency scan) — all checks passed, then removed the script. Final import scan confirms the only imports are `threading`, `collections.abc`, and `idledger.public`.

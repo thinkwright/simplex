@@ -1,0 +1,25 @@
+list_dir() → (empty: '.')
+write_file(configweave/__init__.py) → wrote 126 bytes to 'configweave/__init__.py'
+write_file(configweave/public.py) → wrote 107 bytes to 'configweave/public.py'
+write_file(configweave/_merger.py) → wrote 3710 bytes to 'configweave/_merger.py'
+run_command(python3 -c "
+import sys
+print('Python:', sys.version)
+
+# E6:…) → exit: 0 (+16 lines)
+run_command(python3 -c "
+import ast, os
+for root, _, files in os.walk('c…) → exit: 0 (+1 lines)
+
+--- final summary ---
+All checks pass. Summary:
+
+**Files created:**
+- `configweave/__init__.py` — package entry, re-exports `merge_layers`
+- `configweave/public.py` — public API surface exposing `merge_layers`
+- `configweave/_merger.py` — implementation (only stdlib `copy.deepcopy` used)
+
+**Verification:**
+- E1 (nested dict merge), E2 (list concat), E3 (null deletion), E4 (deep-copy isolation), E5 (TypeError on non-dict layer and non-string keys at any nesting level), E6 (only stdlib imports) all pass.
+- Edge cases verified: empty list → `{}`, deleting absent key is a no-op, list replaces non-list and vice versa, nested deletion, nested list concat.
+- Inputs are never mutated; result shares no mutable containers with any input layer.

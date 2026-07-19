@@ -1,0 +1,38 @@
+SIMPLEX: 0.6
+
+CONSTRAINT: cursorvault_contract
+  - [C1] use only the Python standard library
+
+FUNCTION: implement_cursorvault() → output
+
+RULES:
+  - [R1] create an importable cursorvault package exposing paginate and CursorError from cursorvault.public
+  - [R2] paginate(records, cursor=None, limit=3) accepts records with unique string id fields and returns a new dict with exactly items, next_cursor, and has_more; items retain input order
+  - [R3] limit must be an integer from 1 through 100 inclusive; booleans are not integers for this contract
+  - [R4] a non-null cursor is the id of the last record already returned, so the next page begins after that record; when more records remain, next_cursor is the id of the last record in the current page
+  - [R5] has_more is true exactly when records remain after the returned page; next_cursor follows R4 when has_more is true and is null otherwise; an empty input returns an empty terminal page
+  - [R6] do not mutate records or any record dict, and repeated calls with equal inputs return equal results
+
+DONE_WHEN:
+  - [D1] the public API imports and can paginate a valid record list in a clean Python 3.11 environment
+
+EXAMPLES:
+  - [E1] value: paginate([{id: a}, {id: b}, {id: c}], null, 2) → {items: [{id: a}, {id: b}], next_cursor: b, has_more: true}
+  - [E2] value: paginate([{id: a}, {id: b}, {id: c}], b, 2) → {items: [{id: c}], next_cursor: null, has_more: false}
+  - [E3] error: limit 0 or true → ValueError
+  - [E4] property: any valid records and arguments → records remain unchanged after paginate
+  - [E5] error: cursor missing → CursorError
+  - [E6] outcome: inspect the cursorvault package dependencies → every imported dependency is from the Python standard library or cursorvault itself
+
+ERRORS:
+  - [X1] invalid limit → raise ValueError without modifying records
+  - [X2] malformed or unknown cursor → raise CursorError without modifying records
+  - any unhandled condition → fail with descriptive message
+
+COVERS:
+  - E1 → R1, R2, R4, R5, D1
+  - E2 → R4, R5
+  - E3 → R3, X1
+  - E4 → R6
+  - E5 → R4, X2
+  - E6 → C1

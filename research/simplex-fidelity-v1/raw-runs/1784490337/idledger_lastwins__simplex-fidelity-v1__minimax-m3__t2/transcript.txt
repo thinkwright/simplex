@@ -1,0 +1,34 @@
+list_dir() → (empty: '.')
+write_file(idledger/__init__.py) → wrote 208 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 176 bytes to 'idledger/public.py'
+write_file(idledger/ledger.py) → wrote 6040 bytes to 'idledger/ledger.py'
+run_command(python3 -c "
+from idledger import Ledger, InsufficientFunds,…) → exit: 0 (+10 lines)
+run_command(python3 -c "
+from idledger import Ledger, InsufficientFunds
+…) → exit: 1 (+3 lines)
+run_command(python3 -c "
+from idledger import Ledger, InsufficientFunds
+…) → exit: 0 (+4 lines)
+run_command(python3 --version && python3 -c "
+# D1: clean import + apply…) → exit: 0 (+2 lines)
+
+--- final summary ---
+Everything works. Summary:
+
+**Files created:**
+- `idledger/__init__.py` — re-exports `Ledger`, `InsufficientFunds`, `CommandConflict` from `idledger.public`
+- `idledger/public.py` — public API surface
+- `idledger/ledger.py` — implementation
+
+**Implementation highlights:**
+- `Ledger(initial=None)` validates the initial mapping (non-empty string account names, non-negative integer cents) and raises `ValueError` for anything else (R7).
+- `snapshot()` returns a fresh dict sorted by account name (R2).
+- `apply(command)` validates the command has exactly `{id, account, kind, amount}` with positive integer amount and `credit`/`debit` kind; raises `ValueError` otherwise without touching state or history (R7).
+- Idempotent replay: same id + same payload returns the original result without re-applying (R4).
+- Conflict path: reverses the original, attempts the replacement, and on failure restores the original state and re-raises (R5).
+- Debits that would go negative raise `InsufficientFunds` atomically without consuming the id (R6).
+- An `RLock` guards all state and history mutations; concurrent distinct credits each apply exactly once (R8).
+- Only `threading` from the stdlib is imported (C2).
+
+**Verified:** E1–E7, R5 failure-preserves-original, R6 id-reusable, R7 invalid initial/command, R8 concurrency (200 threads → balance 200), and the dependency audit (only stdlib + idledger).

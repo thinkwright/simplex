@@ -1,0 +1,26 @@
+list_dir() → (empty: '.')
+write_file(tokenquota/__init__.py) → wrote 21 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 3472 bytes to 'tokenquota/public.py'
+write_file(test_tokenquota.py) → wrote 6229 bytes to 'test_tokenquota.py'
+run_command(cd /home/user && python3 test_tokenquota.py) → exit: 2 (+1 lines)
+run_command(python3 test_tokenquota.py) → exit: 0 (+12 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`tokenquota/__init__.py`** — Package marker
+2. **`tokenquota/public.py`** — The `Bucket` class implementing the token bucket rate limiter
+3. **`test_tokenquota.py`** — Comprehensive tests covering all examples (E1–E6) and rules
+
+**Implementation details:**
+
+- **R1**: `Bucket(capacity, refill_per_second, clock=None)` starts full, importable from `tokenquota.public`
+- **R2**: `allow(amount=1)` refills first, then consumes if sufficient tokens exist
+- **R3**: Refill uses `elapsed × refill_per_second`, clamped to capacity; backward clock treated as zero elapsed
+- **R4**: After refill + clamp, `math.ceil()` rounds balance up without exceeding capacity
+- **R5**: `available()` performs refill and returns current balance without consuming
+- **R6**: Validates capacity (positive), refill_per_second (non-negative), amount (positive, not boolean) → `ValueError`
+- **R7**: Thread-safe via `threading.Lock` — concurrent consumption never exceeds available tokens
+- **C1**: Only stdlib imports (`math`, `threading`, `time`) and uses the supplied clock for all time decisions

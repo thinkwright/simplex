@@ -1,0 +1,35 @@
+list_dir() → (empty: '.')
+write_file(tokenquota/__init__.py) → wrote 122 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 4018 bytes to 'tokenquota/public.py'
+run_command(cd /home/user && python3 -c "
+import threading
+
+# E1: capaci…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+import threading
+
+# E1: capacity-2 bucket at ti…) → exit: 0 (+8 lines)
+run_command(python3 -c "
+# R1: importable from tokenquota.public
+from to…) → exit: 0 (+10 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+## Files Created
+
+1. **`tokenquota/__init__.py`** — Package init that re-exports `Bucket` from `tokenquota.public`.
+
+2. **`tokenquota/public.py`** — The `Bucket` class implementing all rules:
+   - **R1**: `Bucket(capacity, refill_per_second, clock=None)` starts full; defaults to `time.time` for clock.
+   - **R2**: `allow(amount=1)` refills first, then consumes if sufficient tokens, returning `True`/`False`.
+   - **R3**: Refill adds `elapsed * refill_per_second`, clamped to capacity; backward clock = zero elapsed.
+   - **R4**: After positive-time refill + capacity clamp, `math.ceil()` rounds balance up without exceeding capacity.
+   - **R5**: `available()` performs the same refill and returns current balance without consuming.
+   - **R6**: Validates capacity (positive), refill_per_second (non-negative), amount (positive, not bool) — raises `ValueError`.
+   - **R7**: Thread-safe via `threading.Lock` around refill + consume/return.
+   - **C1**: Only uses `time`, `threading`, `math` from the standard library.
+
+## Verification
+
+All 6 examples (E1–E6) plus additional edge cases pass successfully.

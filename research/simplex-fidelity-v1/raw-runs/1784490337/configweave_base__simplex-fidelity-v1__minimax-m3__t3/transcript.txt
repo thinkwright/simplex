@@ -1,0 +1,30 @@
+list_dir(.) → (empty: '.')
+write_file(configweave/__init__.py) → wrote 127 bytes to 'configweave/__init__.py'
+write_file(configweave/public.py) → wrote 105 bytes to 'configweave/public.py'
+write_file(configweave/_core.py) → wrote 2680 bytes to 'configweave/_core.py'
+run_command(python3 --version && python3 -c "
+import sys
+# Verify no non…) → exit: 0 (+12 lines)
+run_command(python3 -c "
+import configweave
+
+# Deep copy: nested list in…) → exit: 0 (+8 lines)
+
+--- final summary ---
+All edge cases pass. The implementation is complete.
+
+**Summary:**
+
+Created the `configweave` package with three files:
+- `configweave/__init__.py` — re-exports `merge_layers`
+- `configweave/public.py` — public API entry point
+- `configweave/_core.py` — implementation using only `copy` from the stdlib
+
+**Verified against all rules and examples:**
+- **E1** (nested merge): `merge_layers([{db:{host:a,port:1}},{db:{port:2}}])` → `{db:{host:a,port:2}}` ✓
+- **E2** (list replacement): `merge_layers([{plugins:[a,b]},{plugins:[b,c]}])` → `{plugins:[b,c]}` ✓
+- **E3** (null deletion): `merge_layers([{a:1,b:2},{a:None}])` → `{b:2}` ✓
+- **E4** (no input mutation): mutating result leaves sources unchanged; deep copy verified for nested lists ✓
+- **E5** (TypeError on bad input): non-dict layer, non-string top-level key, and non-string nested key all raise `TypeError` without mutating inputs ✓
+- **E6** (stdlib only): `_core.py` imports only `copy`; `configweave` modules are the only non-stdlib imports ✓
+- Empty layer list returns `{}`; deleting absent keys is a no-op; scalar/list/mapping cross-type replacements all behave per R3/R4.

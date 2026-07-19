@@ -1,0 +1,30 @@
+list_dir() → (empty: '.')
+run_command(python3 --version && python3 -c "import sys; print(sys.execu…) → exit: 0 (+2 lines)
+write_file(cursorvault/public.py) → wrote 2642 bytes to 'cursorvault/public.py'
+write_file(cursorvault/__init__.py) → wrote 295 bytes to 'cursorvault/__init__.py'
+run_command(python3 - <<'PY'
+from cursorvault.public import paginate, Cu…) → exit: 0 (+13 lines)
+run_command(echo "=== grep imports ===" && grep -rn "import" cursorvault…) → exit: 0 (+10 lines)
+run_command(cd /tmp && python3 - <<'PY'
+# Simulate a clean environment: …) → exit: 1 (+3 lines)
+run_command(python3 - <<'PY'
+# Clean import via the documented public pa…) → exit: 0 (+3 lines)
+run_command(rm -rf cursorvault/__pycache__ && find cursorvault -type f) → exit: 0 (+2 lines)
+
+--- final summary ---
+The task is complete and verified.
+
+## Summary
+
+I created the `cursorvault` package with two source files:
+
+- **`cursorvault/public.py`** — defines `CursorError` (an `Exception` subclass) and `paginate(records, cursor=None, limit=3)`. It has **zero imports**, satisfying the standard-library-only constraint (C1/E6).
+- **`cursorvault/__init__.py`** — re-exports `paginate` and `CursorError` from `.public` (cursorvault itself, allowed by E6).
+
+**Key implementation details:**
+- `limit` is validated first: rejected if it's a `bool` or non-`int`, or outside `[1, 100]` → `ValueError` (R3/X1/E3), raised before touching records.
+- Records are materialized via `list(records)` (no mutation of the input); a non-null `cursor` is looked up by `id` and that record is the inclusive start (R4). An unknown cursor → `CursorError` (X2/E5).
+- `has_more` is true exactly when records remain past the page; `next_cursor` is the `id` of the first unreturned record when `has_more`, else `None` (R4/R5). Empty input yields an empty terminal page (R5).
+- The result dict has exactly `items`, `next_cursor`, `has_more`; `items` preserve input order and the function is pure (R2/R6).
+
+**Verification:** Ran a script exercising E1–E6 plus edge cases (default limit, cursor at last record, limit boundaries 1/100, empty input, repeated-call determinism, exact-key check, records-unchanged via deepcopy comparison) — all passed. Confirmed `from cursorvault.public import paginate, CursorError` works and that the only package import is the internal `.public` re-export.

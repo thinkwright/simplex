@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "idledger"
+version = "0.1.0"
+description = "An idempotent, thread-safe ledger of integer-cent account balances."
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools]
+packages = ["idledger"]

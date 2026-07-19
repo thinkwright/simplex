@@ -1,0 +1,23 @@
+list_dir() → (empty: '.')
+write_file(wirecodec/__init__.py) → wrote 102 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 3757 bytes to 'wirecodec/public.py'
+run_command(cd /root && python3 -c "
+import json, hashlib
+
+# Test import…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+import json, hashlib
+
+# Test imports (R1, P2, D…) → exit: 0 (+14 lines)
+
+--- final summary ---
+All tests passed. The implementation is complete.
+
+**Files created:**
+- `wirecodec/__init__.py` — re-exports `encode`, `decode`, `CodecError` from `wirecodec.public`
+- `wirecodec/public.py` — full implementation using only `json` and `hashlib` (standard library)
+
+**Summary of behavior:**
+- `encode(record)` validates a non-empty string `id` and integer non-boolean `value`, returns compact sorted JSON with `version: 2` and a SHA-256 checksum over `{id, value, version}`. Raises `ValueError` on invalid input without mutating the record.
+- `decode(text)` parses JSON, treats absent `version` as 1, validates version 2 checksums, discards unknown fields, and returns `{id, value, version}`. Raises `CodecError` for any malformed/unsupported/invalid input.
+- Deterministic: equal inputs always produce byte-identical encoded output.

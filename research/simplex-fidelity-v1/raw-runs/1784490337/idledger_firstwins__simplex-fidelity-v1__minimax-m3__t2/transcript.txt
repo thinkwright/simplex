@@ -1,0 +1,30 @@
+list_dir(.) → (empty: '.')
+write_file(idledger/__init__.py) → wrote 208 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 410 bytes to 'idledger/public.py'
+write_file(idledger/errors.py) → wrote 277 bytes to 'idledger/errors.py'
+write_file(idledger/ledger.py) → wrote 7442 bytes to 'idledger/ledger.py'
+run_command(python3.11 -c "
+from idledger import Ledger, InsufficientFun…) → exit: 0 (+19 lines)
+run_command(python3.11 -c "
+from idledger import Ledger, InsufficientFun…) → exit: 0 (+1 lines)
+
+--- final summary ---
+All checks pass. Summary:
+
+**Files created:**
+- `idledger/__init__.py` — re-exports the public API
+- `idledger/public.py` — exposes `Ledger`, `InsufficientFunds`, `CommandConflict`
+- `idledger/errors.py` — defines `InsufficientFunds` and `CommandConflict` exceptions
+- `idledger/ledger.py` — core `Ledger` implementation
+
+**How each rule is satisfied:**
+- **R1**: `idledger.public` exports `Ledger`, `InsufficientFunds`, `CommandConflict`.
+- **R2**: `Ledger(initial=None)` validates the mapping (string names, non-negative ints) and `snapshot()` returns a fresh dict sorted by account name.
+- **R3**: `apply` requires exactly `{id, account, kind, amount}`, validates `kind ∈ {credit, debit}` and `amount` is a positive int; success returns exactly `{id, account, balance}`.
+- **R4/R5**: A `_history` dict maps command id → (command, result); replays return the stored result. Different content with the same id returns the original result without mutating balances.
+- **R6**: Debit that would go negative raises `InsufficientFunds` before any state mutation, so the id is not consumed and remains reusable.
+- **R7**: Structural validation runs before any state change; bad initial state or command raises `ValueError` with no mutation.
+- **R8**: An `RLock` guards `_balances` and `_history`; concurrent credits are serialized and each applied exactly once (verified with 100 threads → balance 100).
+- **C1/C2**: All amounts are integer cents; only `threading` (stdlib) is imported.
+
+**Verification:** Ran a smoke test covering E1–E7 and D1 in Python 3.11 — all assertions passed.

@@ -1,0 +1,33 @@
+list_dir() → (empty: '.')
+write_file(idledger/_errors.py) → wrote 193 bytes to 'idledger/_errors.py'
+write_file(idledger/_ledger.py) → wrote 3614 bytes to 'idledger/_ledger.py'
+write_file(idledger/public.py) → wrote 190 bytes to 'idledger/public.py'
+write_file(idledger/__init__.py) → wrote 199 bytes to 'idledger/__init__.py'
+run_command(cd /home/user && python3 -c "
+import sys
+print(f'Python {sys…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+import sys
+print(f'Python {sys.version}')
+
+# E1…) → exit: 1 (+10 lines)
+run_command(python3 -c "
+import sys
+print(f'Python {sys.version}')
+
+from…) → exit: 0 (+13 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`idledger/__init__.py`** — Package root; re-exports `Ledger`, `InsufficientFunds`, `CommandConflict` from `public`.
+2. **`idledger/public.py`** — Public API module exposing the three required symbols.
+3. **`idledger/_errors.py`** — Defines `InsufficientFunds` and `CommandConflict` exception classes.
+4. **`idledger/_ledger.py`** — Core `Ledger` class with:
+   - `__init__(initial=None)` — validates all balances are non-negative integers (rejects bools), stores in dict
+   - `snapshot()` — returns a new dict sorted by account name, under lock
+   - `apply(command)` — validates exact key set `{id, account, kind, amount}`, rejects bools/non-positive amounts/extra fields with `ValueError`, checks idempotency cache (returns cached result for duplicate command IDs per R4/R5), applies credit/debit atomically under a `threading.Lock` (R8), raises `InsufficientFunds` without consuming the command ID on failed debits (R6)
+
+**Verification:** All examples E1–E7, rules R2/R7, and D1 confirmed passing on Python 3.12.

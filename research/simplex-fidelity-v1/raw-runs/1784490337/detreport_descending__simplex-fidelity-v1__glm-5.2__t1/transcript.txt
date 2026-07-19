@@ -1,0 +1,46 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 330 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 3989 bytes to 'detreport/public.py'
+write_file(detreport/__main__.py) → wrote 1090 bytes to 'detreport/__main__.py'
+write_file(pyproject.toml) → wrote 283 bytes to 'pyproject.toml'
+run_command(python --version && python -c "
+import json, copy
+from detre…) → exit: 127 (+1 lines)
+run_command(python3 --version && which python3) → exit: 0 (+2 lines)
+run_command(cd /project 2>/dev/null; python3 -c "
+import json, copy
+from…) → exit: 0 (+17 lines)
+run_command(cd /project 2>/dev/null; printf '%s' '[{"id":"b","category":…) → exit: 0 (+12 lines)
+run_command(cd /project 2>/dev/null
+echo "--- X1: invalid input raises R…) → exit: 0 (+5 lines)
+run_command(cd /project 2>/dev/null
+echo "--- S1: cross-process byte sta…) → exit: 0 (+9 lines)
+run_command(/tmp/drv/bin/python -c "
+import json
+from detreport import b…) → exit: 0 (+1 lines)
+
+--- final summary ---
+All requirements verified. The implementation is complete.
+
+## Summary
+
+Created the `detreport` package from scratch (project was empty):
+
+- **`detreport/__init__.py`** — re-exports `build_report` and `ReportError` from `detreport.public`, so both `from detreport import ...` and `from detreport.public import ...` work.
+- **`detreport/public.py`** — `ReportError` exception and `build_report(events)`. Validates the collection is a list and each event is a dict with *exactly* `id`/`category`/`amount_cents` (non-empty strings; integer, non-boolean amount; unique ids), raising `ReportError` on any violation without mutating input. Groups by category into objects with exactly `category`, `count`, `total_cents`, `events` (ids sorted ascending), orders groups by category in **descending** Unicode code-point order, sums `grand_total_cents`, and returns compact `json.dumps(..., separators=(",",":"), ensure_ascii=False, sort_keys=True)` with exactly top-level `groups` + `grand_total_cents`.
+- **`detreport/__main__.py`** — CLI: reads a JSON array from the supplied path, prints exactly `build_report` output plus one newline, exits 0 on success; descriptive stderr + non-zero exit on errors.
+- **`pyproject.toml`** — minimal setuptools config so the package is pip-installable in a clean environment.
+
+Only the standard library (`json`, `sys`) and `detreport` itself are imported (C1/E7).
+
+Verification performed:
+- **E1**: single-category report → `{"grand_total_cents":1,"groups":[{"category":"x","count":2,"events":["a","b"],"total_cents":1}]}` ✓
+- **E2**: beta then alpha → groups ordered `[beta, alpha]` ✓
+- **E3**: `café` appears as a literal UTF-8 character (no `\u` escapes) ✓
+- **E4**: duplicate ids, boolean amount, missing/extra field, non-string id, empty id/category, float amount, non-list collection, non-dict event → all raise `ReportError` ✓
+- **E5**: repeated calls produce byte-identical output and leave input unchanged ✓
+- **E6**: `python3 -m detreport input.json` stdout == library result + exactly one newline; exit 0 ✓
+- **E7**: AST scan confirms every import is stdlib or `detreport` ✓
+- **S1**: byte-identical across separate process invocations ✓
+- **X1**: invalid input raises `ReportError` without mutating input ✓
+- **D1**: installed into an isolated venv and successfully imported + built a valid single-category report ✓

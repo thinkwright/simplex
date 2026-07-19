@@ -1,0 +1,35 @@
+list_dir() → (empty: '.')
+run_command(python3 --version && python3 -c "import sys; print(sys.execu…) → exit: 0 (+2 lines)
+write_file(tokenquota/public.py) → wrote 3890 bytes to 'tokenquota/public.py'
+write_file(tokenquota/__init__.py) → wrote 135 bytes to 'tokenquota/__init__.py'
+write_file(verify.py) → wrote 5745 bytes to 'verify.py'
+run_command(cd "$(dirname verify.py)" && python3 verify.py) → exit: 1 (+17 lines)
+write_file(tokenquota/public.py) → wrote 4064 bytes to 'tokenquota/public.py'
+run_command(cd "$(dirname verify.py)" && python3 verify.py) → exit: 0 (+9 lines)
+run_command(cd "$(dirname verify.py)" && python3 -c "
+from tokenquota.pu…) → exit: 0 (+3 lines)
+run_command(cd /tmp && PYTHONPATH="$(dirname /dev/null/placeholder 2>/de…) → exit: 0 (+3 lines)
+run_command(cd "$(dirname verify.py)" && rm -f verify.py && rm -rf __pyc…) → exit: 0 (+6 lines)
+run_command(cd "$(dirname tokenquota/public.py 2>/dev/null || echo .)" 2…) → exit: 1 (+3 lines)
+run_command(PROJ=$(python3 -c "import os,glob; c=glob.glob('**/tokenquot…) → exit: 0 (+2 lines)
+
+--- final summary ---
+The final smoke test passes from the project root. The deliverable is complete and verified.
+
+## Summary
+
+I implemented the `tokenquota` package with two files:
+
+- **`tokenquota/public.py`** — defines and exposes `Bucket(capacity, refill_per_second, clock=None)`.
+- **`tokenquota/__init__.py`** — re-exports `Bucket` for convenience.
+
+### Key implementation decisions
+- **Clock (C1/R3):** Only `self._clock()` is used for elapsed-time decisions; it defaults to `time.monotonic` when none is supplied. Backward clock movement is treated as zero elapsed time and does **not** reset the reference point (`_last` only advances on positive elapsed time), so negative movement can never grant tokens — directly or indirectly.
+- **Refill (R3):** `balance += elapsed * refill_per_second`, clamped to `capacity`.
+- **Rounding (R4/R5):** The underlying balance is kept at full precision between operations (so fractional accrual is never lost — a rate-0.5 bucket polled every second still accumulates). The balance is rounded down with `math.floor` *before answering*: `available()` returns `floor(balance)`, and `allow()` decides on `floor(balance) >= amount`. This satisfies E2 (`available() == 1` from 1.5) while keeping the rate limiter correct.
+- **Validation (R6/X1):** `capacity > 0`, `refill_per_second >= 0`, and `amount > 0` and not a `bool`; non-numeric values are rejected too. All raise `ValueError`, and `allow` validates before acquiring the lock, so invalid amounts never consume tokens.
+- **Thread-safety (R7):** A `threading.Lock` serializes the refill+check+consume in both `allow` and `available`.
+- **Dependencies (E6/C1):** Only `math`, `threading`, `time` (all standard library) are imported.
+
+### Verification
+I ran a temporary script covering D1 and E1–E6 (plus an R4 fractional-accrual probe and R7 concurrency with N=100 and N=500, 5× oversubscribed) — all passed. I confirmed `from tokenquota.public import Bucket` works in a fresh process, that only stdlib modules are imported, and that the package imports correctly from an external working directory via `PYTHONPATH`. The temporary verification script was removed, leaving only the package.

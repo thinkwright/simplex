@@ -1,0 +1,31 @@
+list_dir() → (empty: '.')
+run_command(python3 --version; python --version 2>/dev/null; echo "---";…) → exit: 0 (+5 lines)
+write_file(idledger/public.py) → wrote 6888 bytes to 'idledger/public.py'
+write_file(idledger/__init__.py) → wrote 293 bytes to 'idledger/__init__.py'
+write_file(pyproject.toml) → wrote 301 bytes to 'pyproject.toml'
+write_file(tests/test_idledger.py) → wrote 9069 bytes to 'tests/test_idledger.py'
+run_command(python -m unittest discover -v 2>&1 | tail -40) → exit: 0 (+1 lines)
+run_command(python3 -m unittest discover -v 2>&1 | tail -50) → exit: 0 (+5 lines)
+run_command(python3 -m unittest discover -s tests -p "test_*.py" -v 2>&1…) → exit: 0 (+24 lines)
+
+--- final summary ---
+## Summary
+
+Created the `idledger` package from scratch in an empty project:
+
+- **`idledger/__init__.py`** — package init re-exporting `Ledger`, `InsufficientFunds`, `CommandConflict`.
+- **`idledger/public.py`** — the public API implementation:
+  - `Ledger(initial=None)` validates a mapping of account → non-negative integer cents; `snapshot()` returns a new account-name-sorted dict.
+  - `apply(command)` requires exactly `id, account, kind, amount` (kind ∈ {credit, debit}, positive int amount); returns `{id, account, balance}`.
+  - Identical successful command id → returns the stored result without re-applying (R4).
+  - Conflicting command id → atomically reverses the original and applies the replacement on a tentative copy; on failure raises `InsufficientFunds` and leaves original state/history intact (R5).
+  - Debit going negative raises `InsufficientFunds` with no state change and does not consume the id (R6).
+  - Invalid initial state or command structure raises `ValueError` with no state/history change (R7).
+  - All `apply`/`snapshot` operations guarded by an `RLock` for thread safety (R8).
+  - Only `threading` and `collections.abc` from the stdlib are used (C2).
+- **`pyproject.toml`** — minimal setuptools build metadata targeting Python ≥3.11.
+- **`tests/test_idledger.py`** — 19 tests covering examples E1–E7 and rules R1–R8 (basic debit, idempotency, conflict replace, insufficient funds, invalid commands/initial state, concurrent credits, stdlib-only dependency check, snapshot isolation, history preservation).
+
+## Verification
+
+Ran `python3 -m unittest discover -s tests -p "test_*.py" -v` → all 19 tests passed, including the stdlib-only import check (E7) which parses every `.py` file in the package with `ast` and asserts each imported module is `idledger` itself or in `sys.stdlib_module_names`.

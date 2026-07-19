@@ -1,0 +1,27 @@
+list_dir() → (empty: '.')
+run_command(mkdir -p idledger) → exit: 0
+write_file(idledger/public.py) → wrote 5543 bytes to 'idledger/public.py'
+write_file(idledger/__init__.py) → wrote 206 bytes to 'idledger/__init__.py'
+run_command(cd /home/user && python3 -c "
+import sys
+print(f'Python {sys…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+import sys
+print(f'Python {sys.version}')
+
+# E1…) → exit: 0 (+14 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`idledger/__init__.py`** — Package init that re-exports `Ledger`, `InsufficientFunds`, and `CommandConflict` from `idledger.public`.
+
+2. **`idledger/public.py`** — Core implementation:
+   - **`Ledger(initial=None)`** — Accepts optional dict of account→balance (non-negative ints). Validates types (rejects bools as ints), non-negative balances.
+   - **`snapshot()`** — Returns a new dict sorted by account name (thread-safe).
+   - **`apply(command)`** — Validates command has exactly `{id, account, kind, amount}` keys, correct types (rejects bools), positive amount, valid kind. Uses a `threading.Lock` for thread safety. Supports idempotency (same id+content returns cached result), detects conflicts (same id, different content raises `CommandConflict`), and atomically handles `InsufficientFunds` without consuming the command id.
+   - **`InsufficientFunds`** / **`CommandConflict`** — Custom exception classes.
+
+**Verified:** All examples E1–E7 pass, including concurrent credits (100 threads), idempotency, conflict detection, insufficient funds with id reuse, and validation of invalid inputs (bools, zero, negatives, extra fields).

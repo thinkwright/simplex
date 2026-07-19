@@ -1,0 +1,30 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/public.py) → wrote 2091 bytes to 'cursorvault/public.py'
+write_file(cursorvault/__init__.py) → wrote 164 bytes to 'cursorvault/__init__.py'
+run_command(cd /dev/shm 2>/dev/null; python3 --version; echo "---"; pyth…) → exit: 1 (+5 lines)
+run_command(pwd; ls -la; echo "---"; python3 - <<'PY'
+import sys
+from cu…) → exit: 0 (+21 lines)
+run_command(echo "=== source imports ==="; grep -rn "^import\|^from\| im…) → exit: 0 (+8 lines)
+run_command(python3 -c "
+import sys
+# Simulate a clean environment: only…) → exit: 0 (+2 lines)
+
+--- final summary ---
+All requirements are satisfied and verified.
+
+## Summary
+
+Created the `cursorvault` package (stdlib-only) with two files:
+
+- **`cursorvault/__init__.py`** — re-exports `paginate` and `CursorError` from `cursorvault.public` (so both `from cursorvault import ...` and `from cursorvault.public import ...` work).
+- **`cursorvault/public.py`** — defines `CursorError(Exception)` and `paginate(records, cursor=None, limit=3)`.
+
+Key implementation details:
+- **R3/X1**: `limit` validated first — must be an `int` that is not a `bool`, in `[1, 100]`, else `ValueError` (rejects `0`, `True`, `1.5`, `"3"`, etc.).
+- **R4/X2**: a non-null `cursor` must be a string matching `^[0-9]+$` (canonical decimal non-negative index); `None`/non-string/malformed → `CursorError`. A valid out-of-range index gracefully yields an empty terminal page.
+- **R2/R5**: returns a new dict with exactly `items`, `next_cursor`, `has_more`; `next_cursor` is `str(start+limit)` when `has_more` (records remain) else `None`; empty input → empty terminal page.
+- **R6**: never mutates `records` or any record dict — uses `len()` and slicing (`list(records[start:end])`); validation happens before any record access, so error paths also leave records untouched; repeated equal calls return equal results.
+- **C1/E6**: the only import is `re` (stdlib) in `public.py` and `cursorvault.public` (itself) in `__init__.py`.
+
+Verified with a comprehensive script covering E1–E6, R1–R6, X1–X2, plus a fresh-import D1 check — all passed.

@@ -1,0 +1,28 @@
+list_dir() → (empty: '.')
+write_file(wirecodec/public.py) → wrote 4639 bytes to 'wirecodec/public.py'
+write_file(wirecodec/__init__.py) → wrote 166 bytes to 'wirecodec/__init__.py'
+write_file(verify_wirecodec.py) → wrote 6579 bytes to 'verify_wirecodec.py'
+run_command(cd /project && python3 --version && python3 verify_wirecodec…) → exit: 2 (+1 lines)
+run_command(pwd && ls) → exit: 0 (+3 lines)
+run_command(python3 --version && python3 verify_wirecodec.py) → exit: 0 (+56 lines)
+run_command(python3 -c "
+from wirecodec.public import encode, decode, Co…) → exit: 0 (+4 lines)
+run_command(rm -f verify_wirecodec.py && ls -R wirecodec) → exit: 0 (+8 lines)
+run_command(python3 -c "
+from wirecodec.public import encode, decode, Co…) → exit: 0 (+1 lines)
+
+--- final summary ---
+The implementation is complete and verified.
+
+## Summary
+
+Created the `wirecodec` package with two files:
+
+- **`wirecodec/public.py`** — exposes `encode`, `decode`, and `CodecError`. Uses only the standard library (`json`, `hashlib`).
+- **`wirecodec/__init__.py`** — re-exports the public API for convenience.
+
+Key behaviors implemented per the contract:
+- **encode** (R2/R3/V1): validates `id` is a non-empty string and `value` is an integer (rejecting `bool`), raises `ValueError` on invalid input without mutating the record, and returns compact, sorted-key JSON with `version: 2` plus a lowercase SHA-256 `checksum` computed over the canonical compact JSON of `{id, value, version}`. Deterministic across calls (R7).
+- **decode** (R4/R5/R6/V2): accepts a JSON object string, treats absent `version` as 1, returns a fresh `{id, value, version}` dict, validates the v2 checksum (raising `CodecError` on mismatch/malformed/unsupported/invalid), and preserves unknown top-level fields in an `extras` dict (omitted when empty).
+
+Verification: ran a comprehensive script covering all examples (E1–E8) plus error cases (X1/X2), round-trips, determinism, no-mutation, and stdlib-only import inspection — all passed. A final clean-import + encode/decode sanity check also passed. The temporary verification script was removed, leaving only the package.

@@ -1,0 +1,27 @@
+list_dir() → (empty: '.')
+write_file(idledger/__init__.py) → wrote 316 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 5369 bytes to 'idledger/public.py'
+run_command(python3 --version && python3 - <<'PY'
+import threading, sys
+…) → exit: 0 (+11 lines)
+run_command(python3 - <<'PY'
+from idledger import Ledger, InsufficientFu…) → exit: 0 (+7 lines)
+
+--- final summary ---
+Done. The `idledger` package is implemented and verified.
+
+**Files created:**
+- `idledger/__init__.py` — re-exports `Ledger`, `InsufficientFunds`, `CommandConflict` from `idledger.public`.
+- `idledger/public.py` — the implementation.
+
+**Design highlights (mapping to the rules):**
+- **C2 / E7:** only `threading` from the standard library is imported; no third-party deps.
+- **R2:** `Ledger(initial=None)` validates a dict of non-negative integer (non-`bool`) balances; `snapshot()` returns a fresh account-name-sorted dict copy.
+- **R3:** `apply` requires exactly the keys `id, account, kind, amount`; `kind` ∈ {credit, debit}; `amount` a positive integer; success returns exactly `{id, account, balance}`.
+- **R4:** a successful command id is stored with its content+result; an identical repeat returns the original result without re-applying.
+- **R5:** reusing a successful id with different content raises `CommandConflict`, leaving balances and history untouched.
+- **R6 / X1:** a debit that would go negative raises `InsufficientFunds` atomically before any mutation, so the id is not consumed (remains reusable).
+- **R7 / X2:** structural validation (non-dict, wrong keys, bad kind, non-positive/non-int amount, unhashable id/account) and invalid initial state raise `ValueError` before touching state.
+- **R8 / E6:** a `threading.Lock` serializes `apply` and `snapshot`, so concurrent distinct credits are each applied exactly once and snapshots are consistent.
+
+**Verification:** ran an inline Python script covering E1–E7 plus edge cases (snapshot copy/sort, credit creating accounts, debit on a missing account). All assertions passed on Python 3.12 (code uses only 3.11-compatible stdlib features), and both `from idledger.public import …` and `from idledger import …` work.

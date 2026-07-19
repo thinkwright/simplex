@@ -1,0 +1,39 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/__init__.py) → wrote 178 bytes to 'cursorvault/__init__.py'
+write_file(cursorvault/public.py) → wrote 279 bytes to 'cursorvault/public.py'
+write_file(cursorvault/_impl.py) → wrote 219 bytes to 'cursorvault/_impl.py'
+write_file(cursorvault/errors.py) → wrote 151 bytes to 'cursorvault/errors.py'
+write_file(cursorvault/pagination.py) → wrote 2812 bytes to 'cursorvault/pagination.py'
+run_command(python3 -c "
+from cursorvault import paginate, CursorError
+
+…) → exit: 0 (+13 lines)
+run_command(python3 -c "
+import ast, os, sys
+
+# Collect all imports from…) → exit: 0 (+3 lines)
+run_command(python3 --version && python3 -c "
+# D1: clean import + valid…) → exit: 0 (+2 lines)
+
+--- final summary ---
+Everything passes. Summary:
+
+**Files created:**
+- `cursorvault/__init__.py` — package entry, re-exports `paginate` and `CursorError`
+- `cursorvault/public.py` — public API surface (R1)
+- `cursorvault/_impl.py` — internal re-export layer
+- `cursorvault/errors.py` — defines `CursorError`
+- `cursorvault/pagination.py` — `paginate` implementation
+
+**Contract compliance:**
+- **C1 / E6**: Only stdlib + cursorvault imports (verified via AST scan).
+- **R1**: `from cursorvault.public import paginate, CursorError` works.
+- **R2**: Returns `{"items", "next_cursor", "has_more"}`; items preserve input order.
+- **R3**: `limit` must be `int` (not `bool`) in [1, 100]; `True`/`0`/`101`/`-1` raise `ValueError`.
+- **R4**: Non-null cursor is parsed as decimal zero-based index; `next_cursor` is the index immediately after the page when more records remain.
+- **R5**: `has_more` is true exactly when records remain; `next_cursor` is null otherwise; empty input → terminal page.
+- **R6**: Records are never mutated (input is materialized into a fresh list, items are shallow copies); repeated calls with equal inputs return equal results.
+- **X1/X2**: Invalid limit → `ValueError`; malformed/unknown/out-of-range cursor → `CursorError`; both raised before any mutation.
+- **D1**: Verified with `python3 -c` import + pagination call.
+
+All examples E1–E6 verified passing.

@@ -1,0 +1,42 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 204 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 197 bytes to 'detreport/public.py'
+write_file(detreport/core.py) → wrote 4187 bytes to 'detreport/core.py'
+write_file(detreport/__main__.py) → wrote 884 bytes to 'detreport/__main__.py'
+run_command(python3 --version && python3 -c "import sys; print(sys.versi…) → exit: 0 (+2 lines)
+run_command(python3 -c "
+from detreport.public import build_report, Repo…) → exit: 0 (+9 lines)
+run_command(cd /tmp && cat > detreport_test.json <<'EOF'
+[{"id":"b","cat…) → exit: 1 (+8 lines)
+run_command(cat > /tmp/detreport_test.json <<'EOF'
+[{"id":"b","category"…) → exit: 0 (+11 lines)
+run_command(python3 -c "
+import sys, importlib
+
+# Track every import tri…) → exit: 0 (+3 lines)
+run_command(python3 -c "
+from detreport.public import build_report, Repo…) → exit: 0 (+9 lines)
+run_command(ls -la detreport/
+echo "---"
+python3 -c "
+# Verify public AP…) → exit: 0 (+13 lines)
+
+--- final summary ---
+Everything works as expected. Summary of verification:
+
+- **R1**: `detreport` package importable; `build_report` and `ReportError` exposed via `detreport.public`; `python -m detreport INPUT_JSON` works.
+- **R2**: All event validation cases raise `ReportError` (duplicate ids, boolean amount, missing/extra fields, non-dict, empty strings, floats, non-iterable).
+- **R3**: Groups contain exactly `category`, `count`, `total_cents`, `events` (sorted ascending).
+- **R4**: Compact JSON with `ensure_ascii=False`, sorted keys, exactly `groups` + `grand_total_cents` at top level.
+- **R5**: Groups ordered by first appearance (beta → alpha → gamma verified).
+- **R6**: `grand_total_cents` is sum of all amounts; input events are never mutated (verified via deep-copy snapshot).
+- **R7**: CLI prints library output + exactly one newline, exits 0 on success, 1 on `ReportError`.
+- **S1**: Byte-for-byte stable output verified.
+- **C1**: Only stdlib (`json`) + `detreport` modules imported.
+- **E1–E7**: All examples pass.
+
+**Files created:**
+- `detreport/__init__.py` — re-exports `build_report`, `ReportError`.
+- `detreport/public.py` — public API surface.
+- `detreport/core.py` — validation + grouping + JSON serialization.
+- `detreport/__main__.py` — CLI entry point.

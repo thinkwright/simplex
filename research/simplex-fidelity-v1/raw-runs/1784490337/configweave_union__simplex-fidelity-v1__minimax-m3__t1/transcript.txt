@@ -1,0 +1,32 @@
+list_dir(.) → (empty: '.')
+write_file(configweave/__init__.py) → wrote 181 bytes to 'configweave/__init__.py'
+write_file(configweave/public.py) → wrote 105 bytes to 'configweave/public.py'
+write_file(configweave/_impl.py) → wrote 4148 bytes to 'configweave/_impl.py'
+run_command(python3 -c "
+import sys
+print('Python:', sys.version)
+
+# E1:…) → exit: 0 (+14 lines)
+run_command(cd /tmp && python3 -c "
+import sys
+sys.path.insert(0, '/proc…) → exit: 1 (+3 lines)
+run_command(pwd && ls && python3 -c "
+from configweave import merge_laye…) → exit: 0 (+4 lines)
+
+--- final summary ---
+Everything works. Summary:
+
+**Files created:**
+- `configweave/__init__.py` — re-exports `merge_layers` from `configweave.public`.
+- `configweave/public.py` — public API surface, imports `merge_layers` from `_impl`.
+- `configweave/_impl.py` — implementation using only `copy` (stdlib) and `typing`.
+
+**Behavior verified against all examples:**
+- E1: nested mapping merge → `{'db': {'host': 'a', 'port': 2}}` ✓
+- E2: list merge with first-occurrence dedup → `{'plugins': ['a', 'b', 'c']}` ✓
+- E3: `None` deletes key → `{'b': 2}` ✓
+- E4: deep copy; mutating result and inputs don't affect each other ✓
+- E5: non-dict layer and nested non-string key both raise `TypeError` ✓
+- E6: AST scan confirms only stdlib (`copy`, `typing`, `__future__`) and intra-package imports ✓
+
+**Rules covered:** R1 (importable package + public re-export), R2 (empty list → `{}`), R3 (recursive mapping merge, later non-list wins), R4 (list concat with first-occurrence dedup; list replaces non-list), R5 (`None` deletes; absent-key delete is no-op), R6 (deep copy via `copy.deepcopy`, no input mutation), R7 (validates list-of-dicts and string keys at every nesting level, raising `TypeError` per X1).

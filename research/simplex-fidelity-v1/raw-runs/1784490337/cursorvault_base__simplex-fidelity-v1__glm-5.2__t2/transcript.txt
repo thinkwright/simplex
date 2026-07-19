@@ -1,0 +1,25 @@
+list_dir() → (empty: '.')
+run_command(python3 --version) → exit: 0 (+1 lines)
+write_file(cursorvault/public.py) → wrote 4376 bytes to 'cursorvault/public.py'
+write_file(cursorvault/__init__.py) → wrote 307 bytes to 'cursorvault/__init__.py'
+run_command(python3 - <<'PY'
+import copy
+from cursorvault.public import …) → exit: 0 (+1 lines)
+run_command(python3 - <<'PY'
+import ast, os, sys, importlib
+
+def module_…) → exit: 0 (+3 lines)
+run_command(python3 -m compileall -q cursorvault && python3 -c "from cur…) → exit: 0 (+1 lines)
+
+--- final summary ---
+## Summary
+
+Created the `cursorvault` package from scratch in an empty project:
+
+- **`cursorvault/__init__.py`** — re-exports `paginate` and `CursorError` from `cursorvault.public`.
+- **`cursorvault/public.py`** — implements `CursorError` and `paginate(records, cursor=None, limit=3)`. Uses only the standard library (`__future__` for type hints). Validates limit as an int in [1, 100] rejecting booleans (→ `ValueError`), validates records as a list of dicts with unique string `id` fields, resolves a non-null cursor to the position after the matching record (→ `CursorError` if missing/malformed), and returns a fresh dict with exactly `items`, `next_cursor`, `has_more`. Never mutates inputs; returns a new list of the same record object references.
+
+### Verification
+- Ran a comprehensive Python script covering E1–E5 and R1–R6: first/next/last/empty pages, default limit, limit boundaries (1, 100), invalid limits (`0`, `101`, `True`, `False`, `1.5`, `"3"`, `None`, `3.0` → `ValueError`), missing/typed cursors (→ `CursorError`), input immutability after success and errors, and idempotent equal results for equal inputs — all passed.
+- Ran an AST-based dependency scan (E6): only `__future__` (stdlib) and `cursorvault` itself are imported — passed.
+- Byte-compiled and confirmed clean import of `paginate` and `CursorError` from `cursorvault.public`.

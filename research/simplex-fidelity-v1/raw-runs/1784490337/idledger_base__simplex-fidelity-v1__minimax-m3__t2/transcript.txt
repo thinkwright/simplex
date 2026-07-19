@@ -1,0 +1,32 @@
+list_dir(.) → (empty: '.')
+write_file(idledger/__init__.py) → wrote 209 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 176 bytes to 'idledger/public.py'
+write_file(idledger/ledger.py) → wrote 4546 bytes to 'idledger/ledger.py'
+run_command(python3 --version && python3 -c "
+from idledger import Ledge…) → exit: 0 (+12 lines)
+run_command(python3 -c "
+import sys, importlib
+# Check all idledger modu…) → exit: 0 (+3 lines)
+run_command(python3 -c "
+import ast, sys
+for f in ['idledger/__init__.py…) → exit: 0 (+2 lines)
+
+--- final summary ---
+All done. 
+
+**Summary**
+
+Created the `idledger` package with three files:
+
+- `idledger/__init__.py` — re-exports `Ledger`, `InsufficientFunds`, `CommandConflict` from `idledger.public`.
+- `idledger/public.py` — public API surface.
+- `idledger/ledger.py` — implementation using only `threading` from the stdlib.
+
+**Key design points**
+- `Ledger(initial=None)` validates the initial mapping (non-negative ints, no bools) before storing; `snapshot()` returns a sorted copy under the lock.
+- `apply(command)` validates the command (exactly `id`, `account`, `kind`, `amount`; positive int amount; `credit`/`debit` kind) **before** acquiring the lock, so invalid commands leave state and history untouched.
+- Idempotency: a `cid` already in history returns the original result if content matches, or raises `CommandConflict` if it differs — without mutating balances.
+- `InsufficientFunds` is raised before any mutation and the command id is **not** recorded, so it remains reusable.
+- A single `threading.Lock` guards both balance updates and history, so concurrent distinct credits each apply exactly once.
+
+**Verified** with a script covering E1–E6 and a dependency check for E7; all pass on Python 3.12 and syntax is compatible with 3.11.

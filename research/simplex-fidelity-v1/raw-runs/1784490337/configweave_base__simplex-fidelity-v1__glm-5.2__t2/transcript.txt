@@ -1,0 +1,40 @@
+list_dir() → (empty: '.')
+write_file(configweave/__init__.py) → wrote 241 bytes to 'configweave/__init__.py'
+write_file(configweave/_merge.py) → wrote 3860 bytes to 'configweave/_merge.py'
+write_file(configweave/public.py) → wrote 173 bytes to 'configweave/public.py'
+write_file(verify_configweave.py) → wrote 5144 bytes to 'verify_configweave.py'
+run_command(cd / && python3 --version && python3 -c "import sys; print(s…) → exit: 0 (+2 lines)
+run_command(cd /dev/shm/configweave_proj 2>/dev/null || true; pwd; ls -l…) → exit: 0 (+6 lines)
+run_command(python3 verify_configweave.py) → exit: 0 (+26 lines)
+run_command(python3 -c "
+import sys
+# Snapshot modules before importing …) → exit: 1 (+5 lines)
+run_command(python3 -c "
+import sys
+before = set(sys.modules)
+from confi…) → exit: 0 (+3 lines)
+run_command(python3 verify_configweave.py; echo "exit=$?") → exit: 0 (+27 lines)
+
+--- final summary ---
+All 21 checks pass. The task is complete.
+
+## Summary
+
+I created the `configweave` package from scratch (the project directory was empty):
+
+**Files created:**
+- `configweave/__init__.py` — package docstring; re-exports `merge_layers` for convenience.
+- `configweave/_merge.py` — core implementation (`merge_layers`, `_validate`, `_merge_into`). Uses only `copy` from the standard library.
+- `configweave/public.py` — public API; `from configweave._merge import merge_layers` with `__all__ = ["merge_layers"]`.
+- `verify_configweave.py` — verification script (not part of the package).
+
+**How the rules are satisfied:**
+- **R1/R2**: `from configweave.public import merge_layers` works; empty list returns `{}`.
+- **R3**: when both old and new values are dicts, `_merge_into` recurses; otherwise the later non-list value replaces (via `copy.deepcopy`).
+- **R4**: a later list value replaces the earlier value with `copy.deepcopy(new_value)`.
+- **R5**: a `None` later value calls `target.pop(key, None)` (no-op if absent), including at nested levels via recursion.
+- **R6**: every value placed into the result is a deep copy; inputs are only ever read (iterated), never mutated. Verified by mutating the result and confirming sources stay unchanged, and that result lists/nested dicts are independent of sources.
+- **R7/X1**: all layers are validated up front (must be a `list` of `dict`s; every key at every nesting level — including dicts nested inside lists — must be `str`), raising `TypeError` before any merging, so inputs are never mutated on error.
+- **C1/E6**: the only external import is `copy` (stdlib); `copyreg`/`weakref` are stdlib transitive deps of `copy`; the rest are `configweave` itself. Confirmed against `sys.stdlib_module_names`.
+
+**Verification:** Ran `python3 verify_configweave.py` (21/21 checks pass, exit 0) covering E1–E6 and additional edge cases (list↔mapping↔scalar replacements, deep recursive merge, nested null delete, no-mutation-on-error, dependency inspection). Also confirmed a clean subprocess import and that `configweave.merge_layers` is the same object as `configweave.public.merge_layers`.

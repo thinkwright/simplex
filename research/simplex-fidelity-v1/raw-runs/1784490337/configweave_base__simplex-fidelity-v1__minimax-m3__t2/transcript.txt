@@ -1,0 +1,27 @@
+list_dir(.) → (empty: '.')
+write_file(configweave/__init__.py) → wrote 127 bytes to 'configweave/__init__.py'
+write_file(configweave/public.py) → wrote 104 bytes to 'configweave/public.py'
+write_file(configweave/core.py) → wrote 3100 bytes to 'configweave/core.py'
+write_file(verify.py) → wrote 3650 bytes to 'verify.py'
+run_command(python3 verify.py) → exit: 1 (+10 lines)
+write_file(configweave/core.py) → wrote 2620 bytes to 'configweave/core.py'
+run_command(python3 verify.py) → exit: 0 (+17 lines)
+run_command(python3 --version && python3 -c "from configweave import mer…) → exit: 0 (+2 lines)
+run_command(ls -la configweave/ && python3 -c "import configweave; print…) → exit: 0 (+8 lines)
+run_command(rm verify.py && rm -rf configweave/__pycache__) → exit: 0
+
+--- final summary ---
+Done.
+
+**Files created:**
+- `configweave/__init__.py` — package entry, re-exports `merge_layers`
+- `configweave/public.py` — public API module exposing `merge_layers`
+- `configweave/core.py` — implementation
+
+**Implementation notes:**
+- `merge_layers` first validates that `layers` is a list of dicts and recursively validates every nested key is a string (R7/X1) before any mutation occurs.
+- Merging iterates layers in order; for each key: `None` deletes the key (R5), both-dict values recurse (R3), list values are deep-copied in (R4), otherwise the later value deep-copies over the earlier (R3).
+- All values placed into the result are `deepcopy`'d (R6); inputs are never mutated.
+- Only stdlib (`copy.deepcopy`) is used (C1).
+
+**Verified against:** E1–E6, R2, R5 (absent delete), R6 (no shared containers), R7 (list type check), X1 (no mutation on error), plus deep nested merges, nested lists, and nested null deletes.

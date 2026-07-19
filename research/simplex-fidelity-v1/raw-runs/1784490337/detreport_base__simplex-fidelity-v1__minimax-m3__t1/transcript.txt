@@ -1,0 +1,30 @@
+list_dir(.) → (empty: '.')
+write_file(detreport/__init__.py) → wrote 151 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 130 bytes to 'detreport/public.py'
+write_file(detreport/report.py) → wrote 2411 bytes to 'detreport/report.py'
+write_file(detreport/__main__.py) → wrote 677 bytes to 'detreport/__main__.py'
+run_command(python3 --version && python3 -c "import sys; print(sys.versi…) → exit: 0 (+2 lines)
+write_file(verify.py) → wrote 3988 bytes to 'verify.py'
+run_command(python3 verify.py) → exit: 0 (+24 lines)
+list_dir(.) → detreport/ (+1 lines)
+run_command(rm verify.py && ls -la detreport/) → exit: 0 (+8 lines)
+
+--- final summary ---
+Done. Summary of changes:
+
+**Files created:**
+- `detreport/__init__.py` — re-exports `ReportError` and `build_report`
+- `detreport/public.py` — public API surface
+- `detreport/report.py` — core logic: validation, grouping, JSON serialization
+- `detreport/__main__.py` — CLI entry point for `python -m detreport INPUT_JSON`
+
+**Key implementation choices:**
+- `ReportError` extends `ValueError` (R2/X1)
+- Events are deep-copied before processing so input is never mutated (R6)
+- Validation enforces: dict shape, exact key set `{id, category, amount_cents}`, non-empty string id/category, integer (non-bool) amount, unique ids
+- Groups built then sorted by category via Python's `sorted()` (Unicode code-point order, R5/E2)
+- Event ids within each group sorted ascending (R3/E1)
+- Output uses `json.dumps(..., ensure_ascii=False, sort_keys=True, separators=(",", ":"))` for compact, stable, UTF-8-preserving JSON (R4/E3/S1)
+- Only `copy` and `json` from stdlib are imported (C1/E7)
+
+**Verification:** Ran a 22-check script covering E1–E7, R4, R6, and D1 — all passed.

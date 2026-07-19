@@ -1,0 +1,47 @@
+list_dir() → (empty: '.')
+write_file(configweave/__init__.py) → wrote 154 bytes to 'configweave/__init__.py'
+write_file(configweave/merge.py) → wrote 3298 bytes to 'configweave/merge.py'
+write_file(configweave/public.py) → wrote 206 bytes to 'configweave/public.py'
+run_command(cd / && python3 -c "
+import sys
+sys.path.insert(0, '.')
+
+# E…) → exit: 1 (+3 lines)
+run_command(pwd && ls -la) → exit: 0 (+5 lines)
+run_command(python3 -c "
+import sys
+sys.path.insert(0, '.')
+
+# E6: inspe…) → exit: 0 (+19 lines)
+run_command(python3 -c "
+import ast, os, sys, sysconfig
+
+stdlib_path = s…) → exit: 1 (+3 lines)
+run_command(python3 -c "
+import ast, os, sys, sysconfig
+
+paths = sysconf…) → exit: 0 (+4 lines)
+run_command(python3 --version && python3 -c "
+import sys; sys.path.inser…) → exit: 0 (+5 lines)
+
+--- final summary ---
+All requirements are verified. The implementation is complete and working.
+
+## Summary
+
+I created the `configweave` package with three files:
+
+- **`configweave/__init__.py`** — package init that re-exports `merge_layers` from the public API.
+- **`configweave/merge.py`** — core implementation using only `copy` from the standard library. It validates all layers up-front (so invalid input never mutates anything), then builds the result by applying layers first-to-last:
+  - `None` deletes the key at its nesting level (no-op if absent) — R5
+  - two mappings merge recursively — R3
+  - two lists concatenate deep copies in old-then-new order — R4
+  - otherwise the later value (deep-copied) replaces the earlier one; a list replaces a non-list — R3/R4
+  - every value placed into the result is `copy.deepcopy`'d, so no mutable container is shared with inputs and inputs are never mutated — R6
+  - validation raises `TypeError` for non-list `layers`, non-dict layers, and any non-string key at any nesting level (including dicts nested in lists) — R7/X1
+- **`configweave/public.py`** — the canonical public API: `from configweave.public import merge_layers` — R1
+
+**Verification:**
+- Ran a comprehensive test script covering E1–E6, R2–R7, and X1 — all passed (recursive merge, list concatenation, null deletion, deep-copy isolation, TypeError cases, no-mutation-on-error, list-replaces-non-list, deep nested merges, deep copy of dicts nested in lists).
+- AST-based dependency audit confirmed every import is either `copy` (stdlib) or `configweave` itself — C1/E6.
+- Confirmed `from configweave.public import merge_layers` imports cleanly and produces the expected outputs for E1/E2/E3.

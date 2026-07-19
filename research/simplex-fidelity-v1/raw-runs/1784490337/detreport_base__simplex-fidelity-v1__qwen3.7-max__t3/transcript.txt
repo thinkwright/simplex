@@ -1,0 +1,32 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 164 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 3757 bytes to 'detreport/public.py'
+write_file(detreport/__main__.py) → wrote 781 bytes to 'detreport/__main__.py'
+run_command(cd /home/user && python3 -c "
+from detreport import build_re…) → exit: 2 (+1 lines)
+run_command(pwd) → exit: 0 (+1 lines)
+run_command(python3 -c "
+from detreport import build_report, ReportError…) → exit: 0 (+11 lines)
+run_command(echo '[{"id":"b","category":"x","amount_cents":2},{"id":"a",…) → exit: 0 (+1 lines)
+run_command(python3 -c "
+import ast, os
+
+pkg_dir = 'detreport'
+stdlib_ok…) → exit: 0 (+1 lines)
+
+--- final summary ---
+All tests pass. The `detreport` package is complete:
+
+**Files created:**
+- `detreport/__init__.py` - Package entry point exposing `build_report` and `ReportError`
+- `detreport/public.py` - Core implementation with validation and report building
+- `detreport/__main__.py` - CLI entry point for `python -m detreport`
+
+**Verified:**
+- E1-E5: All functional requirements (grouping, ordering, stability, no mutation)
+- R4: Compact JSON with sorted keys and `ensure_ascii=False`
+- E6: CLI reads JSON file and outputs report with newline
+- E7: Only stdlib dependencies (json, sys, copy, typing)
+- D1: Clean imports work in Python 3.11
+
+The implementation validates all events strictly (rejecting duplicates, booleans, missing/extra fields), groups by category with sorted event IDs, orders groups by Unicode code-point, and produces byte-for-byte stable output.

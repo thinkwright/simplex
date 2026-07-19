@@ -1,0 +1,30 @@
+list_dir() → (empty: '.')
+write_file(tokenquota/__init__.py) → wrote 197 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 4079 bytes to 'tokenquota/public.py'
+write_file(test_tokenquota.py) → wrote 4538 bytes to 'test_tokenquota.py'
+run_command(python --version && python test_tokenquota.py) → exit: 127 (+1 lines)
+run_command(python3 --version && python3 test_tokenquota.py) → exit: 0 (+13 lines)
+run_command(grep -rn '^\(import\|from\)' tokenquota/ && echo '---stdlib …) → exit: 0 (+7 lines)
+
+--- final summary ---
+Done. The `tokenquota` package is implemented and verified.
+
+**Files changed:**
+- `tokenquota/__init__.py` — re-exports `Bucket` for convenience.
+- `tokenquota/public.py` — the `Bucket` implementation (the canonical public entry point per R1).
+- `test_tokenquota.py` — standard-library-only behavioural tests covering E1–E6.
+
+**How it satisfies the rules:**
+- **R1/D1**: `from tokenquota.public import Bucket` works; `Bucket(capacity, refill_per_second, clock=None)` starts full (balance = capacity, last_time = clock()).
+- **R2**: `allow(amount=1)` refills first, consumes and returns `True` when enough tokens exist, else `False` without consuming.
+- **R3**: refill adds `elapsed * refill_per_second`, clamps to capacity; a backward/stationary clock yields zero elapsed time and `last_time` is never moved backward.
+- **R4**: after each positive-time refill + capacity clamp, `math.floor` rounds the balance down before answering.
+- **R5**: `available()` runs the same refill calculation and returns the balance without consuming.
+- **R6/X1**: capacity must be positive, `refill_per_second` non-negative, `amount` positive and non-boolean; invalid values raise `ValueError` without consuming tokens.
+- **R7**: a `threading.Lock` serializes `allow`/`available`, so concurrent successful consumption never exceeds available tokens.
+- **C1**: only the supplied clock (default `time.monotonic`) is consulted; imports are `math`, `threading`, `time` only — all standard library.
+
+**Verification:**
+- `python3 test_tokenquota.py` → all 10 tests pass (E1–E6 plus extras).
+- `grep` of imports confirms only `math`, `threading`, `time` (stdlib) are used.
+- A fresh-interpreter import confirms `from tokenquota.public import Bucket` works and consumes correctly (D1).

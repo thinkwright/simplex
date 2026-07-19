@@ -1,0 +1,30 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 173 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 4033 bytes to 'detreport/public.py'
+write_file(detreport/__main__.py) → wrote 1073 bytes to 'detreport/__main__.py'
+run_command(cd /tmp && python3 --version && python3 - <<'PY'
+import sys,…) → exit: 1 (+201 lines)
+run_command(pwd && echo "---" && ls -la && echo "--- detreport ---" && l…) → exit: 0 (+13 lines)
+run_command(cd /tmp/thinkbench-1475391/detreport_descending__simplex-fid…) → exit: 0 (+12 lines)
+run_command(cd /tmp/thinkbench-1475391/detreport_descending__simplex-fid…) → exit: 0 (+12 lines)
+run_command(cd /tmp/thinkbench-1475391/detreport_descending__simplex-fid…) → exit: 0 (+10 lines)
+run_command(cd /tmp/thinkbench-1475391/detreport_descending__simplex-fid…) → exit: 0 (+3 lines)
+
+--- final summary ---
+All requirements verified. The implementation is complete and passes every example and rule.
+
+## Summary
+
+Created the `detreport` package from scratch with three files:
+
+- **`detreport/__init__.py`** — re-exports `build_report` and `ReportError` from `detreport.public` (allowed since it's detreport itself).
+- **`detreport/public.py`** — the public API. `ReportError` exception and `build_report(events)`:
+  - Validates the collection is a list and each event is a dict with *exactly* `id`, `category`, `amount_cents`; `id` is a unique non-empty string, `category` a non-empty string, `amount_cents` an integer that is **not** a bool (bool is rejected before the `int` check). All validation runs before any grouping, so invalid input raises `ReportError` without mutating input.
+  - Groups by category into objects with exactly `category`, `count`, `total_cents`, `events` (ids sorted ascending); orders groups by category in **descending** Unicode code-point order; computes `grand_total_cents` as the sum of all event amounts. Input events are only read, never mutated.
+  - Returns compact JSON via `json.dumps(..., ensure_ascii=False, sort_keys=True, separators=(",", ":"))`, yielding exactly `grand_total_cents` and `groups` at top level with sorted keys everywhere.
+- **`detreport/__main__.py`** — CLI: `python -m detreport INPUT_JSON` reads a JSON array from the path, prints exactly `build_report` output plus one newline, exits 0 on success and non-zero with a descriptive stderr message on error.
+
+Only the standard library (`json`, `sys`) and `detreport` itself are imported (C1/E7).
+
+Verified with `run_command`:
+- E1 (single category: count 2, total 1, events `[a,b]`, grand total 1), E2 (descending order `[beta, alpha]`), E3 (literal `café`, no `\u` escapes), E4 (dup ids / bool amount / missing field / extra field / empty strings / non-string id / float / non-list / non-dict / None all raise `ReportError` without mutating input), E5 (50 repeated calls produce identical bytes and unchanged input), E6 (CLI stdout == library result + one newline; exit 0 on valid, exit 1 on invalid), E7 (AST check confirms every import is stdlib or detreport), D1 (clean `-S` import works), and S1 (byte-for-byte stable with a multi-category Unicode case, descending order `café > alpha > Beta`).

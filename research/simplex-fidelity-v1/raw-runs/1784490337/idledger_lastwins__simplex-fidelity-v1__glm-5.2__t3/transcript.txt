@@ -1,0 +1,24 @@
+list_dir() → (empty: '.')
+run_command(python3 --version && ls -la) → exit: 0 (+4 lines)
+write_file(idledger/errors.py) → wrote 420 bytes to 'idledger/errors.py'
+write_file(idledger/ledger.py) → wrote 6278 bytes to 'idledger/ledger.py'
+write_file(idledger/public.py) → wrote 342 bytes to 'idledger/public.py'
+write_file(idledger/__init__.py) → wrote 201 bytes to 'idledger/__init__.py'
+write_file(_verify.py) → wrote 6917 bytes to '_verify.py'
+run_command(python3 _verify.py) → exit: 0 (+12 lines)
+run_command(python3 -c "
+from idledger.public import Ledger, Insufficien…) → exit: 0 (+15 lines)
+
+--- final summary ---
+## Summary
+
+Created the `idledger` package from scratch in an empty project directory:
+
+- **`idledger/errors.py`** — `LedgerError` base plus `InsufficientFunds` and `CommandConflict` exception types.
+- **`idledger/ledger.py`** — the `Ledger` class: integer-cent balances, `Ledger(initial=None)` with mapping validation, account-name-sorted `snapshot()` returning a fresh dict, and `apply(command)` enforcing exactly `id`/`account`/`kind`/`amount` with positive integer amounts. Implements idempotent repeat (R4), atomic conflict replacement with reversal (R5), atomic `InsufficientFunds` on negative debit without consuming the id (R6), atomic `ValueError` on invalid initial/command with no state change (R7), and `threading.RLock`-guarded `apply`/`snapshot` for thread safety (R8). Uses only stdlib (`threading`, `collections.abc`) plus relative `idledger` imports (C2).
+- **`idledger/public.py`** — re-exports `Ledger`, `InsufficientFunds`, `CommandConflict` (R1).
+- **`idledger/__init__.py`** — package entry point re-exporting the public API.
+
+## Verification
+
+Ran a temporary `_verify.py` covering all examples E1–E7 plus extras (cross-account conflict, conflict-failure preservation, auto-account creation, snapshot independence). All passed: E1 exact result, E2 idempotent repeat, E3 atomic replacement returning balance 120, E4 `InsufficientFunds` with reusable id, E5 `ValueError` for `True`/zero/negative/float/extra-fields/missing-fields/bad-kind/non-string-id and invalid initial states with no state change, E6 200 concurrent credits summing exactly once, and E7 AST-based import check confirming only stdlib/`idledger` imports. Also confirmed `from idledger.public import Ledger, InsufficientFunds, CommandConflict` works and `python3 -m compileall` succeeds. The temporary verification script was removed afterward, leaving only the `idledger` package.

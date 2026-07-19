@@ -1,0 +1,38 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 235 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 3312 bytes to 'detreport/public.py'
+write_file(detreport/__main__.py) → wrote 1106 bytes to 'detreport/__main__.py'
+run_command(cd /tmp && rm -rf detreport_test && mkdir detreport_test && …) → exit: 0 (+7 lines)
+run_command(pwd && ls -R) → exit: 0 (+8 lines)
+run_command(python3 --version && python3 - <<'PY'
+import json, copy
+from…) → exit: 0 (+5 lines)
+run_command(python3 - <<'PY'
+from detreport import build_report, ReportE…) → exit: 0 (+16 lines)
+run_command(cd /tmp/thinkbench-1475391/detreport_base__simplex-fidelity-…) → exit: 0 (+6 lines)
+run_command(cd /tmp/thinkbench-1475391/detreport_base__simplex-fidelity-…) → exit: 0 (+15 lines)
+run_command(cd /tmp/thinkbench-1475391/detreport_base__simplex-fidelity-…) → exit: 0 (+2 lines)
+run_command(cd /tmp/thinkbench-1475391/detreport_base__simplex-fidelity-…) → exit: 0 (+5 lines)
+run_command(cd /tmp/thinkbench-1475391/detreport_base__simplex-fidelity-…) → exit: 0 (+19 lines)
+run_command(cd /tmp/thinkbench-1475391/detreport_base__simplex-fidelity-…) → exit: 0 (+7 lines)
+
+--- final summary ---
+The implementation is complete and verified.
+
+## Summary
+
+Created the `detreport` package with three files:
+
+- **`detreport/__init__.py`** — re-exports `build_report` and `ReportError` from `detreport.public` so both `from detreport import ...` and `from detreport.public import ...` work and return identical objects (R1).
+- **`detreport/public.py`** — the core logic using only `json` (stdlib). `ReportError` is raised for any invalid collection/event. `build_report` validates (list of dicts with exactly `id`/`category`/`amount_cents`; non-empty unique string `id`; non-empty string `category`; integer non-boolean `amount_cents`), groups by category, sorts group objects by category (Unicode code-point order), sorts each group's event ids ascending, sums `total_cents` and `grand_total_cents` as integer cents, and returns compact `ensure_ascii=False` JSON with sorted keys and exactly `groups` + `grand_total_cents` at top level. Input is never mutated (R2–R6, C1, X1, S1).
+- **`detreport/__main__.py`** — CLI using only `json`/`sys` (stdlib). Reads a JSON array from the supplied path, writes exactly `build_report`'s output as UTF-8 bytes plus one newline to `stdout.buffer`, and exits 0 on success (non-zero on usage/IO/JSON/ReportError errors) (R7, E6, E7).
+
+Verification performed (all passing under both Python 3.12 and a clean Python 3.11.15 environment):
+- E1: exact compact JSON string match for the single-category example.
+- E2: categories ordered `[alpha, beta]`.
+- E3: literal `café` present (no `\u` escapes).
+- E4: `ReportError` for duplicate ids, boolean amounts, missing/extra fields, bad collection types, non-dict events, empty/non-string id/category, float amounts — with input never mutated on error.
+- E5: repeated calls produce byte-identical output and leave input unchanged.
+- E6: `python -m detreport input.json` stdout equals the library result + one newline (byte-for-byte, including UTF-8 `café`).
+- E7: AST scan confirms every import is stdlib or `detreport` itself.
+- D1/S1: valid single-category report builds and output is byte-stable in a fresh process.

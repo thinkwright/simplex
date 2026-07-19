@@ -1,0 +1,32 @@
+list_dir(.) → (empty: '.')
+write_file(wirecodec/__init__.py) → wrote 97 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 167 bytes to 'wirecodec/public.py'
+write_file(wirecodec/_codec.py) → wrote 4974 bytes to 'wirecodec/_codec.py'
+run_command(python3 --version && python3 -c "
+import sys, hashlib, json
+…) → exit: 0 (+15 lines)
+run_command(python3 -c "
+from wirecodec.public import encode, decode, Co…) → exit: 0 (+1 lines)
+
+--- final summary ---
+All checks pass. 
+
+**Summary**
+
+Created the `wirecodec` package with three files:
+
+- `wirecodec/__init__.py` — package marker
+- `wirecodec/public.py` — exposes `encode`, `decode`, `CodecError` (R1, P2)
+- `wirecodec/_codec.py` — implementation using only `json` and `hashlib.sha256` (C1)
+
+**Behavior verified against every example and rule:**
+- **E1**: `encode({'id':'a','value':2})` → compact sorted-key JSON with `version:2`, `id`, `value`, and a SHA-256 checksum computed over the canonical `{id,value,version}` payload (R3, V1).
+- **E2**: `decode('{"id":"a","value":2}')` → `{id, value, version:1}` (R4, P1).
+- **E3**: decoding a valid v2 record returns `{id, value, version:2}` (R5, V2).
+- **E4**: unknown top-level fields are discarded after validation (R6).
+- **E5**: tampering with a v2 record raises `CodecError` (R5, X2).
+- **E6**: repeated `encode` produces byte-identical output and never mutates input (R2, R7).
+- **E7**: missing id, empty id, boolean value, non-int value, non-dict input all raise `ValueError` (R2, X1).
+- **E8**: only `hashlib`/`json` are imported; checksum is lowercase SHA-256 hex (C1).
+
+Additional edge cases verified: malformed JSON, unsupported versions, missing checksum, wrong field types, and v1 records with extra fields all behave per spec.

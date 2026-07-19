@@ -1,0 +1,26 @@
+list_dir() → (empty: '.')
+write_file(configweave/__init__.py) → wrote 126 bytes to 'configweave/__init__.py'
+write_file(configweave/public.py) → wrote 3403 bytes to 'configweave/public.py'
+run_command(cd /home/user && python3 -c "
+import copy
+from configweave i…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+import copy
+from configweave import merge_layer…) → exit: 0 (+17 lines)
+
+--- final summary ---
+All tests pass. Here's what was created:
+
+**Files created:**
+- `configweave/__init__.py` — Package init that re-exports `merge_layers` from `configweave.public`.
+- `configweave/public.py` — Contains the `merge_layers(layers)` function implementing all rules.
+
+**How it works:**
+1. **Validation** (`_validate_layers` / `_validate_keys_recursive`): Checks that `layers` is a list of dicts with all-string keys at every nesting level, raising `TypeError` before any mutation occurs (R7, X1).
+2. **Merging** (`_deep_merge`): Iterates layers left-to-right. For each key in the overlay:
+   - `None` → deletes the key (R5)
+   - Both mappings → recurse (R3)
+   - Both lists → concatenate deep copies, old-then-new (R4)
+   - Otherwise → later value replaces (R3/R4)
+3. **Deep copy safety** (R6): All values are deep-copied during merge; inputs are never mutated.
+4. **Stdlib only** (C1): Uses only `copy` and `collections.abc` from the standard library.

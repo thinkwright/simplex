@@ -1,0 +1,35 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/public.py) → wrote 3715 bytes to 'cursorvault/public.py'
+write_file(cursorvault/__init__.py) → wrote 208 bytes to 'cursorvault/__init__.py'
+run_command(python3 --version && python3 - <<'PY'
+import copy, sys
+
+# [R…) → exit: 0 (+17 lines)
+run_command(python3 - <<'PY'
+import ast, os, sys, sysconfig
+
+stdlib_path…) → exit: 0 (+6 lines)
+run_command(cd /tmp && python3 -c "
+from cursorvault.public import pagin…) → exit: 1 (+3 lines)
+run_command(PYTHONPATH="$PWD" python3 -c "
+import sys
+print('cwd:', __im…) → exit: 0 (+3 lines)
+
+--- final summary ---
+All checks pass. The implementation is complete and verified.
+
+## Summary
+
+Created the `cursorvault` package (Python standard library only):
+
+- **`cursorvault/public.py`** — defines `CursorError` (an `Exception` subclass) and `paginate(records, cursor=None, limit=3)`.
+- **`cursorvault/__init__.py`** — re-exports `paginate` and `CursorError` from `cursorvault.public`.
+
+Key implementation details:
+- **Limit validation [R3]/[X1]:** rejects booleans explicitly (`isinstance(limit, bool)`) before the `int` check, then enforces `1 ≤ limit ≤ 100`, raising `ValueError` before any record access.
+- **Cursor validation [R4]/[X2]:** `None` → start at 0; otherwise requires a string of ASCII digits only (`cursor.isascii() and cursor.isdigit()`), rejecting signs, whitespace, underscores, decimals, unicode digits, and non-strings as `CursorError`. Index equal to length yields an empty terminal page; index beyond length raises `CursorError`.
+- **Pagination [R2]/[R5]:** builds the page via `list(records[start:start+limit])` (fresh list, input order, no mutation), computes `has_more = end < length`, and sets `next_cursor` to `str(end)` only when `has_more` is true (else `None`). Returns exactly the three keys.
+- **No mutation / determinism [R6]:** only `len()` and slicing are used; records and record dicts are never modified, so equal inputs yield equal results.
+- **Dependencies [C1]/[E6]:** `public.py` has zero imports; `__init__.py` imports only from `cursorvault` itself — no third-party or non-stdlib dependencies.
+
+Verification: ran a comprehensive script confirming E1–E6 (valid pages, limit/cursor errors, no-mutation property, determinism, empty terminal pages, full cursor walk, exactly-three-keys), AST-scanned the package to confirm only stdlib/cursorvault imports, and confirmed `from cursorvault.public import paginate, CursorError` works and produces the E1 result in a clean process.

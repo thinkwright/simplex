@@ -1,0 +1,33 @@
+list_dir() → (empty: '.')
+write_file(idledger/__init__.py) → wrote 201 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 176 bytes to 'idledger/public.py'
+write_file(idledger/ledger.py) → wrote 3946 bytes to 'idledger/ledger.py'
+run_command(python3 -c "
+from idledger import Ledger, InsufficientFunds,…) → exit: 0 (+8 lines)
+run_command(python3 -c "
+import sys
+# Clear and reimport to capture
+for …) → exit: 0 (+2 lines)
+run_command(grep -r "^import\|^from" idledger/) → exit: 0 (+3 lines)
+run_command(python3 --version && python3 -c "
+# Final comprehensive veri…) → exit: 0 (+2 lines)
+
+--- final summary ---
+All checks pass. The implementation is complete.
+
+**Summary of changes:**
+
+Created the `idledger` package with three files:
+
+- `idledger/__init__.py` — re-exports the public API
+- `idledger/public.py` — exposes `Ledger`, `InsufficientFunds`, `CommandConflict`
+- `idledger/ledger.py` — the `Ledger` implementation using only `threading.RLock` from stdlib
+
+**Key design decisions:**
+- `Ledger` uses an `RLock` to make `apply` and `snapshot` thread-safe (R8).
+- Command history is stored as `cmd_id → (account, kind, amount, resulting_balance)`. On replay with identical content, the original result is returned without re-applying (R4). On replay with different content, the original result is returned and balances are unchanged (R5).
+- Validation of initial state and command structure happens before acquiring the lock's write path; invalid input raises `ValueError` and leaves all state unchanged (R7).
+- Debits that would go negative raise `InsufficientFunds` before mutating any state, and the command id is not recorded, so it remains reusable (R6).
+- `snapshot()` returns a new dict sorted by account name (R2).
+
+**Verification:** Ran a comprehensive test covering all examples (E1–E7) and rules (R1–R8); all passed. Only `threading` (stdlib) and `idledger` modules are imported.

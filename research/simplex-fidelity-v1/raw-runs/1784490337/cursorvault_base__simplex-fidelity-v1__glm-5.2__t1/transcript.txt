@@ -1,0 +1,35 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/errors.py) → wrote 482 bytes to 'cursorvault/errors.py'
+write_file(cursorvault/public.py) → wrote 3465 bytes to 'cursorvault/public.py'
+write_file(cursorvault/__init__.py) → wrote 371 bytes to 'cursorvault/__init__.py'
+run_command(python3 --version && python3 - <<'EOF'
+import copy
+import sy…) → exit: 1 (+11 lines)
+run_command(python3 - <<'EOF'
+import copy
+import sys
+
+import cursorvault…) → exit: 0 (+17 lines)
+list_dir(cursorvault) → __init__.py (+3 lines)
+
+--- final summary ---
+The task is complete and verified.
+
+## Summary
+
+Created the `cursorvault` package (standard library only) with three files:
+
+- **`cursorvault/errors.py`** — defines `CursorError(Exception)`.
+- **`cursorvault/public.py`** — implements `paginate(records, cursor=None, limit=3)` and re-exports `CursorError`. This is the public API surface required by R1.
+- **`cursorvault/__init__.py`** — re-exports `paginate` and `CursorError` for convenience.
+
+### How `paginate` satisfies the contract
+- **R3/X1**: `limit` is validated first — rejected if it's a `bool` (even though `bool` subclasses `int`) or not an `int`, or outside `[1, 100]`, raising `ValueError` before records are touched.
+- **R2**: validates `records` is a list/tuple of dicts each with a unique string `id`; returns a fresh dict with exactly `items`, `next_cursor`, `has_more`, preserving input order.
+- **R4/X2**: a non-null cursor must be a string matching a record `id` (else `CursorError`); the page starts at `index(cursor)+1`. `next_cursor` is the last item's `id` when more remain.
+- **R5**: `has_more = end < total`; `next_cursor` is `None` when `has_more` is false; empty input (and a cursor at the last record) yields an empty terminal page.
+- **R6**: never mutates `records` or any record dict (uses slicing into a new list, references only); deterministic, so equal inputs yield equal results.
+- **C1/E6**: imports only `cursorvault.errors` (itself) and stdlib — verified against `sys.stdlib_module_names`.
+
+### Verification
+Ran a comprehensive script (Python 3.12, code is 3.11-compatible — no version-specific constructs) covering E1–E6, R2/R3/R5/R6, X1/X2, a full multi-page cursor walk, the default `limit=3`, and the top-level re-export identity. All assertions passed (`ALL CHECKS PASSED`).

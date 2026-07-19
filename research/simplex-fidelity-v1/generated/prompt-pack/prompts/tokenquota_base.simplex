@@ -1,0 +1,38 @@
+SIMPLEX: 0.6
+
+CONSTRAINT: tokenquota_contract
+  - [C1] use only the supplied clock for elapsed-time decisions and use only the Python standard library
+
+FUNCTION: implement_tokenquota() → output
+
+RULES:
+  - [R1] create an importable tokenquota package exposing Bucket from tokenquota.public; Bucket(capacity, refill_per_second, clock=None) starts full
+  - [R2] allow(amount=1) refills first, consumes amount and returns true when enough tokens exist, otherwise returns false without consuming
+  - [R3] refill adds elapsed_seconds times refill_per_second, never exceeds capacity, and treats a backward clock movement as zero elapsed time
+  - [R4] preserve fractional tokens exactly after refill; do not round the balance
+  - [R5] available() performs the same refill calculation and returns the current numeric balance without consuming tokens
+  - [R6] constructor capacity must be positive, refill_per_second non-negative, and allow amount positive and not boolean; invalid values raise ValueError
+  - [R7] allow and available are thread-safe so concurrent successful consumption never exceeds available tokens
+
+DONE_WHEN:
+  - [D1] the public API imports and can consume from a valid bucket in a clean Python 3.11 environment
+
+EXAMPLES:
+  - [E1] value: a capacity-2 bucket at time 0 → allow(1) is true twice and then false
+  - [E2] value: after emptying a capacity-3 bucket with refill rate 0.5 and advancing 3 seconds → available() is 1.5
+  - [E3] property: advancing far beyond capacity or moving the clock backward → balance never exceeds capacity and never gains tokens from negative elapsed time
+  - [E4] error: capacity 0, negative refill, or allow(true) → ValueError
+  - [E5] property: many concurrent allow(1) calls against a full capacity-N bucket with no refill → exactly N calls succeed
+  - [E6] outcome: supply a fake clock and inspect package dependencies → the fake clock fully controls refill and only standard-library dependencies appear
+
+ERRORS:
+  - [X1] invalid constructor or consumption amount → raise ValueError without consuming tokens
+  - any unhandled condition → fail with descriptive message
+
+COVERS:
+  - E1 → R1, R2, D1
+  - E2 → R3, R4, R5
+  - E3 → R3
+  - E4 → R6, X1
+  - E5 → R7
+  - E6 → C1, R3

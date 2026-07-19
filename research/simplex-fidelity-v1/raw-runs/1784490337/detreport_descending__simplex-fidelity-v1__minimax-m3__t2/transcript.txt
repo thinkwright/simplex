@@ -1,0 +1,24 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 152 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 130 bytes to 'detreport/public.py'
+write_file(detreport/report.py) → wrote 3991 bytes to 'detreport/report.py'
+write_file(detreport/__main__.py) → wrote 997 bytes to 'detreport/__main__.py'
+write_file(verify.py) → wrote 4290 bytes to 'verify.py'
+run_command(python3 --version && python3 verify.py) → exit: 0 (+29 lines)
+run_command(python3 -c "from detreport.public import build_report, Repor…) → exit: 0 (+2 lines)
+run_command(python3 -c "
+from detreport.public import build_report
+event…) → exit: 0 (+1 lines)
+
+--- final summary ---
+Output is compact, sorted keys, exactly `groups` + `grand_total_cents` at top level, with `café`-style characters preserved.
+
+Summary of changes:
+
+- **`detreport/__init__.py`** — package entry exposing `build_report` and `ReportError`.
+- **`detreport/public.py`** — public re-export module per R1.
+- **`detreport/report.py`** — core logic: validates each event (exactly the three required keys, non-empty string id/category, integer non-bool `amount_cents`), checks unique ids, groups by category, sorts group objects by category in descending Unicode code-point order, sorts event ids ascending within each group, and emits compact JSON with `ensure_ascii=False` and sorted keys. Uses only `json` and `collections` from the stdlib.
+- **`detreport/__main__.py`** — CLI: reads JSON array from path, prints `build_report` output + one newline, exits 0 on success.
+- **`verify.py`** — verification harness covering E1–E7, R4, and the stdlib-only constraint.
+
+Verified: all 28 checks pass under Python 3.12 (stdlib-only imports confirmed via AST scan against `sys.stdlib_module_names`).

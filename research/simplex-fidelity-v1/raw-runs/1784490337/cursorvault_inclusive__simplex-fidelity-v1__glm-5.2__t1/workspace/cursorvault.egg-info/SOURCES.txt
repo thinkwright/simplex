@@ -1,0 +1,8 @@
+pyproject.toml
+cursorvault/__init__.py
+cursorvault/_core.py
+cursorvault/public.py
+cursorvault.egg-info/PKG-INFO
+cursorvault.egg-info/SOURCES.txt
+cursorvault.egg-info/dependency_links.txt
+cursorvault.egg-info/top_level.txt

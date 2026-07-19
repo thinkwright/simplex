@@ -1,0 +1,24 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/__init__.py) → wrote 92 bytes to 'cursorvault/__init__.py'
+write_file(cursorvault/public.py) → wrote 2039 bytes to 'cursorvault/public.py'
+run_command(cd /home/user && python3 -c "
+from cursorvault import pagina…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from cursorvault import paginate, CursorError
+i…) → exit: 0 (+10 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`cursorvault/__init__.py`** — Package init that re-exports `paginate` and `CursorError` from `cursorvault.public`.
+
+2. **`cursorvault/public.py`** — Contains the full implementation:
+   - **`CursorError`** — Custom exception for malformed/unknown cursors.
+   - **`paginate(records, cursor=None, limit=3)`** — Cursor-based pagination that:
+     - Validates `limit` is a non-boolean `int` in `[1, 100]` (raises `ValueError` otherwise)
+     - Resolves `cursor` to the starting record index (raises `CursorError` if not found)
+     - Returns `{"items": [...], "next_cursor": str|None, "has_more": bool}`
+     - Uses `copy.deepcopy` to avoid mutating input records
+     - Uses only the Python standard library (`copy` module)

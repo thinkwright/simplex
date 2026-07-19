@@ -1,0 +1,25 @@
+list_dir() → (empty: '.')
+write_file(configweave/_merge.py) → wrote 3420 bytes to 'configweave/_merge.py'
+write_file(configweave/public.py) → wrote 119 bytes to 'configweave/public.py'
+write_file(configweave/__init__.py) → wrote 126 bytes to 'configweave/__init__.py'
+run_command(cd /home/user && python3 -c "
+import copy
+from configweave.p…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+import copy
+from configweave.public import merg…) → exit: 0 (+17 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`configweave/__init__.py`** — Package init that re-exports `merge_layers` from `configweave.public`.
+2. **`configweave/public.py`** — Public API module exposing `merge_layers`.
+3. **`configweave/_merge.py`** — Internal implementation with:
+   - **Validation** (`_validate_dict`, `_validate_value`): Recursively checks all layers are dicts with string keys at every nesting level; raises `TypeError` on violations.
+   - **`_dedup_list`**: Concatenates old-then-new lists keeping only the first occurrence of each equality-distinct value (R4).
+   - **`_merge_dicts`**: Recursively merges dicts — mappings merge recursively (R3), lists concatenate with dedup (R4), `None` deletes keys (R5), otherwise later values replace (R3).
+   - **`merge_layers`**: Validates all layers upfront (before any mutation), deep-copies all inputs (R6), then folds left-to-right (R2).
+
+**Verified:** All examples E1–E6 and error case X1 pass, using only the Python standard library (`copy`).

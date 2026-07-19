@@ -1,0 +1,34 @@
+list_dir() → (empty: '.')
+run_command(mkdir -p tokenquota) → exit: 0
+write_file(tokenquota/__init__.py) → wrote 59 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 3749 bytes to 'tokenquota/public.py'
+run_command(cd /home/user && python3 -c "
+import threading
+
+# ---- E1: c…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+import threading
+
+# ---- E1: capacity-2 bucket,…) → exit: 0 (+11 lines)
+run_command(python3 -c "
+# Verify only standard library imports
+import a…) → exit: 0 (+11 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`tokenquota/__init__.py`** — Package init that re-exports `Bucket` from `tokenquota.public`.
+2. **`tokenquota/public.py`** — The `Bucket` class implementation.
+
+**Design decisions:**
+
+- **R1**: `Bucket` is importable from both `tokenquota.public` and `tokenquota` directly.
+- **R2**: `allow(amount=1)` refills first under lock, then checks/consumes atomically.
+- **R3**: `_refill()` computes `elapsed = now - last_time`; if elapsed ≤ 0 (backward clock), no tokens added and `_last_time` is not updated. Tokens capped at capacity.
+- **R4**: Tokens stored as `float`; no rounding applied.
+- **R5**: `available()` performs the same refill under lock and returns the balance.
+- **R6**: Constructor validates `capacity > 0`, `refill_per_second >= 0`, rejects booleans. `allow()` validates `amount > 0` and rejects booleans. All raise `ValueError`.
+- **R7**: Both `allow()` and `available()` use a `threading.Lock` for thread safety.
+- **C1**: Only `threading` and `time` from the standard library are imported. The `clock` parameter accepts any callable.

@@ -1,0 +1,31 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/_core.py) → wrote 2567 bytes to 'cursorvault/_core.py'
+write_file(cursorvault/public.py) → wrote 392 bytes to 'cursorvault/public.py'
+write_file(cursorvault/__init__.py) → wrote 326 bytes to 'cursorvault/__init__.py'
+write_file(pyproject.toml) → wrote 317 bytes to 'pyproject.toml'
+write_file(test_cursorvault.py) → wrote 4573 bytes to 'test_cursorvault.py'
+run_command(python3 --version && python3 test_cursorvault.py) → exit: 0 (+2 lines)
+run_command(python3 -c "
+from cursorvault.public import paginate, Cursor…) → exit: 0 (+6 lines)
+run_command(python3 -c "
+import ast, os
+# E6: statically verify every im…) → exit: 0 (+1 lines)
+run_command(python3 -m venv /tmp/cv_clean_env && /tmp/cv_clean_env/bin/p…) → exit: 0 (+2 lines)
+
+--- final summary ---
+All requirements are verified. The implementation is complete.
+
+## Summary
+
+Created the `cursorvault` package (standard library only) with these files:
+
+- **`cursorvault/_core.py`** — Implementation: `CursorError` exception and `paginate(records, cursor=None, limit=3)`. Validates `limit` (rejects booleans and out-of-range values with `ValueError` before touching records), locates the cursor inclusively (raises `CursorError` for unknown/malformed cursors), slices a new `items` list preserving input order, and sets `next_cursor` to the id of the first unreturned record when `has_more` is true (else `None`). Never mutates inputs.
+- **`cursorvault/public.py`** — Re-exports `paginate` and `CursorError` from `cursorvault._core` (the supported entry point per R1).
+- **`cursorvault/__init__.py`** — Convenience re-export from `cursorvault.public`.
+- **`pyproject.toml`** — Minimal packaging metadata (no runtime dependencies).
+- **`test_cursorvault.py`** — Verification tests covering E1–E6 plus edge cases.
+
+## Verification
+- `python3 test_cursorvault.py` → **all tests passed** (E1 basic pagination, E2 inclusive terminal cursor, E3 invalid limit `0`/`True`→`ValueError`, E4 no mutation + stable repeated calls, E5 missing/malformed cursor→`CursorError`, E6 stdlib-only, empty input, default limit, full walk, limit-error precedence).
+- Static AST import scan confirmed every import is from the standard library or `cursorvault` itself (C1/E6).
+- Installed into a fresh isolated venv and confirmed `from cursorvault.public import paginate, CursorError` imports and paginates correctly (D1).

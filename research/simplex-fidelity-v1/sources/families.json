@@ -1,0 +1,280 @@
+{
+  "schema_version": 1,
+  "families": [
+    {
+      "name": "cursorvault",
+      "project": "cursorvault",
+      "summary": "Implement deterministic cursor pagination as a Python 3.11+ standard-library package.",
+      "mutation_target": "R4",
+      "constraints": [
+        {"id": "C1", "text": "use only the Python standard library"}
+      ],
+      "rules": [
+        {"id": "R1", "text": "create an importable cursorvault package exposing paginate and CursorError from cursorvault.public"},
+        {"id": "R2", "text": "paginate(records, cursor=None, limit=3) accepts records with unique string id fields and returns a new dict with exactly items, next_cursor, and has_more; items retain input order"},
+        {"id": "R3", "text": "limit must be an integer from 1 through 100 inclusive; booleans are not integers for this contract"},
+        {"id": "R4", "text": "{{cursor_rule}}"},
+        {"id": "R5", "text": "has_more is true exactly when records remain after the returned page; next_cursor follows R4 when has_more is true and is null otherwise; an empty input returns an empty terminal page"},
+        {"id": "R6", "text": "do not mutate records or any record dict, and repeated calls with equal inputs return equal results"}
+      ],
+      "done_when": [
+        {"id": "D1", "text": "the public API imports and can paginate a valid record list in a clean Python 3.11 environment"}
+      ],
+      "examples": [
+        {"id": "E1", "kind": "value", "text": "paginate([{id: a}, {id: b}, {id: c}], null, 2) → {{first_page}}", "covers": ["R1", "R2", "R4", "R5", "D1"]},
+        {"id": "E2", "kind": "value", "text": "{{second_page_example}}", "covers": ["R4", "R5"]},
+        {"id": "E3", "kind": "error", "text": "limit 0 or true → ValueError", "covers": ["R3", "X1"]},
+        {"id": "E4", "kind": "property", "text": "any valid records and arguments → records remain unchanged after paginate", "covers": ["R6"]},
+        {"id": "E5", "kind": "error", "text": "{{invalid_cursor_example}}", "covers": ["R4", "X2"]},
+        {"id": "E6", "kind": "outcome", "text": "inspect the cursorvault package dependencies → every imported dependency is from the Python standard library or cursorvault itself", "covers": ["C1"]}
+      ],
+      "errors": [
+        {"id": "X1", "text": "invalid limit → raise ValueError without modifying records"},
+        {"id": "X2", "text": "malformed or unknown cursor → raise CursorError without modifying records"}
+      ],
+      "variants": {
+        "base": {
+          "slug": "cursorvault_base",
+          "mode": "exclusive",
+          "values": {
+            "cursor_rule": "a non-null cursor is the id of the last record already returned, so the next page begins after that record; when more records remain, next_cursor is the id of the last record in the current page",
+            "first_page": "{items: [{id: a}, {id: b}], next_cursor: b, has_more: true}",
+            "second_page_example": "paginate([{id: a}, {id: b}, {id: c}], b, 2) → {items: [{id: c}], next_cursor: null, has_more: false}",
+            "invalid_cursor_example": "cursor missing → CursorError"
+          }
+        },
+        "inclusive": {
+          "slug": "cursorvault_inclusive",
+          "mode": "inclusive",
+          "values": {
+            "cursor_rule": "a non-null cursor is the id of the first record to return, so that record is included; when more records remain, next_cursor is the id of the first record not returned in the current page",
+            "first_page": "{items: [{id: a}, {id: b}], next_cursor: c, has_more: true}",
+            "second_page_example": "paginate([{id: a}, {id: b}, {id: c}], b, 2) → {items: [{id: b}, {id: c}], next_cursor: null, has_more: false}",
+            "invalid_cursor_example": "cursor missing → CursorError"
+          }
+        },
+        "offset": {
+          "slug": "cursorvault_offset",
+          "mode": "offset",
+          "values": {
+            "cursor_rule": "a non-null cursor is the decimal zero-based index of the first record to return; when records remain, next_cursor is the decimal index immediately after the page",
+            "first_page": "{items: [{id: a}, {id: b}], next_cursor: \"2\", has_more: true}",
+            "second_page_example": "paginate([{id: a}, {id: b}, {id: c}], \"1\", 2) → {items: [{id: b}, {id: c}], next_cursor: null, has_more: false}",
+            "invalid_cursor_example": "cursor \"missing\" → CursorError"
+          }
+        }
+      }
+    },
+    {
+      "name": "configweave",
+      "project": "configweave",
+      "summary": "Implement immutable recursive configuration merging as a Python 3.11+ standard-library package.",
+      "mutation_target": "R4",
+      "constraints": [
+        {"id": "C1", "text": "use only the Python standard library"}
+      ],
+      "rules": [
+        {"id": "R1", "text": "create an importable configweave package exposing merge_layers from configweave.public"},
+        {"id": "R2", "text": "merge_layers(layers) applies layer dicts from first to last and returns an empty dict for an empty layer list"},
+        {"id": "R3", "text": "when both old and new values are mappings, merge recursively; otherwise the later non-list value replaces the earlier value"},
+        {"id": "R4", "text": "{{list_rule}}"},
+        {"id": "R5", "text": "a later null value deletes that key from the result at its current nesting level; deleting an absent key is a no-op"},
+        {"id": "R6", "text": "return a deep copy with no mutable container shared with any input, and never mutate an input layer"},
+        {"id": "R7", "text": "layers must be a list of dicts and every key at every nesting level must be a string"}
+      ],
+      "done_when": [
+        {"id": "D1", "text": "the public API imports and can merge valid nested layers in a clean Python 3.11 environment"}
+      ],
+      "examples": [
+        {"id": "E1", "kind": "value", "text": "merge_layers([{db: {host: a, port: 1}}, {db: {port: 2}}]) → {db: {host: a, port: 2}}", "covers": ["R1", "R2", "R3", "D1"]},
+        {"id": "E2", "kind": "value", "text": "merge_layers([{plugins: [a, b]}, {plugins: [b, c]}]) → {{list_result}}", "covers": ["R4"]},
+        {"id": "E3", "kind": "value", "text": "merge_layers([{a: 1, b: 2}, {a: null}]) → {b: 2}", "covers": ["R5"]},
+        {"id": "E4", "kind": "property", "text": "any valid layers → mutating the result cannot mutate a source layer and source layers remain unchanged", "covers": ["R6"]},
+        {"id": "E5", "kind": "error", "text": "a non-dict layer or nested non-string key → TypeError", "covers": ["R7", "X1"]},
+        {"id": "E6", "kind": "outcome", "text": "inspect the configweave package dependencies → every imported dependency is from the Python standard library or configweave itself", "covers": ["C1"]}
+      ],
+      "errors": [
+        {"id": "X1", "text": "invalid layer structure or any non-string key → raise TypeError without mutating inputs"}
+      ],
+      "variants": {
+        "base": {"slug": "configweave_base", "mode": "replace", "values": {"list_rule": "when a later value is a list, replace the earlier value with a deep copy of that list", "list_result": "{plugins: [b, c]}"}},
+        "concat": {"slug": "configweave_concat", "mode": "concat", "values": {"list_rule": "when both old and new values are lists, concatenate deep copies in old-then-new order; a list still replaces a non-list", "list_result": "{plugins: [a, b, b, c]}"}},
+        "union": {"slug": "configweave_union", "mode": "union", "values": {"list_rule": "when both old and new values are lists, concatenate in old-then-new order while keeping only the first occurrence of each equality-distinct value; a list still replaces a non-list", "list_result": "{plugins: [a, b, c]}"}}
+      }
+    },
+    {
+      "name": "idledger",
+      "project": "idledger",
+      "summary": "Implement an idempotent in-memory account ledger as a Python 3.11+ standard-library package.",
+      "mutation_target": "R5",
+      "constraints": [
+        {"id": "C1", "text": "balances and command amounts are integer cents and no successful operation may leave a negative balance"},
+        {"id": "C2", "text": "use only the Python standard library"}
+      ],
+      "rules": [
+        {"id": "R1", "text": "create an importable idledger package exposing Ledger, InsufficientFunds, and CommandConflict from idledger.public"},
+        {"id": "R2", "text": "Ledger(initial=None) accepts a mapping of account names to non-negative integer balances; snapshot returns a new account-name-sorted dict"},
+        {"id": "R3", "text": "apply(command) accepts exactly id, account, kind, and amount where kind is credit or debit and amount is a positive integer; a success returns exactly id, account, and resulting balance"},
+        {"id": "R4", "text": "repeating an identical successful command id returns the original result without applying the command again"},
+        {"id": "R5", "text": "{{conflict_rule}}"},
+        {"id": "R6", "text": "a debit that would make a balance negative raises InsufficientFunds, leaves all state unchanged, and does not consume the command id"},
+        {"id": "R7", "text": "invalid initial state or command structure raises ValueError and leaves all state and command history unchanged"},
+        {"id": "R8", "text": "apply and snapshot are thread-safe; concurrent successful commands are each reflected exactly once"}
+      ],
+      "done_when": [
+        {"id": "D1", "text": "the public API imports and can apply a valid command in a clean Python 3.11 environment"}
+      ],
+      "examples": [
+        {"id": "E1", "kind": "value", "text": "Ledger({a: 100}).apply({id: c1, account: a, kind: debit, amount: 40}) → {id: c1, account: a, balance: 60}", "covers": ["R1", "R2", "R3", "C1", "D1"]},
+        {"id": "E2", "kind": "property", "text": "applying the same successful command twice → the second result equals the first and the balance changes once", "covers": ["R4"]},
+        {"id": "E3", "kind": "outcome", "text": "{{conflict_example}}", "covers": ["R5"]},
+        {"id": "E4", "kind": "error", "text": "debit 101 from balance 100 → InsufficientFunds and the command id remains reusable", "covers": ["R6", "X1"]},
+        {"id": "E5", "kind": "error", "text": "amount true, zero, or a command with extra fields → ValueError and no state change", "covers": ["R7", "X2"]},
+        {"id": "E6", "kind": "property", "text": "concurrent distinct credits → final balance equals the initial balance plus every credit exactly once", "covers": ["R8"]},
+        {"id": "E7", "kind": "outcome", "text": "inspect the idledger package dependencies → every imported dependency is from the Python standard library or idledger itself", "covers": ["C2"]}
+      ],
+      "errors": [
+        {"id": "X1", "text": "insufficient funds → raise InsufficientFunds atomically"},
+        {"id": "X2", "text": "invalid initial state or command → raise ValueError atomically"}
+      ],
+      "variants": {
+        "base": {"slug": "idledger_base", "mode": "conflict", "values": {"conflict_rule": "reusing a successful command id with different command content raises CommandConflict and leaves the original result and all balances unchanged", "conflict_example": "reuse c1 with different content → CommandConflict and the original state remains"}},
+        "firstwins": {"slug": "idledger_firstwins", "mode": "firstwins", "values": {"conflict_rule": "reusing a successful command id with different command content returns the original result and leaves balances unchanged; the first successful command wins", "conflict_example": "reuse c1 with different content → return the original c1 result and retain the original state"}},
+        "lastwins": {"slug": "idledger_lastwins", "mode": "lastwins", "values": {"conflict_rule": "a conflicting successful command id atomically replaces the original: reverse the original, apply and return the replacement, or preserve the original if replacement fails", "conflict_example": "replace c1 debit 40 with c1 credit 20 → reverse the debit, apply the credit, and return balance 120"}}
+      }
+    },
+    {
+      "name": "tokenquota",
+      "project": "tokenquota",
+      "summary": "Implement a thread-safe clock-driven token bucket as a Python 3.11+ standard-library package.",
+      "mutation_target": "R4",
+      "constraints": [
+        {"id": "C1", "text": "use only the supplied clock for elapsed-time decisions and use only the Python standard library"}
+      ],
+      "rules": [
+        {"id": "R1", "text": "create an importable tokenquota package exposing Bucket from tokenquota.public; Bucket(capacity, refill_per_second, clock=None) starts full"},
+        {"id": "R2", "text": "allow(amount=1) refills first, consumes amount and returns true when enough tokens exist, otherwise returns false without consuming"},
+        {"id": "R3", "text": "refill adds elapsed_seconds times refill_per_second, never exceeds capacity, and treats a backward clock movement as zero elapsed time"},
+        {"id": "R4", "text": "{{rounding_rule}}"},
+        {"id": "R5", "text": "available() performs the same refill calculation and returns the current numeric balance without consuming tokens"},
+        {"id": "R6", "text": "constructor capacity must be positive, refill_per_second non-negative, and allow amount positive and not boolean; invalid values raise ValueError"},
+        {"id": "R7", "text": "allow and available are thread-safe so concurrent successful consumption never exceeds available tokens"}
+      ],
+      "done_when": [
+        {"id": "D1", "text": "the public API imports and can consume from a valid bucket in a clean Python 3.11 environment"}
+      ],
+      "examples": [
+        {"id": "E1", "kind": "value", "text": "a capacity-2 bucket at time 0 → allow(1) is true twice and then false", "covers": ["R1", "R2", "D1"]},
+        {"id": "E2", "kind": "value", "text": "after emptying a capacity-3 bucket with refill rate 0.5 and advancing 3 seconds → available() is {{rounded_value}}", "covers": ["R3", "R4", "R5"]},
+        {"id": "E3", "kind": "property", "text": "advancing far beyond capacity or moving the clock backward → balance never exceeds capacity and never gains tokens from negative elapsed time", "covers": ["R3"]},
+        {"id": "E4", "kind": "error", "text": "capacity 0, negative refill, or allow(true) → ValueError", "covers": ["R6", "X1"]},
+        {"id": "E5", "kind": "property", "text": "many concurrent allow(1) calls against a full capacity-N bucket with no refill → exactly N calls succeed", "covers": ["R7"]},
+        {"id": "E6", "kind": "outcome", "text": "supply a fake clock and inspect package dependencies → the fake clock fully controls refill and only standard-library dependencies appear", "covers": ["C1", "R3"]}
+      ],
+      "errors": [
+        {"id": "X1", "text": "invalid constructor or consumption amount → raise ValueError without consuming tokens"}
+      ],
+      "variants": {
+        "base": {"slug": "tokenquota_base", "mode": "exact", "values": {"rounding_rule": "preserve fractional tokens exactly after refill; do not round the balance", "rounded_value": "1.5"}},
+        "floor": {"slug": "tokenquota_floor", "mode": "floor", "values": {"rounding_rule": "after each positive-time refill and capacity clamp, round the balance down to the nearest integer before answering the operation", "rounded_value": "1"}},
+        "ceiling": {"slug": "tokenquota_ceiling", "mode": "ceiling", "values": {"rounding_rule": "after each positive-time refill and capacity clamp, round the balance up to the nearest integer without exceeding capacity before answering the operation", "rounded_value": "2"}}
+      }
+    },
+    {
+      "name": "wirecodec",
+      "project": "wirecodec",
+      "summary": "Implement a deterministic versioned JSON wire codec as a Python 3.11+ standard-library package.",
+      "mutation_target": "R6",
+      "constraints": [
+        {"id": "C1", "text": "use only the Python standard library and SHA-256 from hashlib"}
+      ],
+      "baseline": {
+        "reference": "version 1 JSON records containing id and value with no checksum",
+        "preserve": [
+          {"id": "P1", "text": "decode version 1 records where version is absent or equals 1"},
+          {"id": "P2", "text": "the public encode, decode, and CodecError imports remain stable"}
+        ],
+        "evolve": [
+          {"id": "V1", "text": "encode deterministic version 2 records with a checksum"},
+          {"id": "V2", "text": "decode version 2 records only when the checksum is valid"}
+        ]
+      },
+      "eval": {"preserve": "pass^3", "evolve": "pass@3", "grading": "code"},
+      "rules": [
+        {"id": "R1", "text": "create an importable wirecodec package exposing encode, decode, and CodecError from wirecodec.public"},
+        {"id": "R2", "text": "encode(record) requires exactly a non-empty string id and an integer non-boolean value, does not mutate record, and raises ValueError for invalid input"},
+        {"id": "R3", "text": "encode returns compact JSON with sorted object keys containing version 2, id, value, and checksum; checksum is lowercase SHA-256 hex over compact sorted JSON of only id, value, and version"},
+        {"id": "R4", "text": "decode(text) accepts a JSON object string, treats absent version as version 1, and returns a new dict containing id, value, and version"},
+        {"id": "R5", "text": "decode validates version 2 checksum before returning and raises CodecError for malformed JSON, unsupported versions, invalid fields, or checksum mismatch"},
+        {"id": "R6", "text": "{{unknown_rule}}"},
+        {"id": "R7", "text": "equal inputs produce byte-for-byte equal encoded strings across repeated calls"}
+      ],
+      "done_when": [
+        {"id": "D1", "text": "the public API imports and can encode a valid record in a clean Python 3.11 environment"}
+      ],
+      "examples": [
+        {"id": "E1", "kind": "outcome", "text": "encode({id: a, value: 2}) → compact version 2 JSON whose checksum matches its canonical known-field payload", "covers": ["R1", "R2", "R3", "V1", "P2", "D1"]},
+        {"id": "E2", "kind": "value", "text": "decode(\"{\\\"id\\\":\\\"a\\\",\\\"value\\\":2}\") → {id: a, value: 2, version: 1}", "covers": ["R4", "P1"]},
+        {"id": "E3", "kind": "value", "text": "decode(a valid encoded version 2 record) → {id: a, value: 2, version: 2}", "covers": ["R3", "R4", "R5", "V2"]},
+        {"id": "E4", "kind": "outcome", "text": "decode a valid record with unknown field note=ok → {{unknown_result}}", "covers": ["R6"]},
+        {"id": "E5", "kind": "error", "text": "decode version 2 with a changed value but original checksum → CodecError", "covers": ["R5", "X2"]},
+        {"id": "E6", "kind": "property", "text": "repeated encode of the same valid record → identical bytes and no input mutation", "covers": ["R2", "R7"]},
+        {"id": "E7", "kind": "error", "text": "encode missing id or with boolean value → ValueError", "covers": ["R2", "X1"]},
+        {"id": "E8", "kind": "outcome", "text": "inspect wirecodec dependencies and a produced checksum → only standard-library imports are used and the digest is SHA-256", "covers": ["C1"]}
+      ],
+      "errors": [
+        {"id": "X1", "text": "invalid encode input → raise ValueError without mutating input"},
+        {"id": "X2", "text": "malformed, unsupported, or checksum-invalid wire input → raise CodecError"}
+      ],
+      "variants": {
+        "base": {"slug": "wirecodec_base", "mode": "discard", "values": {"unknown_rule": "when decoding version 1 or 2, discard unknown top-level fields after validating known fields", "unknown_result": "return only {id, value, version}; note is absent"}},
+        "reject": {"slug": "wirecodec_reject", "mode": "reject", "values": {"unknown_rule": "when decoding version 1 or 2, any unknown top-level field raises CodecError", "unknown_result": "CodecError"}},
+        "preserve": {"slug": "wirecodec_preserve", "mode": "preserve", "values": {"unknown_rule": "when decoding version 1 or 2, preserve unknown top-level fields in an extras dict in the returned record; extras is omitted when empty", "unknown_result": "return {id, value, version, extras: {note: ok}}"}}
+      }
+    },
+    {
+      "name": "detreport",
+      "project": "detreport",
+      "summary": "Implement deterministic aggregate report generation as a Python 3.11+ standard-library package and CLI.",
+      "mutation_target": "R5",
+      "constraints": [
+        {"id": "C1", "text": "amounts and totals are integer cents and use only the Python standard library"}
+      ],
+      "determinism": {
+        "level": "strict",
+        "stable": [
+          {"id": "S1", "text": "the complete report string is byte-for-byte stable for the same ordered input"}
+        ]
+      },
+      "rules": [
+        {"id": "R1", "text": "create an importable detreport package exposing build_report and ReportError from detreport.public plus python -m detreport INPUT_JSON"},
+        {"id": "R2", "text": "each event must be a dict with exactly unique non-empty string id, non-empty string category, and integer non-boolean amount_cents; invalid input raises ReportError"},
+        {"id": "R3", "text": "group events by category into objects with exactly category, count, total_cents, and events; events is the list of event ids sorted ascending"},
+        {"id": "R4", "text": "return compact ensure_ascii=false JSON with sorted object keys and exactly groups plus grand_total_cents at the top level"},
+        {"id": "R5", "text": "{{order_rule}}"},
+        {"id": "R6", "text": "grand_total_cents is the sum of every event amount and input events are never mutated"},
+        {"id": "R7", "text": "the CLI reads a JSON array from the supplied path, prints exactly build_report output plus one newline, and exits successfully"}
+      ],
+      "done_when": [
+        {"id": "D1", "text": "the public API imports and can build a valid single-category report in a clean Python 3.11 environment"}
+      ],
+      "examples": [
+        {"id": "E1", "kind": "value", "text": "events [{id: b, category: x, amount_cents: 2}, {id: a, category: x, amount_cents: -1}] → group x has count 2, total_cents 1, events [a, b], and grand total 1", "covers": ["R1", "R3", "R4", "R6", "D1", "C1"]},
+        {"id": "E2", "kind": "value", "text": "categories encountered as beta then alpha → groups ordered {{order_result}}", "covers": ["R5"]},
+        {"id": "E3", "kind": "outcome", "text": "category café → output contains literal café rather than an ASCII escape", "covers": ["R4"]},
+        {"id": "E4", "kind": "error", "text": "duplicate ids, boolean amount, missing field, or extra field → ReportError", "covers": ["R2", "X1"]},
+        {"id": "E5", "kind": "property", "text": "repeating build_report on the same ordered events → identical bytes and unchanged input", "covers": ["R6", "S1"]},
+        {"id": "E6", "kind": "outcome", "text": "python -m detreport input.json → stdout is the library result followed by one newline", "covers": ["R7"]},
+        {"id": "E7", "kind": "outcome", "text": "inspect the detreport package dependencies → every imported dependency is from the Python standard library or detreport itself", "covers": ["C1"]}
+      ],
+      "errors": [
+        {"id": "X1", "text": "invalid event collection or event → raise ReportError without mutating input"}
+      ],
+      "variants": {
+        "base": {"slug": "detreport_base", "mode": "ascending", "values": {"order_rule": "order group objects by category in ascending Unicode code-point order", "order_result": "[alpha, beta]"}},
+        "descending": {"slug": "detreport_descending", "mode": "descending", "values": {"order_rule": "order group objects by category in descending Unicode code-point order", "order_result": "[beta, alpha]"}},
+        "firstseen": {"slug": "detreport_firstseen", "mode": "firstseen", "values": {"order_rule": "order group objects by the first appearance of each category in the input sequence", "order_result": "[beta, alpha]"}}
+      }
+    }
+  ]
+}

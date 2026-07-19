@@ -1,0 +1,38 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 221 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 3731 bytes to 'detreport/public.py'
+write_file(detreport/__main__.py) → wrote 1043 bytes to 'detreport/__main__.py'
+run_command(python3 --version && python3 -c "
+import json, copy
+from det…) → exit: 0 (+8 lines)
+run_command(cd /tmp && cat > input.json <<'EOF'
+[{"id":"b","category":"x…) → exit: 1 (+8 lines)
+run_command(python3 - <<'EOF'
+import ast, os
+# E7: verify every imported…) → exit: 0 (+8 lines)
+run_command(cat > /tmp/input.json <<'EOF'
+[{"id":"b","category":"x","amo…) → exit: 0 (+5 lines)
+run_command(python3 - <<'EOF'
+import copy
+from detreport import build_re…) → exit: 0 (+8 lines)
+
+--- final summary ---
+All requirements verified. The implementation is complete and working.
+
+## Summary
+
+Created the `detreport` package (project was empty) with three files:
+
+- **`detreport/__init__.py`** — exposes `build_report` and `ReportError` from `detreport.public` (satisfies R1).
+- **`detreport/public.py`** — the public API. `build_report(events)` validates the collection, groups events by category, and returns a compact JSON string (`ensure_ascii=False`, `sort_keys=True`, `separators=(",", ":")`) with exactly `grand_total_cents` and `groups` at the top level; each group has exactly `category`, `count`, `total_cents`, and `events` (ids sorted ascending). Groups are ordered by category in ascending Unicode code-point order. Validation enforces: list/tuple input; each event a dict with exactly `id`/`category`/`amount_cents`; non-empty string `id`/`category`; integer non-boolean `amount_cents`; unique ids — raising `ReportError` otherwise. Input is never mutated (validation builds fresh dicts; only reads from input). Uses only `json` from the stdlib (C1, E7).
+- **`detreport/__main__.py`** — CLI: reads a JSON array from the supplied path, prints `build_report` output plus exactly one newline, exits 0 on success and 1 with a descriptive stderr message on read/JSON/`ReportError` errors (R7).
+
+Verification (Python 3.12, stdlib-only features also valid in 3.11):
+- E1: exact byte output `{"grand_total_cents":1,"groups":[{"category":"x","count":2,"events":["a","b"],"total_cents":1}]}`.
+- E2: categories `beta`→`alpha` produce groups ordered `[alpha, beta]`.
+- E3: `café` appears as a literal (no `\u` escapes).
+- E4: duplicate ids, boolean amount, missing field, extra field, non-list, non-string/empty id/category, float amount all raise `ReportError`.
+- E5: repeated calls produce identical bytes; input unchanged.
+- E6: `python -m detreport input.json` prints the library result followed by exactly one newline, exit 0; CLI vs library bytes match.
+- E7: AST scan confirms every import is `json`/`sys` (stdlib) or `detreport`.
+- X1: invalid input raises `ReportError` without mutating input; CLI exits 1 with descriptive messages.

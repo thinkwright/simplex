@@ -1,0 +1,37 @@
+list_dir(.) → (empty: '.')
+write_file(cursorvault/__init__.py) → wrote 160 bytes to 'cursorvault/__init__.py'
+write_file(cursorvault/public.py) → wrote 169 bytes to 'cursorvault/public.py'
+write_file(cursorvault/_core.py) → wrote 2238 bytes to 'cursorvault/_core.py'
+run_command(python3 --version && python3 -c "
+import sys
+# Verify only s…) → exit: 0 (+3 lines)
+run_command(python3 -c "
+from cursorvault import paginate, CursorError
+
+…) → exit: 0 (+15 lines)
+run_command(python3 -c "
+from cursorvault.public import paginate, Cursor…) → exit: 0 (+1 lines)
+
+--- final summary ---
+All checks pass. Summary:
+
+**Files created:**
+- `cursorvault/__init__.py` — package entry, re-exports `paginate` and `CursorError`
+- `cursorvault/public.py` — public API module exposing `paginate` and `CursorError` (R1)
+- `cursorvault/_core.py` — implementation; uses only stdlib (`copy`) plus internal modules (C1)
+
+**Verification (all examples pass):**
+- E1: `paginate([a,b,c], None, 2)` → `{items:[a,b], next_cursor:"2", has_more:true}` ✓
+- E2: `paginate([a,b,c], "1", 2)` → `{items:[b,c], next_cursor:null, has_more:false}` ✓
+- E3: `limit=0` and `limit=True` both raise `ValueError` (booleans rejected via `isinstance(limit, bool)` check) ✓
+- E4: input records unchanged after paginate; returned items are shallow copies so callers can't mutate originals ✓
+- E5: cursor `"missing"` raises `CursorError` ✓
+- E6: only stdlib (`copy`) + cursorvault imports ✓
+
+**Contract details honored:**
+- R2: returns dict with exactly `items`, `next_cursor`, `has_more`; items in input order
+- R3: limit validated as int 1–100, booleans excluded
+- R4: cursor is decimal zero-based index; `next_cursor` is the index after the page when more remain
+- R5: `has_more` true iff records remain; `next_cursor` null when `has_more` false; empty input → terminal page
+- R6: records and record dicts are not mutated; deterministic output
+- X1/X2: `ValueError` for invalid limit, `CursorError` for malformed/unknown cursor, both without mutating records

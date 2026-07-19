@@ -1,0 +1,33 @@
+list_dir() → (empty: '.')
+run_command(python3 --version && which python3) → exit: 0 (+2 lines)
+write_file(wirecodec/public.py) → wrote 4082 bytes to 'wirecodec/public.py'
+write_file(wirecodec/__init__.py) → wrote 162 bytes to 'wirecodec/__init__.py'
+run_command(python3 - <<'PY'
+import json, hashlib
+from wirecodec.public …) → exit: 0 (+11 lines)
+run_command(cd /tmp && python3 -c "
+from wirecodec.public import encode,…) → exit: 1 (+7 lines)
+run_command(python3 -c "
+from wirecodec.public import encode, decode, Co…) → exit: 0 (+5 lines)
+
+--- final summary ---
+All requirements are verified. The implementation is complete.
+
+## Summary
+
+Created the `wirecodec` package from scratch (the project was empty):
+
+- **`wirecodec/__init__.py`** — makes `wirecodec` an importable package and re-exports the public API for convenience.
+- **`wirecodec/public.py`** — implements the public API: `encode`, `decode`, and `CodecError`.
+
+Key implementation details:
+- **C1**: Only `hashlib` and `json` (both standard library) are imported; the checksum uses `hashlib.sha256(...).hexdigest()` (lowercase hex).
+- **R1/P2**: `from wirecodec.public import encode, decode, CodecError` works and is stable.
+- **R2/X1**: `encode` requires a dict with exactly `id` (non-empty `str`) and `value` (`int`, not `bool`); it reads values without mutating the input and raises `ValueError` for any invalid input (non-dict, extra/missing keys, bad types, empty id, bool/float value).
+- **R3/V1**: `encode` returns compact, sorted-key JSON with `checksum`, `id`, `value`, `version` (=2). The checksum is SHA-256 hex over the compact sorted JSON of only `id`, `value`, `version`.
+- **R4/P1**: `decode` parses a JSON object string, treats absent `version` as 1, and returns a fresh dict with `id`, `value`, `version`.
+- **R5/V2/X2**: `decode` raises `CodecError` for non-string input, malformed JSON, non-object JSON, unsupported versions, missing/invalid `id`/`value`, and version-2 checksum mismatch (validating the checksum before returning).
+- **R6**: Unknown top-level fields are collected into an `extras` dict (excluding `id`/`value`/`version`, and `checksum` for v2); `extras` is omitted when empty.
+- **R7**: Encoding is fully deterministic (sorted keys, compact separators, no randomness), so repeated calls produce byte-for-byte identical output.
+
+Verification: ran a comprehensive script covering E1–E8 plus edge cases (tampered checksum, missing fields, unsupported versions, malformed JSON, non-string input, float/bool values, extra keys) — all assertions passed. Confirmed only `hashlib` and `json` load into `sys.modules` and that the required import path works from the project root.

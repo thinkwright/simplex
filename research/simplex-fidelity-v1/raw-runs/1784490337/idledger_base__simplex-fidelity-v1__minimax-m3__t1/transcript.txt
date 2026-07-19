@@ -1,0 +1,31 @@
+list_dir() → (empty: '.')
+write_file(idledger/__init__.py) → wrote 211 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 176 bytes to 'idledger/public.py'
+write_file(idledger/ledger.py) → wrote 5205 bytes to 'idledger/ledger.py'
+run_command(python3 --version && python3 -c "
+from idledger import Ledge…) → exit: 0 (+11 lines)
+run_command(python3 -c "
+import sys
+# Check all imports in idledger modu…) → exit: 0 (+2 lines)
+run_command(python3 -c "
+import ast
+for f in ['idledger/__init__.py', 'i…) → exit: 0 (+4 lines)
+
+--- final summary ---
+Everything works. Summary:
+
+**Files created:**
+- `idledger/__init__.py` — re-exports `Ledger`, `InsufficientFunds`, `CommandConflict`
+- `idledger/public.py` — public API surface
+- `idledger/ledger.py` — implementation
+
+**Implementation notes:**
+- `Ledger` uses a single `threading.Lock` guarding both balances and command history, so `apply` and `snapshot` are thread-safe (R8) and concurrent distinct credits each apply exactly once.
+- Command validation (`_validate_command`) checks structure, types, and positivity before any state is touched; raises `ValueError` (R7, X2).
+- Initial state validation (`_validate_initial`) rejects non-int, negative, or bool balances (R7).
+- `apply` checks for prior command id under the lock: identical content returns the original result (R4); different content raises `CommandConflict` and leaves state unchanged (R5).
+- Debit that would go negative raises `InsufficientFunds` before mutating anything, so the command id is not consumed (R6, X1).
+- `snapshot` returns a fresh dict sorted by account name (R2).
+- Only `threading`, `typing`, and `__future__` are imported — all stdlib (C2, E7).
+
+**Verification:** Ran a script covering E1–E6, R2, R7, and an import audit for E7 — all passed.

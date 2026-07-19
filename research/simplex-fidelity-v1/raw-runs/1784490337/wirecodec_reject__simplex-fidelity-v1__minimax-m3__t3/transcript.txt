@@ -1,0 +1,51 @@
+list_dir() → (empty: '.')
+write_file(wirecodec/__init__.py) → wrote 162 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 231 bytes to 'wirecodec/public.py'
+write_file(wirecodec/errors.py) → wrote 164 bytes to 'wirecodec/errors.py'
+write_file(wirecodec/codec.py) → wrote 5838 bytes to 'wirecodec/codec.py'
+run_command(python3 -c "
+import sys
+sys.path.insert(0, '.')
+
+# E8: only …) → exit: 1 (+3 lines)
+run_command(python3 -c "
+import sys
+sys.path.insert(0, '.')
+
+from wireco…) → exit: 1 (+20 lines)
+edit_file(wirecodec/codec.py) → error: unknown tool 'edit_file'
+read_file(wirecodec/codec.py) → 1: """Implementation of the wirecodec encode/decode functions. (+24 lines)
+write_file(wirecodec/codec.py) → wrote 5849 bytes to 'wirecodec/codec.py'
+run_command(python3 -c "
+import sys
+sys.path.insert(0, '.')
+
+from wireco…) → exit: 0 (+18 lines)
+run_command(cd /tmp && rm -rf wirecodec_test && mkdir wirecodec_test && …) → exit: 0 (+2 lines)
+run_command(python3 --version && python3 -c "
+# Verify no 3.12+ syntax u…) → exit: 0 (+3 lines)
+
+--- final summary ---
+All files parse cleanly and use only standard syntax compatible with Python 3.11.
+
+## Summary
+
+Implemented the `wirecodec` package with the following files:
+
+- **`wirecodec/__init__.py`** — re-exports `encode`, `decode`, `CodecError`
+- **`wirecodec/public.py`** — the public API surface (R1)
+- **`wirecodec/errors.py`** — defines `CodecError`
+- **`wirecodec/codec.py`** — implementation using only `json` and `hashlib.sha256` (C1)
+
+**Key behaviors verified:**
+- **E1**: `encode({'id':'a','value':2})` → compact sorted-key JSON with `version:2` and a SHA-256 checksum over `{"id":"a","value":2,"version":2}`
+- **E2**: `decode('{"id":"a","value":2}')` → `{'id':'a','value':2,'version':1}` (absent version = v1)
+- **E3**: round-trip decode of a valid v2 record returns the expected dict
+- **E4**: unknown top-level field raises `CodecError` (R6, both v1 and v2)
+- **E5**: tampered value with original checksum raises `CodecError` (R5)
+- **E6**: repeated encode produces byte-identical output and does not mutate input (R2, R7)
+- **E7**: missing id, empty id, boolean value, or float value all raise `ValueError` (R2, X1)
+- **E8**: only `json` and `hashlib` are imported (C1)
+- Malformed JSON, unsupported versions, and bad checksums all raise `CodecError` (R5, X2)
+
+**Verification:** Ran a comprehensive test script covering all examples (E1–E8) plus edge cases (malformed JSON, unsupported version, explicit v1, bad checksum, determinism over many calls, no mutation). All passed. Also confirmed clean import in a fresh directory and Python 3.11-compatible syntax.

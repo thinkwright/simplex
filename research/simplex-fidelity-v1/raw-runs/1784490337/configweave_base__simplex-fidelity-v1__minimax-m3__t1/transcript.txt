@@ -1,0 +1,36 @@
+list_dir() → (empty: '.')
+write_file(configweave/__init__.py) → wrote 122 bytes to 'configweave/__init__.py'
+write_file(configweave/public.py) → wrote 105 bytes to 'configweave/public.py'
+write_file(configweave/_core.py) → wrote 3271 bytes to 'configweave/_core.py'
+run_command(python3 -c "
+from configweave import merge_layers
+
+# E1
+r = …) → exit: 0 (+16 lines)
+run_command(python3 -c "
+import ast, os, sys
+
+# Collect all imports from…) → exit: 0 (+4 lines)
+run_command(python3 -c "
+from configweave.public import merge_layers
+pri…) → exit: 0 (+2 lines)
+
+--- final summary ---
+Everything works. 
+
+**Summary**
+
+Created the `configweave` package with three files:
+
+- `configweave/__init__.py` — re-exports `merge_layers` from `configweave.public`.
+- `configweave/public.py` — public API surface exposing `merge_layers`.
+- `configweave/_core.py` — implementation using only the standard library (`copy`).
+
+**Verification** (all passed):
+- E1: nested mapping merge → `{'db': {'host': 'a', 'port': 2}}`
+- E2: list replacement → `{'plugins': ['b', 'c']}`
+- E3: null deletion → `{'b': 2}`
+- E4: mutating result / nested result does not mutate sources
+- E5: non-dict layer and non-string keys (top-level and nested) raise `TypeError`
+- E6: only `copy` (stdlib) and `configweave` are imported
+- Additional checks: empty list → `{}`, null on absent key is a no-op, list replaces scalar and vice versa, deep-copied lists are independent, inputs are not mutated even when validation raises `TypeError`.

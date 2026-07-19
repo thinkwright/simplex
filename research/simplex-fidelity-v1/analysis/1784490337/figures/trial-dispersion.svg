@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="430" viewBox="0 0 960 430" role="img" aria-label="Across-trial reliability interval plot">
+<rect width="100%" height="100%" fill="white"/>
+<text x="24.0" y="34.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="20" text-anchor="start" font-weight="600" fill="#111827">Across-trial dispersion</text>
+<text x="24.0" y="58.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12" text-anchor="start" font-weight="normal" fill="#4b5563">Dots are trial aggregates; line spans show the observed minimum and maximum, not confidence intervals.</text>
+<line x1="235.0" y1="78" x2="235.0" y2="375" stroke="#e5e7eb"/>
+<text x="235.0" y="398.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#4b5563">0.0</text>
+<line x1="369.0" y1="78" x2="369.0" y2="375" stroke="#e5e7eb"/>
+<text x="369.0" y="398.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#4b5563">0.2</text>
+<line x1="503.0" y1="78" x2="503.0" y2="375" stroke="#e5e7eb"/>
+<text x="503.0" y="398.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#4b5563">0.4</text>
+<line x1="637.0" y1="78" x2="637.0" y2="375" stroke="#e5e7eb"/>
+<text x="637.0" y="398.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#4b5563">0.6</text>
+<line x1="771.0" y1="78" x2="771.0" y2="375" stroke="#e5e7eb"/>
+<text x="771.0" y="398.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#4b5563">0.8</text>
+<line x1="905.0" y1="78" x2="905.0" y2="375" stroke="#e5e7eb"/>
+<text x="905.0" y="398.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" text-anchor="middle" font-weight="normal" fill="#4b5563">1.0</text>
+<text x="219.0" y="94.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">glm-5.2 · requirement fidelity</text>
+<line x1="707.6" y1="90" x2="817.6" y2="90" stroke="#2563eb" stroke-width="3"/>
+<circle cx="707.6" cy="85.0" r="4.5" fill="#2563eb" stroke="white"/>
+<circle cx="817.6" cy="90.0" r="4.5" fill="#2563eb" stroke="white"/>
+<circle cx="801.4" cy="95.0" r="4.5" fill="#2563eb" stroke="white"/>
+<text x="219.0" y="137.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">glm-5.2 · full-contract success</text>
+<line x1="346.7" y1="133" x2="421.1" y2="133" stroke="#dc2626" stroke-width="3"/>
+<circle cx="383.9" cy="128.0" r="4.5" fill="#dc2626" stroke="white"/>
+<circle cx="421.1" cy="133.0" r="4.5" fill="#dc2626" stroke="white"/>
+<circle cx="346.7" cy="138.0" r="4.5" fill="#dc2626" stroke="white"/>
+<text x="219.0" y="191.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">minimax-m3 · requirement fidelity</text>
+<line x1="785.2" y1="187" x2="827.3" y2="187" stroke="#2563eb" stroke-width="3"/>
+<circle cx="798.2" cy="182.0" r="4.5" fill="#2563eb" stroke="white"/>
+<circle cx="827.3" cy="187.0" r="4.5" fill="#2563eb" stroke="white"/>
+<circle cx="785.2" cy="192.0" r="4.5" fill="#2563eb" stroke="white"/>
+<text x="219.0" y="234.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">minimax-m3 · full-contract success</text>
+<line x1="383.9" y1="230" x2="495.6" y2="230" stroke="#dc2626" stroke-width="3"/>
+<circle cx="458.3" cy="225.0" r="4.5" fill="#dc2626" stroke="white"/>
+<circle cx="495.6" cy="230.0" r="4.5" fill="#dc2626" stroke="white"/>
+<circle cx="383.9" cy="235.0" r="4.5" fill="#dc2626" stroke="white"/>
+<text x="219.0" y="288.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">qwen3.7-max · requirement fidelity</text>
+<line x1="788.5" y1="284" x2="814.4" y2="284" stroke="#2563eb" stroke-width="3"/>
+<circle cx="788.5" cy="279.0" r="4.5" fill="#2563eb" stroke="white"/>
+<circle cx="807.9" cy="284.0" r="4.5" fill="#2563eb" stroke="white"/>
+<circle cx="814.4" cy="289.0" r="4.5" fill="#2563eb" stroke="white"/>
+<text x="219.0" y="331.0" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12" text-anchor="end" font-weight="normal" fill="#111827">qwen3.7-max · full-contract success</text>
+<line x1="346.7" y1="327" x2="383.9" y2="327" stroke="#dc2626" stroke-width="3"/>
+<circle cx="346.7" cy="322.0" r="4.5" fill="#dc2626" stroke="white"/>
+<circle cx="383.9" cy="327.0" r="4.5" fill="#dc2626" stroke="white"/>
+<circle cx="383.9" cy="332.0" r="4.5" fill="#dc2626" stroke="white"/>
+</svg>

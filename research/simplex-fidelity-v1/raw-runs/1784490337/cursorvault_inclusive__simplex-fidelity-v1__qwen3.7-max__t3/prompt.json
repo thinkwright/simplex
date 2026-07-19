@@ -1,0 +1,6 @@
+{
+  "condition": "simplex-fidelity-v1",
+  "format": "simplex-v0.6",
+  "source": "/home/bran/code/simplex/research/simplex-fidelity-v1/generated/prompt-pack/prompts/cursorvault_inclusive.simplex",
+  "task": "cursorvault_inclusive"
+}

@@ -1,0 +1,31 @@
+list_dir() → (empty: '.')
+write_file(configweave/__init__.py) → wrote 177 bytes to 'configweave/__init__.py'
+write_file(configweave/public.py) → wrote 105 bytes to 'configweave/public.py'
+write_file(configweave/_core.py) → wrote 4975 bytes to 'configweave/_core.py'
+run_command(python3 --version && python3 -c "
+import sys
+print('Python:'…) → exit: 0 (+17 lines)
+run_command(python3 -c "
+from configweave.public import merge_layers
+
+# …) → exit: 0 (+7 lines)
+
+--- final summary ---
+All checks pass. Implementation summary:
+
+**Files created:**
+- `configweave/__init__.py` — package entry, re-exports `merge_layers`
+- `configweave/public.py` — public API surface, imports `merge_layers` from `_core`
+- `configweave/_core.py` — implementation (only stdlib: `copy.deepcopy`)
+
+**How each rule is satisfied:**
+- **R1**: `configweave.public.merge_layers` is importable.
+- **R2**: empty list returns `{}`; first layer is deep-copied as the base.
+- **R3**: `_merge_into` recurses when both sides are dicts.
+- **R4**: `_merge_lists` concatenates old-then-new, keeping first occurrence via deep equality (`_equal` handles dicts/lists/scalars without requiring hashability); a list still replaces a non-list (and vice versa) in the fallback branch.
+- **R5**: `new_value is None` pops the key; `pop(key, None)` makes absent-key deletion a no-op.
+- **R6**: every layer is `deepcopy`'d before being merged; the result is built from a deep copy of layer 0, so no mutable container is shared with any input. Verified by mutating the result and confirming sources are untouched.
+- **R7**: `merge_layers` rejects non-list input; `_validate_keys` recursively rejects any non-string key at any nesting level with `TypeError`. Validation runs before any merge work, so a failed call never mutates inputs.
+- **C1**: only `copy.deepcopy` is imported (stdlib); the rest of the package only imports from itself.
+
+**Verification:** Ran the full example suite (E1–E6), all rules (R2, R4 list/non-list replacement, R5 absent-key delete, R7 non-list input), and extra edge cases (nested null deletion, shared nested dict/list isolation between layers, deep-equal dict/list deduplication, no mutation on validation error). All passed on Python 3.12.

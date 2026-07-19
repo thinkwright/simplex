@@ -1,0 +1,27 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 155 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 3000 bytes to 'detreport/public.py'
+write_file(detreport/__main__.py) → wrote 732 bytes to 'detreport/__main__.py'
+run_command(cd /home/user && python3 -c "
+from detreport import build_re…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from detreport import build_report, ReportError…) → exit: 0 (+10 lines)
+run_command(echo '[{"id":"b","category":"x","amount_cents":2},{"id":"a",…) → exit: 0 (+1 lines)
+run_command(python3 -m detreport /tmp/test_input.json | xxd | tail -3) → exit: 0 (+3 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`detreport/__init__.py`** — Package init that re-exports `build_report` and `ReportError` from `detreport.public`.
+
+2. **`detreport/public.py`** — Core implementation:
+   - `ReportError` exception class
+   - `build_report(events)` function that validates input (exactly 3 keys per event dict, non-empty string `id`/`category`, integer non-boolean `amount_cents`, unique ids), groups by category in first-appearance order, sorts event IDs ascending within each group, and returns compact JSON with `ensure_ascii=False` and `sort_keys=True`. Input is never mutated (uses `copy.deepcopy`).
+
+3. **`detreport/__main__.py`** — CLI entry point that reads a JSON array from the given file path, calls `build_report`, and prints the result followed by one newline.
+
+**Verification:**
+- All example scenarios (E1–E7) pass: correct grouping/sorting, category ordering by first appearance, literal Unicode output, error handling for duplicates/booleans/missing/extra fields, byte-for-byte stability, no input mutation, and CLI output with trailing newline.
+- Only standard library imports used (`json`, `copy`, `sys`).

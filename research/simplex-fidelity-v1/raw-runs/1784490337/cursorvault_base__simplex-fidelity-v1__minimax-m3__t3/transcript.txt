@@ -1,0 +1,23 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/__init__.py) → wrote 172 bytes to 'cursorvault/__init__.py'
+write_file(cursorvault/public.py) → wrote 261 bytes to 'cursorvault/public.py'
+write_file(cursorvault/core.py) → wrote 2195 bytes to 'cursorvault/core.py'
+run_command(python3 -c "
+from cursorvault import paginate, CursorError
+
+…) → exit: 0 (+11 lines)
+run_command(python3 -c "
+import ast, os
+for root, _, files in os.walk('c…) → exit: 0 (+3 lines)
+
+--- final summary ---
+Only `typing` (stdlib) and `cursorvault` itself — E6 satisfied.
+
+**Summary**
+
+Created the `cursorvault` package:
+- `cursorvault/__init__.py` — re-exports `CursorError` and `paginate`
+- `cursorvault/public.py` — public surface, re-exports from `core`
+- `cursorvault/core.py` — implementation: `CursorError` exception and `paginate(records, cursor=None, limit=3)`
+
+Verified against all contract examples (E1–E6) plus boundary cases: empty input, limit 1/100, invalid limits (-1, 101, 1.5, 'x'), unknown cursor, mutation safety, and determinism. Only stdlib (`typing`) and `cursorvault` are imported.

@@ -1,0 +1,30 @@
+list_dir(.) → (empty: '.')
+write_file(idledger/__init__.py) → wrote 201 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 234 bytes to 'idledger/public.py'
+write_file(idledger/ledger.py) → wrote 5382 bytes to 'idledger/ledger.py'
+run_command(python3 -c "
+from idledger import Ledger, InsufficientFunds,…) → exit: 0 (+9 lines)
+run_command(python3 --version && python3 -c "
+import idledger
+print('exp…) → exit: 0 (+3 lines)
+
+--- final summary ---
+All checks pass. Summary:
+
+**Files created:**
+- `idledger/__init__.py` — package entry, re-exports `Ledger`, `InsufficientFunds`, `CommandConflict`.
+- `idledger/public.py` — public API surface per R1.
+- `idledger/ledger.py` — `Ledger` implementation.
+
+**How it satisfies the spec:**
+- **R1**: `idledger` package exposes `Ledger`, `InsufficientFunds`, `CommandConflict` from `idledger.public`.
+- **R2**: `Ledger(initial=None)` validates non-negative integer balances; `snapshot()` returns a new dict sorted by account name.
+- **R3**: `apply(command)` requires exactly `id`, `account`, `kind`, `amount`; returns `{id, account, balance}` on success.
+- **R4/R5**: A `threading.Lock` guards a `_history` dict; repeat ids return the stored original result without re-applying, even if content differs.
+- **R6**: Debit that would go negative raises `InsufficientFunds` before mutating state or history, so the id stays reusable.
+- **R7**: `_validate_command` enforces exact key set, types, and value ranges; raises `ValueError` before any state mutation.
+- **R8**: All mutations happen under `_lock`; concurrent distinct credits each apply exactly once (verified with 1000 threads).
+- **C1**: All amounts are integer cents; balances never go negative.
+- **C2**: Only `threading` from stdlib is used.
+
+**Verification:** Ran all seven examples (E1–E7) — all pass, including the 1000-thread concurrent credit test.

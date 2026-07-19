@@ -1,0 +1,28 @@
+list_dir() → (empty: '.')
+write_file(tokenquota/__init__.py) → wrote 124 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 261 bytes to 'tokenquota/public.py'
+write_file(tokenquota/_bucket.py) → wrote 3975 bytes to 'tokenquota/_bucket.py'
+run_command(python3 --version && python3 -c "import sys; print(sys.versi…) → exit: 0 (+2 lines)
+write_file(verify.py) → wrote 6230 bytes to 'verify.py'
+run_command(python3 verify.py) → exit: 0 (+12 lines)
+run_command(python3 -c "
+from tokenquota.public import Bucket
+b = Bucket…) → exit: 0 (+8 lines)
+run_command(rm verify.py && ls -la tokenquota/) → exit: 0 (+7 lines)
+
+--- final summary ---
+Done.
+
+**Files created:**
+- `tokenquota/__init__.py` — package marker, re-exports `Bucket`
+- `tokenquota/public.py` — public API surface (`from tokenquota.public import Bucket`)
+- `tokenquota/_bucket.py` — `Bucket` implementation
+
+**Implementation summary:**
+- `Bucket(capacity, refill_per_second, clock=None)` validates inputs (R6: positive capacity, non-negative refill, raises `ValueError` on bad values), starts full, and stores a pluggable clock defaulting to `time.monotonic` (R1, C1).
+- `_refill_locked` computes `elapsed = now - last_time`, treats negative elapsed as 0 (R3), adds `elapsed * refill_per_second`, clamps to capacity (R3), and floors to an integer after any positive-time refill (R4).
+- `allow(amount=1)` validates `amount` (positive, non-bool) before locking, refills, then consumes only if enough tokens exist; returns `False` otherwise without consuming (R2, X1).
+- `available()` performs the same refill and returns the balance without consuming (R5).
+- A `threading.Lock` guards refill + consume so concurrent successful `allow` calls never exceed available tokens (R7).
+
+**Verified against all examples:** E1 (capacity-2 → two trues then false), E2 (capacity-3, refill 0.5, +3s → 1), E3 (far advance clamps to capacity, backward clock gains nothing), E4 (capacity 0 / negative refill / `allow(True)` raise `ValueError`), E5 (200 concurrent threads on capacity-100 bucket → exactly 100 successes), E6 (fake clock fully drives refill; only `threading`/`time`/`typing` imported — stdlib only), plus R4 rounding and X1 no-consume-on-error.

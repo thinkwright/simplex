@@ -1,0 +1,37 @@
+list_dir() → (empty: '.')
+write_file(idledger/__init__.py) → wrote 203 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 8692 bytes to 'idledger/public.py'
+run_command(cd /home/user && python3 -c "
+from idledger.public import Le…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from idledger.public import Ledger, Insufficien…) → exit: 0 (+15 lines)
+run_command(python3 -c "
+from idledger import Ledger, InsufficientFunds,…) → exit: 0 (+9 lines)
+write_file(demo.py) → wrote 1770 bytes to 'demo.py'
+run_command(python3 demo.py) → exit: 0 (+23 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was implemented:
+
+## Files Created
+
+1. **`idledger/__init__.py`** — Package entry point that re-exports `Ledger`, `InsufficientFunds`, and `CommandConflict` from `idledger.public`.
+
+2. **`idledger/public.py`** — Core implementation containing:
+   - **`InsufficientFunds`** — Exception raised when a debit would cause a negative balance (R6, X1)
+   - **`CommandConflict`** — Exception class exposed per R1
+   - **`Ledger(initial=None)`** — Thread-safe ledger with:
+     - `snapshot()` — Returns account-name-sorted dict of balances (R2)
+     - `apply(command)` — Processes commands with exact `{id, account, kind, amount}` structure (R3)
+     - Idempotent replay for identical command IDs (R4)
+     - Atomic replacement for conflicting command IDs (R5)
+     - `InsufficientFunds` on negative balance without consuming the ID (R6, X1)
+     - `ValueError` on invalid state/commands without mutating state (R7, X2)
+     - `threading.RLock` for thread safety (R8)
+     - Only uses `threading` from the standard library (C2)
+
+3. **`demo.py`** — Demonstration script showing all examples working correctly.
+
+## Verification
+
+All 7 examples (E1–E7) and additional edge cases (cross-account replacement, concurrent same-id commands, failed replacement preserving original, ValueError not consuming IDs) were verified with passing assertions.

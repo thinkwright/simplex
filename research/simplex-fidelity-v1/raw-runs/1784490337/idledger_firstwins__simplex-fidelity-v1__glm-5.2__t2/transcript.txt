@@ -1,0 +1,32 @@
+list_dir() → (empty: '.')
+run_command(python3 --version && ls -la) → exit: 0 (+4 lines)
+write_file(idledger/errors.py) → wrote 698 bytes to 'idledger/errors.py'
+write_file(idledger/ledger.py) → wrote 5344 bytes to 'idledger/ledger.py'
+write_file(idledger/public.py) → wrote 195 bytes to 'idledger/public.py'
+write_file(idledger/__init__.py) → wrote 201 bytes to 'idledger/__init__.py'
+write_file(pyproject.toml) → wrote 303 bytes to 'pyproject.toml'
+run_command(python3 - <<'EOF'
+import sys, threading, traceback
+from idle…) → exit: 0 (+34 lines)
+run_command(echo "=== imports in package ===" && grep -rnE "^\s*(import|…) → exit: 0 (+12 lines)
+run_command(python3 -m pip wheel . --no-deps --no-build-isolation -w /tm…) → exit: 0 (+17 lines)
+
+--- final summary ---
+The implementation is complete and fully verified. Here's a summary.
+
+## Files created
+
+- **`idledger/errors.py`** — `InsufficientFunds` (raised atomically on a debit that would go negative) and `CommandConflict` (exposed as part of the public API surface per R1).
+- **`idledger/ledger.py`** — the `Ledger` implementation:
+  - `__init__(initial=None)` validates the initial mapping (string account names, non-negative integer-cent balances, bools rejected) up front so a bad state raises `ValueError` before any state is established.
+  - `snapshot()` returns a fresh account-name-sorted dict under the lock.
+  - `apply(command)` validates structure first (exactly `id`/`account`/`kind`/`amount`, `kind` ∈ {credit, debit}, positive non-bool integer amount) → `ValueError` with no state change; then under a `threading.Lock` returns the stored original result on id reuse (R4/R5, first successful command wins), checks debit sufficiency → `InsufficientFunds` without consuming the id (R6), otherwise applies atomically and records the result.
+- **`idledger/public.py`** — re-exports `Ledger`, `InsufficientFunds`, `CommandConflict` (R1).
+- **`idledger/__init__.py`** — convenience re-export of the public API.
+- **`pyproject.toml`** — zero-dependency, stdlib-only build metadata so the package installs in a clean environment.
+
+## How I verified
+
+- Ran an inline test suite covering **E1–E7**: E1 result shape, E2 idempotent repeat, E3 reuse-with-different-content returns original + unchanged state, E4 `InsufficientFunds` with reusable id, E5 `ValueError` for `amount=True/0`, extra/missing fields, bad kind, non-mapping, floats, negatives, and invalid initial states (all with no state change), E6 200 concurrent distinct credits applied exactly once plus 50 concurrent same-id applied once, sorted/independent snapshots, auto-create on credit, `InsufficientFunds` on debit of a missing account. → **ALL PASS**.
+- Confirmed **E7/C2**: AST-scanned every import in the package — only `threading`, `collections.abc` (stdlib) and relative `idledger` imports; no third-party.
+- Confirmed **D1**: built a wheel (`pip wheel`), installed it into a fresh isolated venv, and imported/applied a valid command from `/tmp` (outside the project) successfully.

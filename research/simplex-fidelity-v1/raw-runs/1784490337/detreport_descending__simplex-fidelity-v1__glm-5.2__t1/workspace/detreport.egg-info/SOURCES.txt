@@ -1,0 +1,8 @@
+pyproject.toml
+detreport/__init__.py
+detreport/__main__.py
+detreport/public.py
+detreport.egg-info/PKG-INFO
+detreport.egg-info/SOURCES.txt
+detreport.egg-info/dependency_links.txt
+detreport.egg-info/top_level.txt

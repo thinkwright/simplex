@@ -1,0 +1,27 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 164 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 3482 bytes to 'detreport/public.py'
+write_file(detreport/__main__.py) → wrote 732 bytes to 'detreport/__main__.py'
+run_command(cd /home/user && python3 -c "
+from detreport import build_re…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from detreport import build_report, ReportError…) → exit: 0 (+7 lines)
+run_command(echo '[{"id":"b","category":"x","amount_cents":2},{"id":"a",…) → exit: 0 (+1 lines)
+
+--- final summary ---
+All tests pass and the CLI works correctly. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`detreport/__init__.py`** — Package init that exposes `build_report` and `ReportError` from `detreport.public`.
+
+2. **`detreport/public.py`** — Core logic:
+   - `ReportError` exception class
+   - `build_report(events)` function that validates events (exactly 3 keys: `id`, `category`, `amount_cents`; non-empty strings; int-not-bool amounts; unique ids), groups by category, sorts groups by Unicode code-point order, sorts event IDs ascending within each group, and returns compact JSON with `ensure_ascii=False` and `sort_keys=True`. Input is deep-copied to prevent mutation.
+
+3. **`detreport/__main__.py`** — CLI entry point (`python -m detreport INPUT_JSON`) that reads a JSON array from the given file path, calls `build_report`, and prints the result followed by one newline.
+
+**Verification:**
+- E1–E5 all pass (correct grouping, ordering, Unicode literals, error handling, stability/no-mutation)
+- E6: CLI produces correct stdout output
+- E7: All imports are from Python standard library (`copy`, `json`, `sys`) or `detreport` itself

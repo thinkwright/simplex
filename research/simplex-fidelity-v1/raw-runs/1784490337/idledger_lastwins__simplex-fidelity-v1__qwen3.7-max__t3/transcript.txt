@@ -1,0 +1,40 @@
+list_dir() → (empty: '.')
+write_file(idledger/_exceptions.py) → wrote 260 bytes to 'idledger/_exceptions.py'
+write_file(idledger/_ledger.py) → wrote 7333 bytes to 'idledger/_ledger.py'
+write_file(idledger/_ledger.py) → wrote 6994 bytes to 'idledger/_ledger.py'
+write_file(idledger/public.py) → wrote 190 bytes to 'idledger/public.py'
+write_file(idledger/__init__.py) → wrote 201 bytes to 'idledger/__init__.py'
+run_command(cd /root && python3 -c "
+from idledger.public import Ledger,…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from idledger.public import Ledger, Insufficien…) → exit: 0 (+10 lines)
+run_command(python3 -c "
+import threading
+from idledger.public import Le…) → exit: 0 (+8 lines)
+run_command(python3 -c "
+from idledger.public import Ledger, Insufficien…) → exit: 0 (+12 lines)
+list_dir(idledger) → __init__.py (+4 lines)
+
+--- final summary ---
+All examples and edge cases pass. Here's a summary of the implementation:
+
+**Files created:**
+
+1. **`idledger/__init__.py`** — Package init that re-exports `Ledger`, `InsufficientFunds`, `CommandConflict` from `public`.
+2. **`idledger/public.py`** — Public API module exposing the three required names.
+3. **`idledger/_exceptions.py`** — Defines `InsufficientFunds` and `CommandConflict` exception classes.
+4. **`idledger/_ledger.py`** — Core `Ledger` class with:
+   - **`__init__(initial=None)`** — Validates and stores initial balances (R2, R7, C1)
+   - **`snapshot()`** — Returns account-name-sorted dict copy (R2, R8)
+   - **`apply(command)`** — Validates command structure (R7), handles idempotency (R4), conflict replacement (R5), insufficient funds (R6), all under a threading lock (R8)
+   - **`_replace_command()`** — Atomic replace with full rollback on failure (R5)
+   - Thread safety via `threading.Lock` (R8, C2 — stdlib only)
+
+**Verified against all examples:**
+- E1: Basic debit → correct balance
+- E2: Idempotent replay → same result, balance unchanged
+- E3: Conflict replacement → reverse + apply = correct balance
+- E4: InsufficientFunds → id remains reusable
+- E5: Invalid amounts (bool, zero, extra fields) → ValueError, no state change
+- E6: Concurrent credits → each reflected exactly once
+- E7: Only stdlib imports (`threading`)

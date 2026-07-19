@@ -1,0 +1,27 @@
+list_dir() → (empty: '.')
+run_command(mkdir -p wirecodec) → exit: 0
+write_file(wirecodec/__init__.py) → wrote 185 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 4281 bytes to 'wirecodec/public.py'
+run_command(cd /root && python3 -c "
+import json, hashlib
+from wirecodec…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+import json, hashlib
+from wirecodec import enco…) → exit: 0 (+18 lines)
+run_command(python3 -c "
+# Verify R1: importable from wirecodec.public
+f…) → exit: 0 (+5 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was implemented:
+
+**Files created:**
+- `wirecodec/__init__.py` — Package init that re-exports `encode`, `decode`, and `CodecError` from `wirecodec.public`.
+- `wirecodec/public.py` — Full implementation of the wire codec.
+
+**Implementation details:**
+- **`encode(record)`** — Validates that `record` is a dict with exactly `id` (non-empty string) and `value` (integer, not boolean). Raises `ValueError` on invalid input without mutating the record. Returns compact JSON (`separators=(",",":")`) with sorted keys containing `version: 2`, `id`, `value`, and `checksum`. The checksum is the lowercase SHA-256 hex digest over the compact sorted JSON of `{id, value, version}`.
+- **`decode(text)`** — Parses JSON, treats absent `version` as version 1, validates known fields (`id`, `value`), checks version 2 checksums, raises `CodecError` for any problem, and returns only `{id, value, version}` (discarding unknown fields).
+- **`CodecError`** — Custom exception for decode failures.
+- Only uses `json` and `hashlib` from the Python standard library (C1 satisfied).
+- Deterministic output (R7) via `sort_keys=True` and compact separators.

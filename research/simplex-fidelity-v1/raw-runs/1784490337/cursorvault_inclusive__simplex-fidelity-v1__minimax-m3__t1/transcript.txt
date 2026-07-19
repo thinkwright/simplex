@@ -1,0 +1,27 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/__init__.py) → wrote 88 bytes to 'cursorvault/__init__.py'
+write_file(cursorvault/public.py) → wrote 132 bytes to 'cursorvault/public.py'
+write_file(cursorvault/errors.py) → wrote 121 bytes to 'cursorvault/errors.py'
+write_file(cursorvault/core.py) → wrote 1926 bytes to 'cursorvault/core.py'
+run_command(python3 -c "
+from cursorvault.public import paginate, Cursor…) → exit: 1 (+10 lines)
+run_command(python3 -c "
+import sys
+# Check that no third-party packages…) → exit: 1 (+4 lines)
+run_command(grep -rn "^import\|^from" cursorvault/) → exit: 0 (+3 lines)
+run_command(python3 -c "
+from cursorvault.public import paginate, Cursor…) → exit: 1 (+3 lines)
+run_command(python3 -c "
+from cursorvault.public import paginate, Cursor…) → exit: 0 (+1 lines)
+list_dir() → cursorvault/
+
+--- final summary ---
+Done.
+
+**Files created:**
+- `cursorvault/__init__.py` — package marker
+- `cursorvault/public.py` — public API exposing `paginate` and `CursorError`
+- `cursorvault/errors.py` — `CursorError` exception
+- `cursorvault/core.py` — `paginate` implementation
+
+**Verification:** All contract examples (E1–E5) pass, plus boundary checks for limit (1 and 100 valid; 0, 101, booleans, floats, strings, None raise `ValueError`), empty input returns a terminal page, cursor at the last record returns `has_more=False`, records are not mutated, and repeated calls are deterministic. The only imports in the package are intra-package (`from .errors import CursorError`, `from .core import paginate`) — no stdlib or third-party dependencies, satisfying C1.

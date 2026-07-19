@@ -1,0 +1,32 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 98 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 2667 bytes to 'detreport/public.py'
+write_file(detreport/__main__.py) → wrote 748 bytes to 'detreport/__main__.py'
+run_command(cd /home/user && python3 -c "
+from detreport import build_re…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from detreport import build_report, ReportError…) → exit: 0 (+7 lines)
+run_command(echo '[{"id":"b","category":"x","amount_cents":2},{"id":"a",…) → exit: 0 (+1 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`detreport/__init__.py`** — Package init that exposes `build_report` and `ReportError` from `detreport.public`.
+
+2. **`detreport/public.py`** — Core logic:
+   - `ReportError` exception class
+   - `build_report(events)` — validates events (exact keys, non-empty string id/category, int non-bool amount_cents, unique ids), groups by category, sorts event ids ascending, orders groups by category descending (Unicode code-point), returns compact JSON with `ensure_ascii=False` and `sort_keys=True`. Input is never mutated.
+
+3. **`detreport/__main__.py`** — CLI entry point (`python -m detreport INPUT_JSON`) that reads a JSON array from the given file path, calls `build_report`, and prints the result followed by one newline.
+
+**Verified:**
+- E1: single-category report with correct count, total_cents, sorted events, grand_total
+- E2: descending category ordering (beta before alpha)
+- E3: literal `café` in output (no ASCII escape)
+- E4: ReportError for duplicate ids, boolean amounts, missing fields, extra fields
+- E5: byte-for-byte stability and no input mutation
+- R6: grand_total_cents sums all amounts
+- R7: CLI prints library output + newline
+- E7/C1: only standard library imports (`json`, `sys`)

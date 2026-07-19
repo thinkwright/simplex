@@ -1,0 +1,41 @@
+"""Command-line entry point: ``python -m detreport INPUT_JSON``.
+
+Reads a JSON array of events from the supplied path, prints exactly the
+``build_report`` output followed by one newline, and exits successfully.
+"""
+
+import json
+import sys
+
+from detreport.public import ReportError, build_report
+
+
+def main(argv):
+    if len(argv) != 2:
+        sys.stderr.write("usage: python -m detreport INPUT_JSON\n")
+        return 2
+
+    path = argv[1]
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            events = json.load(handle)
+    except OSError as error:
+        sys.stderr.write("error: cannot read %s: %s\n" % (path, error))
+        return 1
+    except json.JSONDecodeError as error:
+        sys.stderr.write("error: invalid JSON in %s: %s\n" % (path, error))
+        return 1
+
+    try:
+        output = build_report(events)
+    except ReportError as error:
+        sys.stderr.write("error: %s\n" % error)
+        return 1
+
+    sys.stdout.write(output)
+    sys.stdout.write("\n")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

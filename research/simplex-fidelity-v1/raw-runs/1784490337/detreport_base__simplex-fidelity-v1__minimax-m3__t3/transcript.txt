@@ -1,0 +1,62 @@
+list_dir() → (empty: '.')
+write_file(detreport/_core.py) → wrote 4053 bytes to 'detreport/_core.py'
+write_file(detreport/public.py) → wrote 160 bytes to 'detreport/public.py'
+write_file(detreport/__init__.py) → wrote 175 bytes to 'detreport/__init__.py'
+write_file(detreport/__main__.py) → wrote 1061 bytes to 'detreport/__main__.py'
+run_command(python3 --version && python3 -c "import sys; print(sys.versi…) → exit: 0 (+2 lines)
+run_command(python3 -c "
+from detreport.public import build_report, Repo…) → exit: 1 (+8 lines)
+run_command(python3 -c "
+from detreport.public import build_report
+event…) → exit: 0 (+4 lines)
+run_command(python3 -c "
+from detreport.public import build_report, Repo…) → exit: 0 (+6 lines)
+run_command(cd /tmp && cat > test_input.json <<'EOF'
+[{"id": "b", "categ…) → exit: 0 (+4 lines)
+run_command(cat > /tmp/test_input.json <<'EOF'
+[{"id": "b", "category": …) → exit: 0 (+10 lines)
+run_command(python3 -c "
+import ast, os, sys
+
+def check(path):
+    with …) → exit: 0 (+9 lines)
+run_command(python3 -c "
+import ast, os, sys
+
+def check(path):
+    with …) → exit: 0 (+10 lines)
+run_command(python3 -c "
+import ast, os, sys
+
+def check(path):
+    with …) → exit: 0 (+7 lines)
+run_command(python3 -c "
+# D1: clean import + valid single-category repo…) → exit: 0 (+1 lines)
+run_command(python3 -c "
+from detreport.public import build_report, Repo…) → exit: 0 (+3 lines)
+run_command(cat > /tmp/bad_input.json <<'EOF'
+[{"id": "a", "category": "…) → exit: 0 (+2 lines)
+list_dir() → detreport/
+run_command(find detreport -type f | sort && echo "---" && wc -l detrepo…) → exit: 0 (+14 lines)
+
+--- final summary ---
+All files in place. Summary of verification:
+
+**Files created:**
+- `detreport/__init__.py` — re-exports `build_report` and `ReportError`
+- `detreport/public.py` — public API surface
+- `detreport/_core.py` — validation, grouping, JSON serialization
+- `detreport/__main__.py` — CLI entry point
+
+**Verification against every rule/example:**
+- **R1**: `from detreport.public import build_report, ReportError` works; `python -m detreport INPUT_JSON` works.
+- **R2**: Each event validated for unique non-empty string `id`, non-empty string `category`, integer (non-bool) `amount_cents`; missing/extra fields rejected; `ReportError` raised.
+- **R3**: Groups contain exactly `{category, count, total_cents, events}` with `events` = sorted event ids.
+- **R4**: Compact JSON (`separators=(",",":")`), `ensure_ascii=False`, `sort_keys=True`, top-level keys exactly `{"groups", "grand_total_cents"}`.
+- **R5**: Categories sorted ascending by Unicode code-point (verified with `beta`/`alpha` and `café`).
+- **R6**: `grand_total_cents` = sum of all amounts; input list/dicts never mutated (verified via snapshot equality).
+- **R7**: CLI reads JSON array, prints `build_report` output + exactly one `\n`, exits 0 on success / non-zero on error.
+- **S1**: Same ordered input → byte-identical output (verified by repeated calls).
+- **C1**: Only stdlib imports (`json`, `sys`, `__future__`, `typing`) plus relative `detreport.*` imports.
+- **D1**: Clean import + valid single-category report works.
+- **E1–E7**: All examples pass.

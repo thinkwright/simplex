@@ -1,0 +1,40 @@
+list_dir() → (empty: '.')
+write_file(idledger/__init__.py) → wrote 208 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 407 bytes to 'idledger/public.py'
+write_file(idledger/errors.py) → wrote 649 bytes to 'idledger/errors.py'
+write_file(idledger/ledger.py) → wrote 8948 bytes to 'idledger/ledger.py'
+run_command(python3.11 -c "
+from idledger import Ledger, InsufficientFun…) → exit: 0 (+9 lines)
+run_command(python3.11 -c "
+import threading
+from idledger import Ledger…) → exit: 0 (+4 lines)
+run_command(python3.11 -c "
+from idledger import Ledger, InsufficientFun…) → exit: 0 (+11 lines)
+run_command(python3.11 --version && python3.11 -c "
+# D1: clean import +…) → exit: 0 (+10 lines)
+
+--- final summary ---
+Everything works. Summary:
+
+**Files created:**
+- `idledger/__init__.py` — re-exports the public API
+- `idledger/public.py` — exposes `Ledger`, `InsufficientFunds`, `CommandConflict`
+- `idledger/errors.py` — defines `InsufficientFunds` and `CommandConflict` exceptions
+- `idledger/ledger.py` — core `Ledger` class
+
+**Verification:**
+- **D1**: `from idledger import Ledger, InsufficientFunds, CommandConflict` works in Python 3.11; applying a valid command returns `{id, account, balance}`.
+- **E1**: `Ledger({'a': 100}).apply({id: c1, account: a, kind: debit, amount: 40})` → `{id: c1, account: a, balance: 60}` ✓
+- **E2**: Replaying identical successful command returns original result, balance changes once ✓
+- **E3**: Conflict replacement reverses original and applies replacement (balance 120) ✓
+- **E4**: Debit 101 from 100 raises `InsufficientFunds`, state unchanged, id reusable ✓
+- **E5**: `amount=True`, `amount=0`, and extra-field commands raise `ValueError` with no state change ✓
+- **E6**: 200 concurrent distinct credits → final balance exactly 200 ✓
+- **E7**: All imports are from stdlib (`threading`) or `idledger` itself ✓
+
+**Key design choices:**
+- `threading.Lock` guards all state mutation for R8 thread-safety.
+- Commands are validated *before* acquiring the lock so invalid input never touches state (R7).
+- `InsufficientFunds` does not record the command in history, so the id remains reusable (R6).
+- Conflict replacement uses a working-copy of balances; if the replacement fails, the working copy is discarded and `CommandConflict` is raised, preserving the original (R5).
+- `snapshot()` returns a fresh dict sorted by account name (R2).

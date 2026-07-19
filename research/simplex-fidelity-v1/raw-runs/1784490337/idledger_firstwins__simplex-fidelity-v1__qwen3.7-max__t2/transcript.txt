@@ -1,0 +1,33 @@
+list_dir() → (empty: '.')
+write_file(idledger/__init__.py) → wrote 133 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 4450 bytes to 'idledger/public.py'
+run_command(cd /home/user && python3 -c "
+import sys
+print(f'Python {sys…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+import sys
+print(f'Python {sys.version}')
+
+# E1…) → exit: 0 (+13 lines)
+run_command(python3 -c "
+from idledger.public import Ledger
+
+# R5 edge c…) → exit: 0 (+4 lines)
+list_dir(idledger) → __init__.py (+2 lines)
+run_command(python3 -c "from idledger import Ledger, InsufficientFunds, …) → exit: 0 (+3 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+- `idledger/__init__.py` — Package init that re-exports `Ledger`, `InsufficientFunds`, and `CommandConflict` from `idledger.public`
+- `idledger/public.py` — Full implementation of the ledger
+
+**Implementation details:**
+- **`Ledger(initial=None)`** — Validates initial balances (must be mapping of str→non-negative int, rejects bools). `snapshot()` returns a name-sorted dict copy.
+- **`apply(command)`** — Validates command structure (exactly 4 keys: id, account, kind, amount), checks types (amount must be positive int, not bool; kind must be "credit"/"debit"), and applies atomically under a `threading.Lock`.
+- **Idempotency (R4/R5)** — Successful commands are cached by id. Replaying the same id returns the cached result regardless of whether the new command content matches or differs (first-wins).
+- **InsufficientFunds (R6)** — Raised atomically when a debit would go negative; the command id is not consumed, so it can be reused.
+- **ValueError (R7)** — Raised for invalid initial state or command structure; state and history remain unchanged.
+- **Thread safety (R8)** — Both `apply` and `snapshot` are protected by a single `threading.Lock`.
+- **Standard library only (C2)** — Uses only `threading` and `collections.abc.Mapping`.

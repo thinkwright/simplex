@@ -1,0 +1,1 @@
+{"grand_total_cents":1,"groups":[{"category":"x","count":2,"events":["a","b"],"total_cents":1}]}

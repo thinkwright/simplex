@@ -1,0 +1,29 @@
+list_dir() → (empty: '.')
+run_command(python3 --version && which python3) → exit: 0 (+2 lines)
+write_file(idledger/__init__.py) → wrote 337 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 5792 bytes to 'idledger/public.py'
+write_file(_verify_idledger.py) → wrote 5364 bytes to '_verify_idledger.py'
+run_command(python3 _verify_idledger.py) → exit: 0 (+1 lines)
+grep(idledger) → idledger/public.py:17:import threading (+8 lines)
+run_command(rm _verify_idledger.py && ls -la && python3 -c "from idledge…) → exit: 0 (+5 lines)
+
+--- final summary ---
+The task is complete and verified. 
+
+## Summary
+
+I created the `idledger` package with two files:
+
+- **`idledger/__init__.py`** — re-exports `Ledger`, `InsufficientFunds`, `CommandConflict` for convenience.
+- **`idledger/public.py`** — the implementation, importing only `threading` and `collections.abc.Mapping` (both stdlib).
+
+Key design points matching the rules:
+- **R1/R2**: `Ledger(initial=None)` accepts a mapping of string account names → non-negative int balances; `snapshot()` returns a fresh, account-name-sorted dict copy.
+- **R3**: `apply` requires exactly `id, account, kind, amount` (kind ∈ {credit, debit}, amount a positive int) and returns exactly `id, account, balance`. `bool` is rejected via `type(x) is int` so `amount=True` is invalid (E5).
+- **R4/R5**: successful commands are stored by id; an identical replay returns the original result without re-applying; a reused id with different content raises `CommandConflict` leaving state unchanged.
+- **R6/X1**: a debit that would go negative raises `InsufficientFunds` before storing the id, so the id stays reusable (E4).
+- **R7/X2**: structural validation runs first under the lock, raising `ValueError` for invalid initial state or command shape with no state/history change.
+- **R8**: an `RLock` serializes `apply`/`snapshot`; concurrent distinct credits are each applied exactly once (verified with 300 threads).
+- **C2/E7**: the package imports only stdlib (`threading`, `collections.abc`) and itself.
+
+Verification: I ran a temporary script exercising E1–E7 (including concurrency and all invalid-input cases) — all assertions passed — then deleted it. A final inline check confirmed `from idledger.public import ...` works and E1 produces `{'id': 'c1', 'account': 'a', 'balance': 60}`.

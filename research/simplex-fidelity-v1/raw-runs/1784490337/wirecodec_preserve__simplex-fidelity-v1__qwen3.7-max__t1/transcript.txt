@@ -1,0 +1,24 @@
+list_dir() → (empty: '.')
+run_command(mkdir -p wirecodec) → exit: 0
+write_file(wirecodec/__init__.py) → wrote 102 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 4328 bytes to 'wirecodec/public.py'
+run_command(cd /root && python3 -c "
+from wirecodec import encode, decod…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from wirecodec import encode, decode, CodecErro…) → exit: 0 (+18 lines)
+run_command(python3 -c "
+import hashlib, json
+# Verify checksum manually…) → exit: 0 (+3 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was implemented:
+
+**Files created:**
+- `wirecodec/__init__.py` — package init that re-exports `encode`, `decode`, and `CodecError` from `wirecodec.public`
+- `wirecodec/public.py` — the full codec implementation
+
+**Implementation details:**
+- **`encode(record)`** — validates `id` (non-empty string) and `value` (int, non-bool), raises `ValueError` on invalid input without mutating the record, returns compact sorted JSON with `version: 2`, `id`, `value`, and `checksum` (SHA-256 hex over canonical JSON of `{id, value, version}`)
+- **`decode(text)`** — parses JSON, treats absent version as 1, validates version 2 checksums, collects unknown top-level fields into `extras` (omitted when empty), raises `CodecError` for any malformed/unsupported/invalid input
+- **`CodecError`** — custom exception for decode failures
+- Only uses Python standard library (`json`, `hashlib`) — no external dependencies

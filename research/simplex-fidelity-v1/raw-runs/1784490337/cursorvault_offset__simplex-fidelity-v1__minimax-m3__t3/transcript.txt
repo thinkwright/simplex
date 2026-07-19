@@ -1,0 +1,44 @@
+list_dir() → (empty: '.')
+write_file(cursorvault/__init__.py) → wrote 172 bytes to 'cursorvault/__init__.py'
+write_file(cursorvault/public.py) → wrote 268 bytes to 'cursorvault/public.py'
+write_file(cursorvault/_core.py) → wrote 234 bytes to 'cursorvault/_core.py'
+write_file(cursorvault/_impl.py) → wrote 3319 bytes to 'cursorvault/_impl.py'
+write_file(cursorvault/_core.py) → wrote 189 bytes to 'cursorvault/_core.py'
+run_command(python3 -c "
+from cursorvault.public import paginate, Cursor…) → exit: 1 (+13 lines)
+edit_file_via_write(cursorvault/_impl.py) → error: unknown tool 'edit_file_via_write'
+write_file(cursorvault/_impl.py) → wrote 3427 bytes to 'cursorvault/_impl.py'
+write_file(cursorvault/_impl.py) → wrote 3570 bytes to 'cursorvault/_impl.py'
+run_command(python3 -c "
+from cursorvault.public import paginate, Cursor…) → exit: 0 (+23 lines)
+run_command(python3 -c "
+import ast, os, sys
+
+# Collect all imports from…) → exit: 0 (+2 lines)
+run_command(python3 -c "
+import cursorvault
+print('cursorvault exports:'…) → exit: 0 (+2 lines)
+list_dir() → cursorvault/
+run_command(ls -la cursorvault/) → exit: 0 (+8 lines)
+
+--- final summary ---
+Everything is in place. Summary:
+
+**Files created:**
+- `cursorvault/__init__.py` — package entry, re-exports `CursorError` and `paginate`
+- `cursorvault/public.py` — public API surface (R1)
+- `cursorvault/_core.py` — internal re-export shim
+- `cursorvault/_impl.py` — core implementation
+
+**Contract coverage:**
+- **R1**: `cursorvault.public` exposes `paginate` and `CursorError` ✓
+- **R2**: `paginate(records, cursor=None, limit=3)` returns `{items, next_cursor, has_more}` with input order preserved ✓
+- **R3**: limit must be int in [1,100]; booleans rejected (R3 + X1) ✓
+- **R4**: cursor is decimal zero-based index; `next_cursor` is decimal index after the page when records remain ✓
+- **R5**: `has_more` true iff records remain; `next_cursor` follows R4 when true, null otherwise; empty input → terminal page ✓
+- **R6**: records are not mutated; repeated calls with equal inputs return equal results ✓
+- **C1**: only stdlib (`typing`) and `cursorvault` are imported ✓
+- **X1**: invalid limit → `ValueError` without modifying records ✓
+- **X2**: malformed/unknown cursor → `CursorError` without modifying records ✓
+
+**Verification:** Ran a comprehensive test suite covering all examples (E1–E6), boundary conditions (limit 0/1/100/101, bool, float, negative), cursor edge cases (empty, whitespace, sign, leading zero, negative, past-end, at-end, non-string), record immutability, repeatability, and full page-walk. All tests passed.

@@ -1,0 +1,44 @@
+list_dir() → (empty: '.')
+write_file(detreport/__init__.py) → wrote 151 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 128 bytes to 'detreport/public.py'
+write_file(detreport/core.py) → wrote 2675 bytes to 'detreport/core.py'
+write_file(detreport/__main__.py) → wrote 585 bytes to 'detreport/__main__.py'
+run_command(python3 --version && python3 -c "
+from detreport.public impo…) → exit: 1 (+7 lines)
+run_command(python3 -c "
+from detreport.public import build_report
+event…) → exit: 0 (+4 lines)
+run_command(python3 -c "
+events = [{'id': 'b', 'category': 'x', 'amount_…) → exit: 0 (+1 lines)
+run_command(python3 -c "
+from detreport.public import build_report, Repo…) → exit: 0 (+1 lines)
+run_command(python3 << 'EOF'
+from detreport.public import build_report, …) → exit: 0 (+6 lines)
+run_command(cd /tmp && cat > input.json << 'EOF'
+[{"id": "b", "category"…) → exit: 1 (+16 lines)
+run_command(pwd && ls && python3 -m detreport /tmp/input.json | xxd
+echo…) → exit: 0 (+16 lines)
+run_command(grep -h "^import\|^from" detreport/*.py) → exit: 0 (+6 lines)
+run_command(python3 -m detreport /tmp/input.json; echo "exit=$?"
+echo "-…) → exit: 0 (+11 lines)
+run_command(python3 << 'EOF'
+from detreport.public import build_report
+i…) → exit: 0 (+1 lines)
+
+--- final summary ---
+All checks pass. The implementation is complete.
+
+**Summary of changes:**
+
+Created the `detreport` package with four files:
+
+- `detreport/__init__.py` — package entry, re-exports `build_report` and `ReportError`.
+- `detreport/public.py` — public API surface exposing `build_report` and `ReportError`.
+- `detreport/core.py` — core implementation: validates each event (exact keys `id`/`category`/`amount_cents`, non-empty string id/category, integer non-boolean amount, unique ids), groups by category preserving first-appearance order, sorts event ids ascending per group, computes totals, and emits compact `ensure_ascii=False` JSON with sorted keys containing exactly `groups` and `grand_total_cents`. Input is never mutated.
+- `detreport/__main__.py` — CLI that reads a JSON array from the given path, runs `build_report`, and prints the result plus one newline.
+
+**Verification:**
+- E1–E5 examples all pass (single-category grouping, first-appearance order, unicode `café` preserved, error cases raise `ReportError`, byte-stable output, input unchanged).
+- E6: `python -m detreport input.json` prints the library output followed by exactly one newline (97 bytes for the example = 96 chars + `\n`).
+- E7: only `json`, `sys`, and `detreport` are imported — all from the Python standard library or the package itself.
+- Exit code is 0 on success and non-zero on error/missing arg.

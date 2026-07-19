@@ -1,0 +1,39 @@
+list_dir() → (empty: '.')
+write_file(detreport/public.py) → wrote 2721 bytes to 'detreport/public.py'
+write_file(detreport/__init__.py) → wrote 176 bytes to 'detreport/__init__.py'
+write_file(detreport/__main__.py) → wrote 972 bytes to 'detreport/__main__.py'
+run_command(cd /tmp && python3 --version && python3 -c "
+import sys, os
+…) → exit: 0 (+7 lines)
+run_command(cd "$OLDPWD" && printf '%s' '[{"id":"b","category":"x","amou…) → exit: 0 (+6 lines)
+run_command(cd "$OLDPWD" && echo "--- E7: dependency check (imports in d…) → exit: 0 (+8 lines)
+run_command(cd "$OLDPWD" && python3 -c "
+import detreport
+from detreport…) → exit: 0 (+10 lines)
+
+--- final summary ---
+All requirements verified. The implementation is complete and working.
+
+## Summary
+
+Created the `detreport` package (3 files) from scratch in an empty project:
+
+- **`detreport/__init__.py`** — re-exports `build_report` and `ReportError` from `detreport.public` (R1).
+- **`detreport/public.py`** — defines `ReportError` and `build_report(events)`:
+  - Validates the collection is a list and each event is a dict with **exactly** `id` (non-empty string), `category` (non-empty string), `amount_cents` (integer, non-boolean — rejecting `bool` since it subclasses `int`); enforces unique ids; raises `ReportError` on any violation without mutating input (R2, X1).
+  - Groups by category into objects with exactly `category`, `count`, `total_cents`, `events` (ids sorted ascending) (R3).
+  - Orders groups by category in ascending Unicode code-point order (R5).
+  - Returns compact `json.dumps(..., ensure_ascii=False, sort_keys=True, separators=(",",":"))` with top-level `groups` + `grand_total_cents` (R4, E3 literal café).
+  - Computes `grand_total_cents` as the integer sum of all amounts; only reads from input events, never mutates them (R6, C1).
+- **`detreport/__main__.py`** — `python -m detreport INPUT_JSON`: reads the JSON array from the path, prints exactly `build_report` output plus one newline, exits 0 on success; reports descriptive errors to stderr with non-zero exit for missing file / invalid JSON / `ReportError` (R7).
+
+**Verification (Python 3.12):**
+- E1: group `x` → count 2, total_cents 1, events `[a,b]`, grand total 1 ✓
+- E2: categories beta→alpha yields groups ordered `[alpha, beta]` ✓
+- E3: `café` emitted literally (no ASCII escape) ✓
+- E4: duplicate ids, boolean amount, missing field, extra field, empty id/category, float amount, non-string id, non-list all raise `ReportError` ✓
+- E5: repeated calls produce identical bytes and leave input unchanged ✓
+- E6: CLI stdout equals library result + one newline, exit 0 ✓
+- E7: AST scan confirms every import is stdlib (`json`, `sys`) or `detreport` itself ✓
+- D1: `import detreport` builds a valid single-category report ✓
+- Edge cases: empty list → `{"grand_total_cents":0,"groups":[]}`; negative totals handled; CLI errors exit non-zero with descriptive messages.

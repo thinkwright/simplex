@@ -1,0 +1,31 @@
+list_dir() → (empty: '.')
+write_file(tokenquota/__init__.py) → wrote 162 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 3719 bytes to 'tokenquota/public.py'
+run_command(python3 --version && python3 - <<'PY'
+import sys, math, thre…) → exit: 1 (+14 lines)
+run_command(python3 - <<'PY'
+import sys, ast, threading
+
+# --- E6 / C1: …) → exit: 0 (+11 lines)
+run_command((command -v python3.11 >/dev/null && python3.11 -c "import s…) → exit: 0 (+2 lines)
+
+--- final summary ---
+Verified on Python 3.11.15 as well — `Bucket(2, 1.0, clock=lambda:0)` yields `True True False`, matching E1.
+
+## Summary
+
+I created the `tokenquota` package with two files:
+
+- **`tokenquota/__init__.py`** — makes the package importable and re-exports `Bucket` for convenience.
+- **`tokenquota/public.py`** — implements `Bucket`, the public API.
+
+Key implementation details mapped to the rules:
+- **R1**: `Bucket(capacity, refill_per_second, clock=None)` starts full (`_balance = capacity`); `clock` defaults to `time.monotonic` but is only ever consulted via `self._clock()`.
+- **R2**: `allow(amount=1)` refills first, then consumes and returns `True` only when `balance >= amount`, otherwise returns `False` without consuming.
+- **R3**: refill adds `elapsed * refill_per_second`, clamps to capacity, and treats backward clock movement (`elapsed < 0`) as zero elapsed time.
+- **R4**: after any positive-time refill and capacity clamp, the balance is rounded up with `math.ceil` and clamped back to capacity before answering.
+- **R5**: `available()` runs the same refill calculation and returns the balance without consuming.
+- **R6/X1**: validates `capacity > 0`, `refill_per_second >= 0`, and `amount > 0` (rejecting booleans and non-numbers) with `ValueError`, raised before any consumption.
+- **R7/C1**: a `threading.Lock` guards both `allow` and `available` for atomic check-and-consume; only `math`, `threading`, and `time` (all standard library) are imported, and the supplied clock fully controls all elapsed-time decisions.
+
+Verification: ran a script covering E1–E6, D1, and edge cases (fractional capacity clamp, default clock, invalid-amount-doesn't-consume) — all passed on Python 3.12.3 and Python 3.11.15. AST inspection confirmed only standard-library imports appear in `public.py`.

@@ -1,0 +1,24 @@
+list_dir() → (empty: '.')
+write_file(tokenquota/__init__.py) → wrote 77 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 3254 bytes to 'tokenquota/public.py'
+write_file(test_tokenquota.py) → wrote 4994 bytes to 'test_tokenquota.py'
+run_command(cd /home/user && python3 test_tokenquota.py) → exit: 2 (+1 lines)
+run_command(python3 test_tokenquota.py) → exit: 0 (+41 lines)
+
+--- final summary ---
+All 28 tests pass. Here's a summary of what was created:
+
+**Files created:**
+- `tokenquota/__init__.py` — Package marker
+- `tokenquota/public.py` — `Bucket` class implementation
+- `test_tokenquota.py` — Comprehensive test suite
+
+**Implementation details:**
+- **R1**: `Bucket(capacity, refill_per_second, clock=None)` in `tokenquota.public`, starts full
+- **R2**: `allow(amount=1)` refills first, consumes on success (returns `True`), returns `False` without consuming on failure
+- **R3**: Refill adds `elapsed × refill_per_second`, clamped to capacity; backward clock treated as zero elapsed
+- **R4**: After positive-time refill + capacity clamp, `math.floor()` applied to balance
+- **R5**: `available()` performs same refill and returns balance without consuming
+- **R6**: `ValueError` raised for non-positive capacity, negative refill, boolean/non-positive allow amount
+- **R7**: `threading.Lock` guards all state mutations for thread safety
+- **C1**: Only `time`, `threading`, and `math` (all stdlib) are imported

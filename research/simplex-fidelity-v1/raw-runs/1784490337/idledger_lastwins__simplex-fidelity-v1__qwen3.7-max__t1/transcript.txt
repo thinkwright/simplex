@@ -1,0 +1,25 @@
+list_dir() → (empty: '.')
+run_command(mkdir -p idledger) → exit: 0
+write_file(idledger/__init__.py) → wrote 181 bytes to 'idledger/__init__.py'
+write_file(idledger/public.py) → wrote 8071 bytes to 'idledger/public.py'
+write_file(test_idledger.py) → wrote 10047 bytes to 'test_idledger.py'
+run_command(cd /home/user && python3 test_idledger.py) → exit: 2 (+1 lines)
+run_command(python3 test_idledger.py) → exit: 0 (+15 lines)
+list_dir(idledger) → __init__.py (+2 lines)
+
+--- final summary ---
+All tests pass. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`idledger/__init__.py`** — Package init that re-exports `Ledger`, `InsufficientFunds`, and `CommandConflict` from `idledger.public`.
+
+2. **`idledger/public.py`** — Core implementation with:
+   - **`InsufficientFunds`** — Exception for debit exceeding balance (R6, X1)
+   - **`CommandConflict`** — Exception when a conflicting command replacement fails (R5)
+   - **`Ledger(initial=None)`** — Thread-safe ledger with:
+     - `snapshot()` — Returns account-name-sorted dict copy (R2)
+     - `apply(command)` — Validates command structure (R7), applies credit/debit (R3), handles idempotency (R4), conflict resolution with atomic rollback (R5), insufficient funds (R6), and thread safety via `threading.Lock` (R8)
+   - Only uses `threading` from the Python standard library (C2)
+
+**Verification:** All 13 tests pass covering E1–E7 scenarios including basic apply, idempotency, conflict replacement, insufficient funds, invalid commands, concurrent credits, and dependency inspection.

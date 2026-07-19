@@ -1,0 +1,38 @@
+list_dir(.) → (empty: '.')
+write_file(wirecodec/__init__.py) → wrote 171 bytes to 'wirecodec/__init__.py'
+write_file(wirecodec/public.py) → wrote 146 bytes to 'wirecodec/public.py'
+write_file(wirecodec/_codec.py) → wrote 3853 bytes to 'wirecodec/_codec.py'
+run_command(python3 -c "
+import sys
+sys.path.insert(0, '.')
+
+# D1: publi…) → exit: 0 (+12 lines)
+run_command(python3 -c "
+import sys
+sys.path.insert(0, '.')
+from wirecod…) → exit: 0 (+10 lines)
+list_dir(.) → wirecodec/
+run_command(ls -la wirecodec/ && python3 -c "import wirecodec; print('pa…) → exit: 0 (+8 lines)
+
+--- final summary ---
+All requirements satisfied and verified.
+
+**Summary**
+
+Created a `wirecodec` package with three files:
+
+- `wirecodec/__init__.py` — re-exports `encode`, `decode`, `CodecError`
+- `wirecodec/public.py` — public API surface (R1)
+- `wirecodec/_codec.py` — implementation using only `json` and `hashlib` (C1)
+
+**Behavior verified against every example:**
+- **E1**: `encode({'id':'a','value':2})` → compact sorted JSON with `version:2` and a SHA-256 checksum matching the canonical `{id,value,version}` payload.
+- **E2**: `decode('{"id":"a","value":2}')` → `{id:a, value:2, version:1}` (absent version treated as 1).
+- **E3**: Round-trip of a valid v2 record returns `{id, value, version:2}`.
+- **E4**: Unknown top-level fields (`note`) are discarded after validation.
+- **E5**: Tampering the value while keeping the original checksum raises `CodecError("checksum mismatch")`.
+- **E6**: Repeated `encode` of the same record produces byte-identical output and never mutates the input dict.
+- **E7**: Missing id or boolean value raises `ValueError` without mutation.
+- **E8**: Only `hashlib` and `json` are imported; digest is SHA-256 hex.
+
+Additional checks confirmed: malformed JSON, unsupported versions, missing/bad v2 checksums, non-dict input, empty id, float value, and 100-call determinism all behave per spec.

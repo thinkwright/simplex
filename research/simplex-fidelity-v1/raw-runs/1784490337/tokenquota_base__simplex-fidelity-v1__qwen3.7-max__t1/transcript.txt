@@ -1,0 +1,28 @@
+list_dir() → (empty: '.')
+write_file(tokenquota/__init__.py) → wrote 59 bytes to 'tokenquota/__init__.py'
+write_file(tokenquota/public.py) → wrote 3552 bytes to 'tokenquota/public.py'
+run_command(cd /home/user && python3 -c "
+import threading, time
+
+# ----…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+import threading, time
+
+# ---- E1: capacity-2 b…) → exit: 0 (+10 lines)
+
+--- final summary ---
+All tests passed. Here's a summary of what was created:
+
+**Files created:**
+
+1. **`tokenquota/__init__.py`** — Package init that re-exports `Bucket` from `tokenquota.public`.
+
+2. **`tokenquota/public.py`** — The `Bucket` class implementing a token-bucket rate limiter:
+   - **R1**: Importable package; `Bucket(capacity, refill_per_second, clock=None)` starts full.
+   - **R2**: `allow(amount=1)` refills first, consumes if enough tokens, returns `True`/`False`.
+   - **R3**: Refill adds `elapsed × refill_per_second`, capped at capacity; backward clock = zero elapsed.
+   - **R4**: Fractional tokens preserved exactly (no rounding).
+   - **R5**: `available()` refills and returns current balance without consuming.
+   - **R6**: Validates capacity (positive), refill_per_second (non-negative), amount (positive, non-boolean); raises `ValueError`.
+   - **R7**: Thread-safe via `threading.Lock` — concurrent `allow(1)` on capacity-N bucket yields exactly N successes.
+   - **C1**: Uses only `threading` and `time` from the Python standard library; accepts a pluggable clock.

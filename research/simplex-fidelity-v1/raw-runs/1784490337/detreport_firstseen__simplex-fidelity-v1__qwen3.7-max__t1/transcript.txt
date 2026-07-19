@@ -1,0 +1,35 @@
+list_dir(.) → (empty: '.')
+run_command(mkdir -p detreport) → exit: 0
+write_file(detreport/__init__.py) → wrote 172 bytes to 'detreport/__init__.py'
+write_file(detreport/public.py) → wrote 4261 bytes to 'detreport/public.py'
+write_file(detreport/__main__.py) → wrote 732 bytes to 'detreport/__main__.py'
+run_command(cd /root && python3 -c "
+from detreport import build_report,…) → exit: 2 (+1 lines)
+run_command(python3 -c "
+from detreport import build_report, ReportError…) → exit: 0 (+6 lines)
+write_file(test_input.json) → wrote 106 bytes to 'test_input.json'
+run_command(python3 -m detreport test_input.json) → exit: 0 (+1 lines)
+run_command(python3 -c "
+import sys
+import subprocess
+
+# E6: verify CLI …) → exit: 0 (+1 lines)
+
+--- final summary ---
+Implementation complete. Created the `detreport` package with:
+
+**Files:**
+- `detreport/__init__.py` - Package exposing build_report and ReportError
+- `detreport/public.py` - Core implementation with validation and report building
+- `detreport/__main__.py` - CLI entry point
+
+**Verified:**
+- E1: Single-category report with sorted event IDs
+- E2: Category order preserved by first appearance
+- E3: Literal UTF-8 (café) in output, no ASCII escapes
+- E4: ReportError raised for duplicate IDs, boolean amounts, missing/extra fields
+- E5: Byte-for-byte stable output, input never mutated
+- E6: CLI outputs library result + exactly one newline
+- E7: Only standard library dependencies (json, copy, sys)
+
+All requirements satisfied.

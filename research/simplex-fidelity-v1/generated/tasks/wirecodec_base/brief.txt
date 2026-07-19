@@ -1,0 +1,1 @@
+This experimental task must be run with the simplex-fidelity-v1 prompt pack.
