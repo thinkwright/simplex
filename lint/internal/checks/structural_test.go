@@ -353,6 +353,87 @@ ERRORS:
 	}
 }
 
+func TestStructuralChecker_W006_UnionOfBuiltinTypes(t *testing.T) {
+	spec := `DATA: Issue
+  message: string
+
+FUNCTION: validate() → valid | issues
+
+RULES:
+  - validate input
+
+DONE_WHEN:
+  - validation is complete
+
+EXAMPLES:
+  () → valid
+
+ERRORS:
+  - any unhandled condition → fail`
+
+	parsed := parser.NewParser().Parse(spec)
+	r := result.NewLintResult("test.md")
+	NewStructuralChecker().Check(parsed, r)
+
+	for _, warning := range r.Warnings {
+		assert.NotEqual(t, "W006", warning.Code)
+	}
+}
+
+func TestStructuralChecker_W006_DefinedTypeInContainerOrUnion(t *testing.T) {
+	spec := `DATA: User
+  id: string
+
+FUNCTION: list_users() → list of user | null
+
+RULES:
+  - return users
+
+DONE_WHEN:
+  - users are returned
+
+EXAMPLES:
+  () → []
+
+ERRORS:
+  - any unhandled condition → fail`
+
+	parsed := parser.NewParser().Parse(spec)
+	r := result.NewLintResult("test.md")
+	NewStructuralChecker().Check(parsed, r)
+
+	for _, warning := range r.Warnings {
+		assert.NotEqual(t, "W006", warning.Code)
+	}
+}
+
+func TestStructuralChecker_W006_UndefinedUnionMember(t *testing.T) {
+	spec := `DATA: User
+  id: string
+
+FUNCTION: get_user() → User | Missing
+
+RULES:
+  - return user
+
+DONE_WHEN:
+  - user is returned
+
+EXAMPLES:
+  () → User
+
+ERRORS:
+  - any unhandled condition → fail`
+
+	parsed := parser.NewParser().Parse(spec)
+	r := result.NewLintResult("test.md")
+	NewStructuralChecker().Check(parsed, r)
+
+	require.Len(t, r.Warnings, 1)
+	assert.Equal(t, "W006", r.Warnings[0].Code)
+	assert.Contains(t, r.Warnings[0].Message, "User | Missing")
+}
+
 func TestStructuralChecker_NoDataBlocks_NoW006(t *testing.T) {
 	// When there are no DATA blocks, we don't warn about undefined types
 	// because the user isn't using typed specs

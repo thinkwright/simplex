@@ -31,7 +31,7 @@ func main() {
 	})
 
 	// Lint API endpoint (must be registered before the /api/ catch-all proxy)
-	linter := lint.DefaultLinter()
+	linter := lint.New(lint.Config{InputMode: lint.InputModeExtracted})
 	mux.HandleFunc("/api/lint", lintHandler(linter))
 
 	// Proxy API requests to the LLM server (optional, for planner functionality)

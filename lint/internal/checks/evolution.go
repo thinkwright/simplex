@@ -187,4 +187,3 @@ func (c *EvolutionChecker) checkEvalStructure(fn parser.FunctionBlock, r *result
 		}
 	}
 }
-

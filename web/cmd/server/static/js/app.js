@@ -266,7 +266,7 @@ function renderLintResults() {
     if (result.valid && result.warnings.length === 0) {
         badge.textContent = 'Pass';
         badge.className = 'lint-badge lint-badge-pass';
-        items.innerHTML = '<div class="lint-item"><span class="lint-message" style="color: var(--success-color);">Specification passes all validation checks.</span></div>';
+        items.innerHTML = '<div class="lint-item"><span class="lint-message" style="color: var(--success-color);">Specification passes all implemented deterministic checks.</span></div>';
     } else if (result.valid && result.warnings.length > 0) {
         badge.textContent = result.warnings.length + ' warning' + (result.warnings.length !== 1 ? 's' : '');
         badge.className = 'lint-badge lint-badge-warn';

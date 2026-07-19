@@ -114,3 +114,6 @@ jobs:
           fi
           echo ""
           echo "All examples pass validation."
+
+      - name: Check canonical spec self-description
+        run: ./simplex-lint spec/simplex.md

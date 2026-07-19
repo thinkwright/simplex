@@ -135,7 +135,7 @@ ERRORS:
                 <!-- Validate with the Linter -->
                 <section class="doc-section">
                     <h2>Validate with the Linter</h2>
-                    <p>Use the Simplex linter to check that your specification meets structural and semantic requirements:</p>
+                    <p>Use the Simplex linter to run deterministic structural, complexity, evolution-metadata, and determinism-declaration checks:</p>
 
                     <div class="code-example">
                         <div class="code-header">
@@ -147,7 +147,9 @@ make build
 ./bin/simplex-lint ../examples/minimal.simplex</code></pre>
                     </div>
 
-                    <p>The linter enforces the "enforced simplicity" pillar through concrete limits and checks. A spec that passes linting has met the structural and semantic requirements for validity.</p>
+                    <p>The CLI uses <code>--input-mode auto</code> by default. It treats <code>.simplex</code> files as raw specifications, reads stdin as an already extracted specification, and lints only <code>simplex</code>-labeled fences in Markdown files that contain them. An unmarked Markdown file falls back to raw mode with a warning. Use <code>--input-mode raw</code>, <code>markdown</code>, or <code>extracted</code> to override that selection.</p>
+
+                    <p>The linter enforces part of the "enforced simplicity" pillar through concrete limits and checks. A passing result means the document satisfies the checks implemented by that linter version; semantic validity still requires review.</p>
                 </section>
 
                 <!-- Writing Tips -->

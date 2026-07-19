@@ -3,6 +3,7 @@ package checks
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/thinkwright/simplex/lint/internal/parser"
 	"github.com/thinkwright/simplex/lint/internal/result"
@@ -87,6 +88,7 @@ func (c *StructuralChecker) checkDataReferences(spec *parser.ParsedSpec, r *resu
 		typeName := extractTypeName(data.Content)
 		if typeName != "" {
 			definedTypes[typeName] = true
+			definedTypes[normalizeTypeName(typeName)] = true
 		}
 	}
 
@@ -120,23 +122,27 @@ func extractTypeName(content string) string {
 
 // checkTypeReference checks if a type reference is valid.
 func checkTypeReference(typeName string, definedTypes map[string]bool, funcName string, r *result.LintResult, spec *parser.ParsedSpec) {
-	// Normalize: lowercase, strip "list of", etc.
-	normalized := normalizeTypeName(typeName)
+	for _, alternative := range strings.Split(typeName, "|") {
+		alternative = strings.TrimSpace(alternative)
+		if alternative == "" {
+			continue
+		}
 
-	if builtinTypes[normalized] {
+		// Normalize each union member independently so "valid | issues" and
+		// "User | null" are not mistaken for a single undefined type.
+		normalized := normalizeTypeName(alternative)
+		if builtinTypes[normalized] || definedTypes[normalized] || definedTypes[alternative] {
+			continue
+		}
+
+		// Only report if we have DATA blocks defined (otherwise the author is
+		// not using the typed-spec convention).
+		if len(spec.DataBlocks) > 0 {
+			r.AddWarning("W006",
+				fmt.Sprintf("Return type '%s' may reference undefined DATA type", typeName),
+				formatFunctionLocation(funcName))
+		}
 		return
-	}
-
-	// Check if it's a defined DATA type
-	if definedTypes[normalized] || definedTypes[typeName] {
-		return
-	}
-
-	// Only report if we have DATA blocks defined (otherwise user isn't using typed specs)
-	if len(spec.DataBlocks) > 0 {
-		r.AddWarning("W006",
-			fmt.Sprintf("Return type '%s' may reference undefined DATA type", typeName),
-			formatFunctionLocation(funcName))
 	}
 }
 

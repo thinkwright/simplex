@@ -38,18 +38,22 @@ Every function needs these five sections:
 
 ### Validate with the Linter
 
+The bundled linter performs deterministic structural, complexity, evolution-metadata, and determinism-declaration checks. It does not execute examples or perform semantic/LLM validation.
+
 ```bash
 cd lint
 make build
 ./bin/simplex-lint ../examples/minimal.simplex
 ```
 
+The CLI uses `--input-mode auto` by default. It treats `.simplex` files as raw specifications, reads stdin as an already extracted specification, and lints only `simplex`-labeled fences in Markdown files that contain them. An unmarked Markdown file falls back to raw mode with a warning. Use `--input-mode raw`, `markdown`, or `extracted` to override that selection.
+
 ## Documentation
 
-- [README.md](README.md) - Full specification (v0.3)
-- [1-pager.md](1-pager.md) - Executive summary
+- [README.md](README.md) - Project overview
+- [spec/simplex.md](spec/simplex.md) - Full specification (v0.5)
 - [examples/](examples/) - Example specifications
-- [docs/lint-design.md](docs/lint-design.md) - Linter architecture
+- [docs/lint-design.md](docs/lint-design.md) - Linter architecture and unimplemented design notes
 
 ## Status
 

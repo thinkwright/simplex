@@ -22,15 +22,15 @@ type LintError struct {
 	Location   string  `json:"location"`             // e.g., "FUNCTION filter_policies" or "line 42"
 	Severity   string  `json:"severity"`             // "error" or "warning"
 	Suggestion *string `json:"suggestion,omitempty"` // optional fix suggestion
-	Fixable    bool    `json:"fixable"`              // can --fix resolve this?
+	Fixable    bool    `json:"fixable"`              // suggestion is mechanical; no fixer is currently implemented
 }
 
 // LintStats provides summary statistics for a linted spec.
 type LintStats struct {
-	Functions       int     `json:"functions"`
-	Branches        int     `json:"branches"`
-	Examples        int     `json:"examples"`
-	CoveragePercent float64 `json:"coverage_percent,omitempty"`
+	Functions         int     `json:"functions"`
+	Branches          int     `json:"branches"`
+	Examples          int     `json:"examples"`
+	ExamplesPerBranch float64 `json:"examples_per_branch,omitempty"`
 }
 
 // LintResult represents the complete linting output for a single file.
@@ -148,13 +148,13 @@ func (r *LintResult) ToText() string {
 
 	if r.Valid {
 		validColor := color.New(color.FgGreen, color.Bold)
-		sb.WriteString("  Spec is ")
-		validColor.Fprint(&sb, "VALID")
+		sb.WriteString("  Checks ")
+		validColor.Fprint(&sb, "PASSED")
 		sb.WriteString("\n")
 	} else {
 		invalidColor := color.New(color.FgRed, color.Bold)
-		sb.WriteString("  Spec is ")
-		invalidColor.Fprint(&sb, "INVALID")
+		sb.WriteString("  Checks ")
+		invalidColor.Fprint(&sb, "FAILED")
 		sb.WriteString("\n")
 	}
 
@@ -216,7 +216,7 @@ func (m *MultiResult) ToText() string {
 	sb.WriteString("\n")
 	summaryColor := color.New(color.Bold)
 	summaryColor.Fprintln(&sb, "OVERALL:")
-	sb.WriteString(fmt.Sprintf("  %d/%d specs valid\n", m.TotalValid, m.TotalFiles))
+	sb.WriteString(fmt.Sprintf("  %d/%d files passed\n", m.TotalValid, m.TotalFiles))
 
 	return sb.String()
 }

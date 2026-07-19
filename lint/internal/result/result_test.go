@@ -106,7 +106,7 @@ func TestLintResult_ToText(t *testing.T) {
 	assert.Contains(t, text, "No FUNCTION block found")
 	assert.Contains(t, text, "WARNINGS:")
 	assert.Contains(t, text, "W001")
-	assert.Contains(t, text, "INVALID")
+	assert.Contains(t, text, "Checks FAILED")
 }
 
 func TestLintResult_ToText_Valid(t *testing.T) {
@@ -116,8 +116,8 @@ func TestLintResult_ToText_Valid(t *testing.T) {
 
 	assert.Contains(t, text, "simplex-lint: valid.md")
 	assert.Contains(t, text, "0 error(s), 0 warning(s)")
-	assert.Contains(t, text, "VALID")
-	assert.NotContains(t, text, "INVALID")
+	assert.Contains(t, text, "Checks PASSED")
+	assert.NotContains(t, text, "Checks FAILED")
 }
 
 func TestLintResult_ToText_WithSuggestion(t *testing.T) {
@@ -180,7 +180,7 @@ func TestMultiResult_ToText(t *testing.T) {
 	assert.Contains(t, text, "test1.md")
 	assert.Contains(t, text, "test2.md")
 	assert.Contains(t, text, "OVERALL:")
-	assert.Contains(t, text, "1/2 specs valid")
+	assert.Contains(t, text, "1/2 files passed")
 	// Should have separator between results
 	assert.True(t, strings.Contains(text, "----"))
 }
@@ -226,7 +226,7 @@ func TestLintResult_ToText_OnlyWarnings(t *testing.T) {
 	assert.NotContains(t, text, "ERRORS:") // No errors section when empty
 	assert.Contains(t, text, "WARNINGS:")
 	assert.Contains(t, text, "W001")
-	assert.Contains(t, text, "VALID") // Still valid with only warnings
+	assert.Contains(t, text, "Checks PASSED") // Warnings do not fail checks
 }
 
 func TestMultiResult_SingleFile(t *testing.T) {
@@ -257,16 +257,16 @@ func TestLintStats_Zero(t *testing.T) {
 	assert.Equal(t, 0, r.Stats.Functions)
 	assert.Equal(t, 0, r.Stats.Branches)
 	assert.Equal(t, 0, r.Stats.Examples)
-	assert.Equal(t, 0.0, r.Stats.CoveragePercent)
+	assert.Equal(t, 0.0, r.Stats.ExamplesPerBranch)
 }
 
 func TestLintResult_ToJSON_WithStats(t *testing.T) {
 	r := NewLintResult("test.md")
 	r.Stats = LintStats{
-		Functions:       3,
-		Branches:        10,
-		Examples:        8,
-		CoveragePercent: 80.0,
+		Functions:         3,
+		Branches:          10,
+		Examples:          8,
+		ExamplesPerBranch: 0.8,
 	}
 
 	jsonBytes, err := r.ToJSON()
@@ -276,5 +276,5 @@ func TestLintResult_ToJSON_WithStats(t *testing.T) {
 	assert.Contains(t, jsonStr, `"functions": 3`)
 	assert.Contains(t, jsonStr, `"branches": 10`)
 	assert.Contains(t, jsonStr, `"examples": 8`)
-	assert.Contains(t, jsonStr, `"coverage_percent": 80`)
+	assert.Contains(t, jsonStr, `"examples_per_branch": 0.8`)
 }

@@ -20,11 +20,11 @@ Five pillars guide Simplex.
 
 **Enforced simplicity.** Simplex refuses to support constructs that would allow specifications to become unwieldy. If something cannot be expressed simply, it must be decomposed into smaller pieces first. This is a feature, not a limitation. Complexity that cannot be decomposed is complexity that is not yet understood.
 
-*Note: Enforcement happens through tooling, not the specification itself. A Simplex linter flags overly complex constructs (lengthy RULES blocks, excessive inputs, deep nesting) and rejects them. The specification defines what simplicity means; tooling enforces it. See the Linter Specification section.*
+*Note: Enforcement happens through tooling, not the specification itself. The current Simplex linter enforces limits on RULES items and function inputs, and warns about long rules and large function counts. The specification defines the broader simplicity principle; tooling enforces only its documented checks. See the Linter Specification section.*
 
 **Syntactic tolerance, semantic precision.** Simplex allows for formatting inconsistencies, typos, and notational variations. Agents interpret what you meant, not what you typed. However, the meaning itself must be unambiguous. If an agent would have to guess your intent, the specification is invalid. Sloppy notation is acceptable; vague meaning is not.
 
-*Note: Semantic precision is validated through example coverage. If examples do not exercise every branch of the rules, or if examples could be satisfied by multiple conflicting interpretations, the specification is ambiguous and invalid. See Validation Criteria.*
+*Note: Semantic precision is assessed through example coverage and interpretation review. If examples do not exercise every branch of the rules, or if examples could be satisfied by multiple conflicting interpretations, the specification is ambiguous and invalid. The current linter uses a count-based branch/example heuristic; it does not prove semantic coverage or interpretation uniqueness. See Validation Criteria.*
 
 **Testability.** Every function requires examples. These are not illustrations; they are contracts. The examples define what correct output looks like for given inputs. An agent's work is not complete until its output is consistent with the examples.
 
@@ -36,13 +36,13 @@ Five pillars guide Simplex.
 
 ## Interpretation Model
 
-Simplex has no formal grammar. There is no parser, no AST, no compilation step. Agents read specifications as semi-structured text and extract meaning directly.
+Simplex does not require a formal grammar, parser, AST, or compilation step for agent interpretation. Agents read specifications as semi-structured text and extract meaning directly. Tooling may use tolerant parsers and intermediate representations to inspect that structure.
 
 This is intentional. A formal grammar would contradict the principle of syntactic tolerance. It would also add complexity and create failure modes. Since Simplex exists for LLM interpretation, it should be native to how LLMs work.
 
 Instead of grammar rules, Simplex uses landmarks. Landmarks are structural markers that agents recognize and orient around. They are all-caps words followed by a colon. Content under a landmark continues until the next landmark or the end of the document.
 
-Agents scan for landmarks, extract the content associated with each, and build understanding from there. Unrecognized landmarks are ignored rather than rejected, which provides forward compatibility as Simplex evolves.
+Agents scan for landmarks, extract the content associated with each, and build understanding from there. Agents ignore unrecognized landmarks rather than rejecting the document, which provides forward compatibility as Simplex evolves. The current linter reports unrecognized landmarks as warnings.
 
 ---
 
@@ -434,6 +434,8 @@ Whether SharedMemory is a graph database, a Redis instance, or a directory of JS
 
 The following specification defines a Simplex linter. The linter enforces the "enforced simplicity" pillar through concrete limits and checks.
 
+**Implementation status.** This section is normative design for the linter, not a claim that every listed check is implemented. The current Go linter performs deterministic structural, complexity, BASELINE/EVAL, and DETERMINISM-level checks. It does not execute examples, prove branch coverage, check interpretation uniqueness or observability, validate output schemas, or perform LLM-based semantic review.
+
 ```
 DATA: LintResult
   valid: boolean
@@ -698,7 +700,7 @@ CONSTRAINT: linter_thresholds
 
 Simplex can describe itself. The following specification defines how agents should interpret Simplex documents.
 
-```
+```simplex
 DATA: Landmark
   name: string, all caps
   purpose: what it communicates
@@ -780,11 +782,11 @@ FUNCTION: validate_spec(spec) → valid | issues
 
 CONSTRAINT: self_description
   this specification is parseable by parse_spec
-  this specification passes validate_spec
-  this specification passes lint_spec with zero errors
+  this specification is intended to satisfy validate_spec; semantic criteria require review
+  this specification passes the implemented deterministic lint_spec checks with zero errors
 ```
 
-The self-description constraint is meaningful. Any future version of Simplex must remain self-describing and pass its own linter. This provides a check on evolution: changes that break self-description or fail linting are changes that have gone too far.
+The self-description constraint is a project invariant: future versions of Simplex should remain self-describing and pass the applicable linter checks. The canonical meta-specification above is the only live Simplex region in this Markdown document. In auto mode, `simplex-lint` ignores the other fenced illustrations, and CI checks `spec/simplex.md` for zero deterministic errors. That gate does not establish the semantic checks described by `validate_spec`; those still require review.
 
 ---
 
@@ -802,17 +804,17 @@ Add optional landmarks only as needed. A simple function may need nothing beyond
 
 If a specification becomes unwieldy, decompose it. Multiple simple specs are better than one complex spec. If the linter flags complexity errors, that is a signal to break the work into smaller pieces.
 
-Run the linter before considering a specification complete. A spec that passes linting has met the structural and semantic requirements for validity.
+Run the linter before considering a specification complete. A passing result means the document satisfies the checks implemented by that linter version. Semantic validity remains a broader requirement and still requires review beyond the current deterministic checks.
 
 ---
 
 ## Version History
 
-**v0.5** — Current version. Added variance reduction features. Enhanced CONSTRAINT as behavioral anchors with examples of state invariants, output guarantees, and boundary conditions. Added DETERMINISM landmark for explicit control over output consistency (strict/structural/semantic levels, seed specification, vary/stable fields). Strengthened DATA as required output schemas—when a function return type references a DATA block, outputs must conform exactly. Added `not allowed` field annotation and conditional field presence. Added linter functions check_determinism and check_output_schema. Updated meta-specification and validation for new landmarks.
+**v0.5** — Current version. Added variance reduction features. Enhanced CONSTRAINT as behavioral anchors with examples of state invariants, output guarantees, and boundary conditions. Added DETERMINISM landmark for explicit control over output consistency (strict/structural/semantic levels, seed specification, vary/stable fields). Strengthened DATA as required output schemas—when a function return type references a DATA block, outputs must conform exactly. Added `not allowed` field annotation and conditional field presence. Added deterministic DETERMINISM-level checks; output-schema validation remains specified but is not implemented. Updated meta-specification and validation for new landmarks.
 
 *v0.5 variance reduction features address the gap between specification intent and implementation variance. When agents have implementation freedom, outputs can vary in structure, ordering, and detail even when semantically equivalent. These landmarks provide spec authors with tools to constrain variance where consistency matters.*
 
-**v0.4** — Added BASELINE and EVAL landmarks for evolutionary specifications. BASELINE declares what to preserve and evolve relative to a reference state. EVAL declares grading approach and consistency thresholds using pass^k (all trials must pass) and pass@k (at least one trial must pass) notation. These landmarks address agent failure modes in long-horizon software evolution scenarios. EVAL is required when BASELINE is present to ensure measurement criteria are explicit. Added linter functions for BASELINE/EVAL validation and evolution coverage checking. Updated meta-specification for conditional landmark requirements.
+**v0.4** — Added BASELINE and EVAL landmarks for evolutionary specifications. BASELINE declares what to preserve and evolve relative to a reference state. EVAL declares grading approach and consistency thresholds using pass^k (all trials must pass) and pass@k (at least one trial must pass) notation. These landmarks address agent failure modes in long-horizon software evolution scenarios. EVAL is required when BASELINE is present to ensure measurement criteria are explicit. Added deterministic BASELINE/EVAL structure checks; preservation/evolution example coverage remains specified but is not implemented. Updated meta-specification for conditional landmark requirements.
 
 *v0.4 landmark additions informed by SWE-EVO research [1].*
 

@@ -9,35 +9,29 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/thinkwright/simplex/lint"
 	"github.com/thinkwright/simplex/lint/internal/result"
 )
 
-func TestNewLinter(t *testing.T) {
-	config := LinterConfig{
+func TestPublicLinterWithConfig(t *testing.T) {
+	config := lint.Config{
 		MaxRules:  20,
 		MaxInputs: 8,
-		NoLLM:     true,
-		Verbose:   false,
 	}
 
-	linter := NewLinter(config)
+	linter := lint.New(config)
 
 	assert.NotNil(t, linter)
-	assert.NotNil(t, linter.parser)
-	assert.NotNil(t, linter.structuralChecker)
-	assert.NotNil(t, linter.complexityChecker)
-	assert.Equal(t, config, linter.config)
 }
 
-func TestNewLinter_DefaultConfig(t *testing.T) {
-	linter := NewLinter(LinterConfig{})
+func TestPublicLinterDefaultConfig(t *testing.T) {
+	linter := lint.DefaultLinter()
 
 	assert.NotNil(t, linter)
-	// With zero config, defaults should be applied
 }
 
 func TestLinter_Lint_ValidSpec(t *testing.T) {
-	linter := NewLinter(LinterConfig{NoLLM: true})
+	linter := lint.DefaultLinter()
 
 	input := InputSource{
 		Name: "valid.md",
@@ -56,7 +50,7 @@ ERRORS:
   - any error → fail`,
 	}
 
-	result := linter.Lint(input)
+	result := linter.Lint(input.Name, input.Content)
 
 	assert.True(t, result.Valid)
 	assert.Empty(t, result.Errors)
@@ -66,14 +60,14 @@ ERRORS:
 }
 
 func TestLinter_Lint_InvalidSpec_MissingFunction(t *testing.T) {
-	linter := NewLinter(LinterConfig{NoLLM: true})
+	linter := lint.DefaultLinter()
 
 	input := InputSource{
 		Name:    "invalid.md",
 		Content: `DATA: SomeType\n  field: string`,
 	}
 
-	result := linter.Lint(input)
+	result := linter.Lint(input.Name, input.Content)
 
 	assert.False(t, result.Valid)
 	require.Len(t, result.Errors, 1)
@@ -81,7 +75,7 @@ func TestLinter_Lint_InvalidSpec_MissingFunction(t *testing.T) {
 }
 
 func TestLinter_Lint_InvalidSpec_MissingErrors(t *testing.T) {
-	linter := NewLinter(LinterConfig{NoLLM: true})
+	linter := lint.DefaultLinter()
 
 	input := InputSource{
 		Name: "missing_errors.md",
@@ -97,7 +91,7 @@ EXAMPLES:
   () → ok`,
 	}
 
-	result := linter.Lint(input)
+	result := linter.Lint(input.Name, input.Content)
 
 	assert.False(t, result.Valid)
 	hasE005 := false
@@ -110,10 +104,9 @@ EXAMPLES:
 }
 
 func TestLinter_Lint_ComplexityViolations(t *testing.T) {
-	linter := NewLinter(LinterConfig{
+	linter := lint.New(lint.Config{
 		MaxRules:  3,
 		MaxInputs: 2,
-		NoLLM:     true,
 	})
 
 	input := InputSource{
@@ -137,7 +130,7 @@ ERRORS:
   - fail`,
 	}
 
-	result := linter.Lint(input)
+	result := linter.Lint(input.Name, input.Content)
 
 	assert.False(t, result.Valid)
 
@@ -150,7 +143,7 @@ ERRORS:
 }
 
 func TestLinter_Lint_ParseWarnings(t *testing.T) {
-	linter := NewLinter(LinterConfig{NoLLM: true})
+	linter := lint.DefaultLinter()
 
 	input := InputSource{
 		Name: "warnings.md",
@@ -172,7 +165,7 @@ CUSTOM_UNKNOWN_LANDMARK:
   - this is unrecognized`,
 	}
 
-	result := linter.Lint(input)
+	result := linter.Lint(input.Name, input.Content)
 
 	// Should still be valid (unrecognized landmarks are warnings)
 	assert.True(t, result.Valid)
@@ -188,7 +181,7 @@ CUSTOM_UNKNOWN_LANDMARK:
 }
 
 func TestLinter_Lint_Stats(t *testing.T) {
-	linter := NewLinter(LinterConfig{NoLLM: true})
+	linter := lint.DefaultLinter()
 
 	input := InputSource{
 		Name: "stats.md",
@@ -224,19 +217,19 @@ ERRORS:
   - fail`,
 	}
 
-	result := linter.Lint(input)
+	result := linter.Lint(input.Name, input.Content)
 
 	assert.True(t, result.Valid)
 	assert.Equal(t, 2, result.Stats.Functions)
 	assert.Equal(t, 4, result.Stats.Examples) // 3 + 1
 	assert.True(t, result.Stats.Branches > 0)
-	assert.True(t, result.Stats.CoveragePercent > 0)
+	assert.True(t, result.Stats.ExamplesPerBranch > 0)
 }
 
-func TestLinter_Lint_CoveragePercent_CanExceed100(t *testing.T) {
-	linter := NewLinter(LinterConfig{NoLLM: true})
+func TestLinter_Lint_ExamplesPerBranch(t *testing.T) {
+	linter := lint.DefaultLinter()
 
-	// More examples than branches — coverage should exceed 100%
+	// More examples than counted branches produce a ratio greater than one.
 	input := InputSource{
 		Name: "overcovered.md",
 		Content: `FUNCTION: test() → result
@@ -258,11 +251,10 @@ ERRORS:
   - fail`,
 	}
 
-	result := linter.Lint(input)
+	result := linter.Lint(input.Name, input.Content)
 
 	assert.True(t, result.Valid)
-	// 5 examples / 1 branch = 500%
-	assert.Equal(t, 500.0, result.Stats.CoveragePercent)
+	assert.Equal(t, 5.0, result.Stats.ExamplesPerBranch)
 }
 
 func TestOutputSingle_Text(t *testing.T) {
@@ -283,7 +275,7 @@ func TestOutputSingle_Text(t *testing.T) {
 	output := buf.String()
 
 	assert.Contains(t, output, "simplex-lint: test.md")
-	assert.Contains(t, output, "VALID")
+	assert.Contains(t, output, "Checks PASSED")
 }
 
 func TestOutputSingle_JSON(t *testing.T) {
@@ -330,7 +322,7 @@ func TestOutputMultiple_Text(t *testing.T) {
 	assert.Contains(t, output, "test1.md")
 	assert.Contains(t, output, "test2.md")
 	assert.Contains(t, output, "OVERALL:")
-	assert.Contains(t, output, "2/2 specs valid")
+	assert.Contains(t, output, "2/2 files passed")
 }
 
 func TestOutputMultiple_JSON(t *testing.T) {
@@ -362,11 +354,8 @@ func TestIntegration_ValidMinimal(t *testing.T) {
 	content, err := os.ReadFile("../../testdata/valid_minimal.md")
 	require.NoError(t, err)
 
-	linter := NewLinter(LinterConfig{NoLLM: true})
-	result := linter.Lint(InputSource{
-		Name:    "valid_minimal.md",
-		Content: string(content),
-	})
+	linter := lint.DefaultLinter()
+	result := linter.Lint("valid_minimal.md", string(content))
 
 	assert.True(t, result.Valid)
 	assert.Empty(t, result.Errors)
@@ -376,11 +365,8 @@ func TestIntegration_ValidComplex(t *testing.T) {
 	content, err := os.ReadFile("../../testdata/valid_complex.md")
 	require.NoError(t, err)
 
-	linter := NewLinter(LinterConfig{NoLLM: true})
-	result := linter.Lint(InputSource{
-		Name:    "valid_complex.md",
-		Content: string(content),
-	})
+	linter := lint.DefaultLinter()
+	result := linter.Lint("valid_complex.md", string(content))
 
 	assert.True(t, result.Valid)
 	assert.Empty(t, result.Errors)
@@ -391,11 +377,8 @@ func TestIntegration_InvalidMissingErrors(t *testing.T) {
 	content, err := os.ReadFile("../../testdata/invalid_missing_errors.md")
 	require.NoError(t, err)
 
-	linter := NewLinter(LinterConfig{NoLLM: true})
-	result := linter.Lint(InputSource{
-		Name:    "invalid_missing_errors.md",
-		Content: string(content),
-	})
+	linter := lint.DefaultLinter()
+	result := linter.Lint("invalid_missing_errors.md", string(content))
 
 	assert.False(t, result.Valid)
 	hasE005 := false
@@ -411,11 +394,8 @@ func TestIntegration_InvalidMissingFunction(t *testing.T) {
 	content, err := os.ReadFile("../../testdata/invalid_missing_function.md")
 	require.NoError(t, err)
 
-	linter := NewLinter(LinterConfig{NoLLM: true})
-	result := linter.Lint(InputSource{
-		Name:    "invalid_missing_function.md",
-		Content: string(content),
-	})
+	linter := lint.DefaultLinter()
+	result := linter.Lint("invalid_missing_function.md", string(content))
 
 	assert.False(t, result.Valid)
 	hasE001 := false
@@ -431,11 +411,8 @@ func TestIntegration_InvalidTooComplex(t *testing.T) {
 	content, err := os.ReadFile("../../testdata/invalid_too_complex.md")
 	require.NoError(t, err)
 
-	linter := NewLinter(LinterConfig{NoLLM: true})
-	result := linter.Lint(InputSource{
-		Name:    "invalid_too_complex.md",
-		Content: string(content),
-	})
+	linter := lint.DefaultLinter()
+	result := linter.Lint("invalid_too_complex.md", string(content))
 
 	assert.False(t, result.Valid)
 
@@ -453,7 +430,7 @@ func TestIntegration_AllTestdata(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, files)
 
-	linter := NewLinter(LinterConfig{NoLLM: true})
+	linter := lint.DefaultLinter()
 
 	for _, file := range files {
 		t.Run(filepath.Base(file), func(t *testing.T) {
@@ -461,10 +438,7 @@ func TestIntegration_AllTestdata(t *testing.T) {
 			require.NoError(t, err)
 
 			// Should not panic
-			result := linter.Lint(InputSource{
-				Name:    filepath.Base(file),
-				Content: string(content),
-			})
+			result := linter.Lint(filepath.Base(file), string(content))
 
 			// Valid files should pass, invalid files should fail
 			if strings.HasPrefix(filepath.Base(file), "valid_") {
@@ -476,39 +450,61 @@ func TestIntegration_AllTestdata(t *testing.T) {
 	}
 }
 
-func TestLinter_Lint_VerboseMode(t *testing.T) {
-	// Test with verbose mode enabled (covers the verbose branch in Lint)
-	linter := NewLinter(LinterConfig{
-		NoLLM:   false, // LLM enabled but not configured
-		Verbose: true,
-	})
-
-	input := InputSource{
-		Name: "verbose_test.md",
-		Content: `FUNCTION: test() → result
-
-RULES:
-  - do something
-
-DONE_WHEN:
-  - done
-
-EXAMPLES:
-  () → ok
-
-ERRORS:
-  - fail`,
+func TestCLIExposesOnlyImplementedFlags(t *testing.T) {
+	for _, name := range []string{"format", "input-mode", "max-rules", "max-inputs"} {
+		assert.NotNil(t, rootCmd.Flags().Lookup(name), "expected supported flag --%s", name)
 	}
 
-	// Capture stderr to verify verbose output
-	// Note: This tests the branch but we don't verify stderr content
-	result := linter.Lint(input)
-	assert.True(t, result.Valid)
+	for _, name := range []string{
+		"fix", "no-llm", "provider", "model", "api-key", "api-base",
+		"cache", "no-cache", "verbose",
+	} {
+		assert.Nil(t, rootCmd.Flags().Lookup(name), "unsupported flag --%s should not be exposed", name)
+	}
+}
+
+func TestParseInputMode(t *testing.T) {
+	for _, value := range []string{"auto", "raw", "markdown", "extracted"} {
+		mode, err := parseInputMode(value)
+		require.NoError(t, err)
+		assert.Equal(t, lint.InputMode(value), mode)
+	}
+
+	_, err := parseInputMode("guess")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid --input-mode")
+}
+
+func TestValidateCLIOptions(t *testing.T) {
+	originalFormat := flagFormat
+	originalMaxRules := flagMaxRules
+	originalMaxInputs := flagMaxInputs
+	t.Cleanup(func() {
+		flagFormat = originalFormat
+		flagMaxRules = originalMaxRules
+		flagMaxInputs = originalMaxInputs
+	})
+
+	flagFormat = "text"
+	flagMaxRules = 15
+	flagMaxInputs = 6
+	require.NoError(t, validateCLIOptions())
+
+	flagFormat = "yaml"
+	assert.EqualError(t, validateCLIOptions(), `invalid --format "yaml": expected text or json`)
+
+	flagFormat = "json"
+	flagMaxRules = 0
+	assert.EqualError(t, validateCLIOptions(), "invalid --max-rules 0: expected a positive integer")
+
+	flagMaxRules = 15
+	flagMaxInputs = -1
+	assert.EqualError(t, validateCLIOptions(), "invalid --max-inputs -1: expected a positive integer")
 }
 
 func TestLinter_Lint_ZeroBranches(t *testing.T) {
 	// Test with a spec that has no identifiable branches
-	linter := NewLinter(LinterConfig{NoLLM: true})
+	linter := lint.DefaultLinter()
 
 	input := InputSource{
 		Name: "no_branches.md",
@@ -527,21 +523,22 @@ ERRORS:
   - fail`,
 	}
 
-	result := linter.Lint(input)
+	result := linter.Lint(input.Name, input.Content)
 	assert.True(t, result.Valid)
-	// With 1 branch (minimum) and 1 example, coverage should be 100%
+	// With 1 counted branch and 1 example, the ratio should be 1.
 	assert.Equal(t, 1, result.Stats.Branches)
+	assert.Equal(t, 1.0, result.Stats.ExamplesPerBranch)
 }
 
 func TestLinter_Lint_EmptySpec(t *testing.T) {
-	linter := NewLinter(LinterConfig{NoLLM: true})
+	linter := lint.DefaultLinter()
 
 	input := InputSource{
 		Name:    "empty.md",
 		Content: "",
 	}
 
-	result := linter.Lint(input)
+	result := linter.Lint(input.Name, input.Content)
 	assert.False(t, result.Valid)
 	assert.Equal(t, 0, result.Stats.Functions)
 	assert.Equal(t, 0, result.Stats.Branches)

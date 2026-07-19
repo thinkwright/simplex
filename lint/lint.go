@@ -16,10 +16,25 @@ type Error = result.LintError
 // Stats is summary statistics for a linted spec.
 type Stats = result.LintStats
 
+// InputMode controls which parts of a source document are linted as Simplex.
+type InputMode string
+
+const (
+	// InputModeRaw lints the entire input, excluding fenced literal blocks.
+	InputModeRaw InputMode = "raw"
+	// InputModeMarkdown lints only fenced blocks labeled simplex.
+	InputModeMarkdown InputMode = "markdown"
+	// InputModeExtracted lints a caller-extracted Simplex block.
+	InputModeExtracted InputMode = "extracted"
+	// InputModeAuto selects a mode from the input name and Markdown markers.
+	InputModeAuto InputMode = "auto"
+)
+
 // Config holds configuration for the linter.
 type Config struct {
 	MaxRules  int
 	MaxInputs int
+	InputMode InputMode
 }
 
 // Linter performs linting on Simplex specifications.
@@ -56,7 +71,10 @@ func New(config Config) *Linter {
 func (l *Linter) Lint(name, content string) *Result {
 	r := result.NewLintResult(name)
 
-	spec := l.parser.Parse(content)
+	spec := l.parser.ParseWithOptions(content, parser.ParseOptions{
+		Mode:       parser.InputMode(l.config.InputMode),
+		SourceName: name,
+	})
 
 	for _, w := range spec.ParseWarnings {
 		r.AddWarning("W001", w, "parse")
@@ -72,7 +90,7 @@ func (l *Linter) Lint(name, content string) *Result {
 	r.Stats.Branches = l.countTotalBranches(spec)
 
 	if r.Stats.Branches > 0 {
-		r.Stats.CoveragePercent = float64(r.Stats.Examples) / float64(r.Stats.Branches) * 100
+		r.Stats.ExamplesPerBranch = float64(r.Stats.Examples) / float64(r.Stats.Branches)
 	}
 
 	return r

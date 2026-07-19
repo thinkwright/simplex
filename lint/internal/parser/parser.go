@@ -89,6 +89,7 @@ type ParsedSpec struct {
 	DataBlocks    []Landmark
 	Constraints   []Landmark
 	RawText       string
+	InputMode     InputMode
 	ParseWarnings []string // non-fatal parse issues
 }
 
@@ -99,6 +100,8 @@ type landmarkMatch struct {
 	lineNumber int
 	startIndex int
 	endIndex   int
+	region     int
+	regionEnd  int
 }
 
 // Parser provides methods for parsing Simplex specifications.
@@ -112,9 +115,9 @@ type Parser struct {
 // NewParser creates a new Parser instance.
 func NewParser() *Parser {
 	return &Parser{
-		// Match landmarks: word boundary, ALL_CAPS (with underscores), colon
+		// Match optionally indented ALL_CAPS landmarks (with underscores), then colon.
 		// Captures: (1) landmark name, (2) rest of line after colon
-		landmarkPattern: regexp.MustCompile(`(?m)^([A-Z][A-Z_]+):\s*(.*)$`),
+		landmarkPattern: regexp.MustCompile(`(?m)^[ \t]*([A-Z][A-Z_]+):\s*(.*)$`),
 		// Match function signature: name(args) → return_type
 		// Handles both → and -> for arrow
 		functionSigPattern: regexp.MustCompile(`^(\w+)\s*\(([^)]*)\)\s*(?:→|->)\s*(.+)$`),
@@ -123,16 +126,25 @@ func NewParser() *Parser {
 
 // Parse parses a Simplex specification text and returns a ParsedSpec.
 func (p *Parser) Parse(text string) *ParsedSpec {
+	return p.ParseWithOptions(text, ParseOptions{Mode: InputModeRaw})
+}
+
+// ParseWithOptions parses Simplex input according to the requested input mode.
+func (p *Parser) ParseWithOptions(text string, options ParseOptions) *ParsedSpec {
+	mode, modeWarnings := resolveInputMode(text, options)
+	regions, regionWarnings := selectInputRegions(text, mode, options.startLine())
+
 	spec := &ParsedSpec{
 		Functions:     []FunctionBlock{},
 		DataBlocks:    []Landmark{},
 		Constraints:   []Landmark{},
 		RawText:       text,
-		ParseWarnings: []string{},
+		InputMode:     mode,
+		ParseWarnings: append(modeWarnings, regionWarnings...),
 	}
 
 	// Find all landmark matches
-	matches := p.findLandmarks(text)
+	matches := p.findLandmarks(text, regions)
 	if len(matches) == 0 {
 		return spec
 	}
@@ -147,33 +159,39 @@ func (p *Parser) Parse(text string) *ParsedSpec {
 }
 
 // findLandmarks finds all landmark declarations in the text.
-func (p *Parser) findLandmarks(text string) []landmarkMatch {
+func (p *Parser) findLandmarks(text string, regions []inputRegion) []landmarkMatch {
 	var matches []landmarkMatch
 
-	// Find all matches
-	allMatches := p.landmarkPattern.FindAllStringSubmatchIndex(text, -1)
+	for regionIndex, region := range regions {
+		allMatches := p.landmarkPattern.FindAllStringSubmatchIndex(region.detectionText, -1)
 
-	for _, m := range allMatches {
-		if len(m) < 6 {
-			continue
+		for _, m := range allMatches {
+			if len(m) < 6 {
+				continue
+			}
+
+			nameStart := region.startIndex + m[2]
+			nameEnd := region.startIndex + m[3]
+			name := text[nameStart:nameEnd]
+			content := ""
+			if m[4] >= 0 && m[5] >= 0 {
+				contentStart := region.startIndex + m[4]
+				contentEnd := region.startIndex + m[5]
+				content = text[contentStart:contentEnd]
+			}
+
+			lineNumber := region.startLine + strings.Count(region.detectionText[:m[0]], "\n")
+
+			matches = append(matches, landmarkMatch{
+				name:       name,
+				content:    strings.TrimSpace(content),
+				lineNumber: lineNumber,
+				startIndex: region.startIndex + m[0],
+				endIndex:   region.startIndex + m[1],
+				region:     regionIndex,
+				regionEnd:  region.endIndex,
+			})
 		}
-
-		name := text[m[2]:m[3]]
-		content := ""
-		if m[4] >= 0 && m[5] >= 0 {
-			content = text[m[4]:m[5]]
-		}
-
-		// Calculate line number
-		lineNumber := strings.Count(text[:m[0]], "\n") + 1
-
-		matches = append(matches, landmarkMatch{
-			name:       name,
-			content:    strings.TrimSpace(content),
-			lineNumber: lineNumber,
-			startIndex: m[0],
-			endIndex:   m[1],
-		})
 	}
 
 	return matches
@@ -187,12 +205,11 @@ func (p *Parser) extractLandmarkContent(text string, matches []landmarkMatch) []
 		// Content starts after the landmark line
 		contentStart := m.endIndex
 
-		// Content ends at next landmark or EOF
-		var contentEnd int
-		if i+1 < len(matches) {
+		// Content ends at the next landmark in the same live input region.
+		// Markdown prose and fence delimiters between regions are not content.
+		contentEnd := m.regionEnd
+		if i+1 < len(matches) && matches[i+1].region == m.region {
 			contentEnd = matches[i+1].startIndex
-		} else {
-			contentEnd = len(text)
 		}
 
 		// Extract and clean content
